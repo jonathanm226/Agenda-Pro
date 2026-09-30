@@ -18,7 +18,7 @@ body {
     max-width: 480px;
     background-color: #141414;
     padding: 20px;
-    padding-bottom: 90px;
+    /* Removido o padding-bottom excessivo (90px) para evitar espaço vazio indesejado */
     box-shadow: 0 0 40px rgba(0, 0, 0, 0.8);
     border-left: 1px solid #222222;
     border-right: 1px solid #222222;
@@ -204,17 +204,15 @@ input:focus, select:focus {
     border-color: #D4AF37;
 }
 
-/* Rodapé Fixo com Botão */
+/* Rodapé em Fluxo Normal (Corrigido para remover a sobreposição fixa) */
 .footer-action {
-    position: fixed;
-    bottom: 0;
-    left: 50%;
-    transform: translateX(-50%);
+    position: relative;
     width: 100%;
-    max-width: 480px;
-    padding: 15px 20px;
-    background: #141414;
-    border-top: 1px solid #2A2A2A;
+    margin-top: 25px;
+    margin-bottom: 15px;
+    padding: 0;
+    background: transparent;
+    border-top: none;
 }
 
 .btn-whatsapp {
