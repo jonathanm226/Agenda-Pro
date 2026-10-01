@@ -1,9 +1,9 @@
 <!DOCTYPE html>
-<html lang="pt-BR">
+<html lang="pt-PT">
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Studio Bella | Painel de Controle</title>
+    <title>Studio Prime | Painel de Controlo</title>
     <link rel="stylesheet" href="style.css">
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.1/css/all.min.css">
     
@@ -19,9 +19,9 @@
         .custom-modal {
             background: #FFFFFF; border: 1px solid #EAEAEA; border-radius: 8px;
             padding: 25px; width: 90%; max-width: 400px; text-align: center;
-            box-shadow: 0 4px 20px rgba(214, 51, 132, 0.15);
+            box-shadow: 0 4px 20px rgba(212, 175, 55, 0.15); /* Sombra Dourada */
         }
-        .custom-modal h3 { color: #d63384; font-size: 1.1rem; margin-bottom: 12px; text-transform: uppercase; letter-spacing: 1px; }
+        .custom-modal h3 { color: #D4AF37; font-size: 1.1rem; margin-bottom: 12px; text-transform: uppercase; letter-spacing: 1px; }
         .custom-modal p { color: #555555; font-size: 0.9rem; margin-bottom: 20px; line-height: 1.4; }
         .custom-modal input {
             width: 100%; padding: 12px; background: #FAFAFA; border: 1px solid #DDD;
@@ -30,7 +30,7 @@
         .custom-modal-buttons { display: flex; gap: 10px; }
         .custom-modal-btn { flex: 1; padding: 12px; border-radius: 6px; font-size: 0.95rem; font-weight: bold; cursor: pointer; border: none; text-transform: uppercase; transition: 0.2s; }
         .btn-modal-cancelar { background: #EAEAEA; color: #333333; border: 1px solid #DDD; }
-        .btn-modal-confirmar { background: #d63384; color: #FFFFFF; }
+        .btn-modal-confirmar { background: #D4AF37; color: #FFFFFF; } /* Botão Dourado */
     </style>
 </head>
 <body>
@@ -40,12 +40,12 @@
         <!-- Cabeçalho -->
         <header class="barber-header">
             <div class="brand-info">
-                <div class="brand-logo-container" style="width: 55px; height: 55px; background: #fff; border-radius: 50%; display: flex; align-items: center; justify-content: center; border: 2px solid #d63384; margin: 0 auto 8px auto;">
-                    <i class="fa-solid fa-spa" style="color: #d63384; font-size: 1.3rem;"></i>
+                <div class="brand-logo-container" style="width: 55px; height: 55px; background: #111; border-radius: 50%; display: flex; align-items: center; justify-content: center; border: 2px solid #D4AF37; margin: 0 auto 8px auto;">
+                    <i class="fa-solid fa-scissors" style="color: #D4AF37; font-size: 1.3rem;"></i>
                 </div>
                 <div>
-                    <h1>Studio Bella</h1>
-                    <p id="painel-subtitulo">Painel de Controlo e Fechamento</p>
+                    <h1 style="color: #111;">Studio Prime</h1>
+                    <p id="painel-subtitulo">Painel de Controlo e Fecho</p>
                 </div>
             </div>
         </header>
@@ -55,29 +55,29 @@
             <h2>Acesso Restrito ao Painel</h2>
             <div class="datetime-inputs">
                 <div class="input-group">
-                    <label for="login-usuario">Usuário (ex: ana, juliana, mariana, admin):</label>
+                    <label for="login-usuario">Utilizador (ex: ana, juliana, mariana, admin):</label>
                     <input type="text" id="login-usuario">
                 </div>
                 <div class="input-group">
-                    <label for="login-senha">Senha:</label>
+                    <label for="login-senha">Palavra-passe:</label>
                     <input type="password" id="login-senha">
                 </div>
-                <button class="btn-primary-action" onclick="fazerLogin()" style="background-color: #d63384;">Entrar</button>
+                <button class="btn-primary-action" onclick="fazerLogin()" style="background-color: #D4AF37; color: #fff; border: none; padding: 12px; border-radius: 6px; font-weight: bold; text-transform: uppercase; cursor: pointer; width: 100%;">Entrar</button>
             </div>
         </section>
 
         <!-- Seção da Agenda da Profissional -->
         <section id="dashboard-barbeiro" class="section" style="display: none;">
             <div style="display: flex; flex-direction: column; gap: 10px; margin-bottom: 15px;">
-                <h2 id="titulo-agenda-barbeiro" style="font-size: 1.1rem; margin: 0; color: #d63384;">Minha Agenda</h2>
+                <h2 id="titulo-agenda-barbeiro" style="font-size: 1.1rem; margin: 0; color: #D4AF37;">A Minha Agenda</h2>
                 <div style="display: flex; gap: 6px; flex-wrap: wrap;">
-                    <button onclick="abrirModalSenha()" class="btn-whatsapp" style="flex: 1; min-width: 110px; padding: 8px 6px; font-size: 0.75rem; background: #d63384; color: #FFF; text-align: center;">
-                        <i class="fa-solid fa-key"></i> Alterar Senha
+                    <button onclick="abrirModalSenha()" class="btn-whatsapp" style="flex: 1; min-width: 110px; padding: 8px 6px; font-size: 0.75rem; background: #D4AF37; color: #FFF; text-align: center; border: none; border-radius: 4px; cursor: pointer;">
+                        <i class="fa-solid fa-key"></i> Palavra-passe
                     </button>
-                    <button onclick="carregarAgendamentos()" class="btn-whatsapp" style="flex: 1; min-width: 90px; padding: 8px 6px; font-size: 0.75rem; text-align: center;">
+                    <button onclick="carregarAgendamentos()" class="btn-whatsapp" style="flex: 1; min-width: 90px; padding: 8px 6px; font-size: 0.75rem; text-align: center; background: #333; color: #FFF; border: none; border-radius: 4px; cursor: pointer;">
                         <i class="fa-solid fa-rotate"></i> Atualizar
                     </button>
-                    <button onclick="fazerLogout()" class="btn-whatsapp" style="flex: 1; min-width: 70px; padding: 8px 6px; font-size: 0.75rem; background: #e74c3c; color: #FFF; text-align: center;">
+                    <button onclick="fazerLogout()" class="btn-whatsapp" style="flex: 1; min-width: 70px; padding: 8px 6px; font-size: 0.75rem; background: #e74c3c; color: #FFF; text-align: center; border: none; border-radius: 4px; cursor: pointer;">
                         <i class="fa-solid fa-right-from-bracket"></i> Sair
                     </button>
                 </div>
@@ -89,46 +89,46 @@
             </div>
 
             <!-- Card de Fechamento Individual -->
-            <div style="background: #FDF2F8; border: 2px solid #d63384; padding: 15px; border-radius: 10px; margin-bottom: 25px;">
-                <h3 style="color: #d63384; margin-bottom: 10px; font-size: 1.1rem;">
-                    <i class="fa-solid fa-chart-pie"></i> Meu Fechamento do Dia
+            <div style="background: #FFFDF5; border: 2px solid #D4AF37; padding: 15px; border-radius: 10px; margin-bottom: 25px;">
+                <h3 style="color: #D4AF37; margin-bottom: 10px; font-size: 1.1rem;">
+                    <i class="fa-solid fa-chart-pie"></i> O Meu Fecho do Dia
                 </h3>
                 <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 10px; font-size: 0.95rem; margin-bottom: 15px;">
-                    <div style="background: #FFF; padding: 10px; border-radius: 6px; border: 1px solid #F3C6D8;">
-                        <span style="color: #888; display: block; font-size: 0.8rem;">Atendimentos Concluídos</span>
+                    <div style="background: #FFF; padding: 10px; border-radius: 6px; border: 1px solid #EAEAEA;">
+                        <span style="color: #888; display: block; font-size: 0.8rem;">Serviços Concluídos</span>
                         <strong id="barber-resumo-qtd" style="font-size: 1.2rem; color: #333;">0</strong>
                     </div>
-                    <div style="background: #FFF; padding: 10px; border-radius: 6px; border: 1px solid #F3C6D8;">
-                        <span style="color: #888; display: block; font-size: 0.8rem;">Faturamento Total</span>
-                        <strong id="barber-resumo-total" style="font-size: 1.2rem; color: #25D366;">R$ 0,00</strong>
+                    <div style="background: #FFF; padding: 10px; border-radius: 6px; border: 1px solid #EAEAEA;">
+                        <span style="color: #888; display: block; font-size: 0.8rem;">Faturação Total</span>
+                        <strong id="barber-resumo-total" style="font-size: 1.2rem; color: #25D366;">€ 0,00</strong>
                     </div>
                 </div>
                 <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 10px; font-size: 0.95rem; margin-bottom: 15px;">
-                    <div style="background: #FFF; padding: 10px; border-radius: 6px; border: 1px solid #F3C6D8;">
-                        <span style="color: #888; display: block; font-size: 0.8rem;">Atendimentos Cancelados</span>
+                    <div style="background: #FFF; padding: 10px; border-radius: 6px; border: 1px solid #EAEAEA;">
+                        <span style="color: #888; display: block; font-size: 0.8rem;">Serviços Cancelados</span>
                         <strong id="barber-resumo-cancelados-qtd" style="font-size: 1.2rem; color: #e74c3c;">0</strong>
                     </div>
-                    <div style="background: #FFF; padding: 10px; border-radius: 6px; border: 1px solid #F3C6D8;">
+                    <div style="background: #FFF; padding: 10px; border-radius: 6px; border: 1px solid #EAEAEA;">
                         <span style="color: #888; display: block; font-size: 0.8rem;">Valor Cancelado</span>
-                        <strong id="barber-resumo-cancelados-val" style="font-size: 1.2rem; color: #e74c3c;">R$ 0,00</strong>
+                        <strong id="barber-resumo-cancelados-val" style="font-size: 1.2rem; color: #e74c3c;">€ 0,00</strong>
                     </div>
                 </div>
-                <div style="background: #FFF; padding: 12px; border-radius: 6px; font-size: 0.9rem; color: #555; border: 1px solid #F3C6D8;" id="barber-detalhes-pagamento"></div>
+                <div style="background: #FFF; padding: 12px; border-radius: 6px; font-size: 0.9rem; color: #555; border: 1px solid #EAEAEA;" id="barber-detalhes-pagamento"></div>
             </div>
 
-            <h3 style="font-size: 1rem; margin-bottom: 10px; color: #d63384;">Lista de Horários</h3>
+            <h3 style="font-size: 1rem; margin-bottom: 10px; color: #D4AF37;">Lista de Horários</h3>
             <div id="agendamentos-list-barbeiro" style="display: flex; flex-direction: column; gap: 10px;"></div>
         </section>
 
         <!-- Seção de Resumo do Administrador -->
         <section id="dashboard-admin" class="section" style="display: none;">
             <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 15px;">
-                <h2 style="color: #d63384;">Resumo Administrativo</h2>
+                <h2 style="color: #D4AF37;">Resumo Administrativo</h2>
                 <div style="display: flex; gap: 8px;">
-                    <button onclick="carregarResumoAdmin()" class="btn-whatsapp" style="width: auto; padding: 8px 15px; font-size: 0.9rem;">
+                    <button onclick="carregarResumoAdmin()" class="btn-whatsapp" style="width: auto; padding: 8px 15px; font-size: 0.9rem; background: #333; color: #FFF; border: none; border-radius: 4px; cursor: pointer;">
                         <i class="fa-solid fa-rotate"></i> Atualizar
                     </button>
-                    <button onclick="fazerLogout()" class="btn-whatsapp" style="width: auto; padding: 8px 15px; font-size: 0.9rem; background: #e74c3c; color: #FFF;">
+                    <button onclick="fazerLogout()" class="btn-whatsapp" style="width: auto; padding: 8px 15px; font-size: 0.9rem; background: #e74c3c; color: #FFF; border: none; border-radius: 4px; cursor: pointer;">
                         <i class="fa-solid fa-right-from-bracket"></i> Sair
                     </button>
                 </div>
@@ -140,34 +140,34 @@
             </div>
 
             <!-- Cards de Resumo Geral -->
-            <div style="background: #FDF2F8; border: 2px solid #d63384; padding: 15px; border-radius: 10px; margin-bottom: 25px;">
-                <h3 style="color: #d63384; margin-bottom: 10px; font-size: 1.1rem;">
-                    <i class="fa-solid fa-chart-pie"></i> Fechamento Geral do Dia
+            <div style="background: #FFFDF5; border: 2px solid #D4AF37; padding: 15px; border-radius: 10px; margin-bottom: 25px;">
+                <h3 style="color: #D4AF37; margin-bottom: 10px; font-size: 1.1rem;">
+                    <i class="fa-solid fa-chart-pie"></i> Fecho Geral do Dia
                 </h3>
                 <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 10px; font-size: 0.95rem; margin-bottom: 15px;">
-                    <div style="background: #FFF; padding: 10px; border-radius: 6px; border: 1px solid #F3C6D8;">
-                        <span style="color: #888; display: block; font-size: 0.8rem;">Atendimentos Concluídos</span>
+                    <div style="background: #FFF; padding: 10px; border-radius: 6px; border: 1px solid #EAEAEA;">
+                        <span style="color: #888; display: block; font-size: 0.8rem;">Serviços Concluídos</span>
                         <strong id="admin-resumo-qtd" style="font-size: 1.2rem; color: #333;">0</strong>
                     </div>
-                    <div style="background: #FFF; padding: 10px; border-radius: 6px; border: 1px solid #F3C6D8;">
-                        <span style="color: #888; display: block; font-size: 0.8rem;">Faturamento Total</span>
-                        <strong id="admin-resumo-total" style="font-size: 1.2rem; color: #25D366;">R$ 0,00</strong>
+                    <div style="background: #FFF; padding: 10px; border-radius: 6px; border: 1px solid #EAEAEA;">
+                        <span style="color: #888; display: block; font-size: 0.8rem;">Faturação Total</span>
+                        <strong id="admin-resumo-total" style="font-size: 1.2rem; color: #25D366;">€ 0,00</strong>
                     </div>
                 </div>
                 <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 10px; font-size: 0.95rem; margin-bottom: 15px;">
-                    <div style="background: #FFF; padding: 10px; border-radius: 6px; border: 1px solid #F3C6D8;">
-                        <span style="color: #888; display: block; font-size: 0.8rem;">Atendimentos Cancelados</span>
+                    <div style="background: #FFF; padding: 10px; border-radius: 6px; border: 1px solid #EAEAEA;">
+                        <span style="color: #888; display: block; font-size: 0.8rem;">Serviços Cancelados</span>
                         <strong id="admin-resumo-cancelados-qtd" style="font-size: 1.2rem; color: #e74c3c;">0</strong>
                     </div>
-                    <div style="background: #FFF; padding: 10px; border-radius: 6px; border: 1px solid #F3C6D8;">
+                    <div style="background: #FFF; padding: 10px; border-radius: 6px; border: 1px solid #EAEAEA;">
                         <span style="color: #888; display: block; font-size: 0.8rem;">Valor Cancelado</span>
-                        <strong id="admin-resumo-cancelados-val" style="font-size: 1.2rem; color: #e74c3c;">R$ 0,00</strong>
+                        <strong id="admin-resumo-cancelados-val" style="font-size: 1.2rem; color: #e74c3c;">€ 0,00</strong>
                     </div>
                 </div>
-                <div style="background: #FFF; padding: 12px; border-radius: 6px; font-size: 0.9rem; color: #555; border: 1px solid #F3C6D8;" id="admin-detalhes-pagamento"></div>
+                <div style="background: #FFF; padding: 12px; border-radius: 6px; font-size: 0.9rem; color: #555; border: 1px solid #EAEAEA;" id="admin-detalhes-pagamento"></div>
             </div>
 
-            <h3 style="font-size: 1rem; margin-bottom: 10px; color: #d63384;">Visão Geral dos Horários do Dia</h3>
+            <h3 style="font-size: 1rem; margin-bottom: 10px; color: #D4AF37;">Visão Geral dos Horários do Dia</h3>
             <div id="agendamentos-list-admin" style="display: flex; flex-direction: column; gap: 10px;"></div>
         </section>
 
@@ -188,9 +188,9 @@
     <!-- Modal de Alteração de Senha -->
     <div id="custom-password-modal" class="custom-modal-overlay">
         <div class="custom-modal">
-            <h3>Alterar sua Senha</h3>
-            <p id="password-modal-user">Digite a nova senha:</p>
-            <input type="password" id="input-nova-senha" placeholder="Nova senha">
+            <h3>Alterar a sua Palavra-passe</h3>
+            <p id="password-modal-user">Digite a nova palavra-passe:</p>
+            <input type="password" id="input-nova-senha" placeholder="Nova palavra-passe">
             <div class="custom-modal-buttons">
                 <button id="pass-btn-cancelar" class="custom-modal-btn btn-modal-cancelar">Cancelar</button>
                 <button id="pass-btn-salvar" class="custom-modal-btn btn-modal-confirmar">Salvar</button>
@@ -218,7 +218,7 @@
             const hoje = new Date().toISOString().split("T")[0];
 
             if (!usuarioInput || !senhaInput) {
-                alert("Por favor, preencha o usuário e a senha.");
+                alert("Por favor, preencha o utilizador e a palavra-passe.");
                 return;
             }
 
@@ -226,7 +226,7 @@
             const senhaCorreta = obterSenhaUsuario(usuarioInput);
 
             if (senhaInput !== senhaCorreta) {
-                alert("Usuário ou senha incorretos!");
+                alert("Utilizador ou palavra-passe incorretos!");
                 return;
             }
 
@@ -249,7 +249,7 @@
                 document.getElementById("filter-date-barber").value = hoje;
                 carregarAgendamentos();
             } else {
-                alert("Usuário não encontrado ou sem permissão de acesso!");
+                alert("Utilizador não encontrado ou sem permissão de acesso!");
             }
         }
 
@@ -264,7 +264,7 @@
             const modal = document.getElementById("custom-password-modal");
             const inputSenha = document.getElementById("input-nova-senha");
             inputSenha.value = "";
-            document.getElementById("password-modal-user").textContent = `Nova senha para ${usuarioLogado}:`;
+            document.getElementById("password-modal-user").textContent = `Nova palavra-passe para ${usuarioLogado}:`;
             modal.classList.add("active");
 
             const btnSalvar = document.getElementById("pass-btn-salvar");
@@ -280,9 +280,9 @@
                 if (novaSenha) {
                     localStorage.setItem(`senha_${usuarioLogado.toLowerCase()}`, novaSenha);
                     modal.classList.remove("active");
-                    alert("Senha alterada com sucesso!");
+                    alert("Palavra-passe alterada com sucesso!");
                 } else {
-                    alert("Digite uma senha válida.");
+                    alert("Digite uma palavra-passe válida.");
                 }
             });
 
@@ -350,7 +350,7 @@
             const lblCanceladosVal = document.getElementById("barber-resumo-cancelados-val");
             const lblDetalhes = document.getElementById("barber-detalhes-pagamento");
 
-            container.innerHTML = "<p style='color: #777; text-align: center;'>Carregando...</p>";
+            container.innerHTML = "<p style='color: #777; text-align: center;'>A carregar...</p>";
 
             try {
                 let query = _supabase.from("agendamento").select("*").eq("profissional", usuarioLogado).order("horario", { ascending: true });
@@ -380,16 +380,16 @@
                 });
 
                 lblQtd.textContent = qtdConcluidos;
-                lblTotal.textContent = `R$ ${faturamentoTotal.toFixed(2).replace(".", ",")}`;
+                lblTotal.textContent = `€ ${faturamentoTotal.toFixed(2).replace(".", ",")}`;
                 lblCanceladosQtd.textContent = qtdCancelados;
-                lblCanceladosVal.textContent = `R$ ${valorCancelados.toFixed(2).replace(".", ",")}`;
+                lblCanceladosVal.textContent = `€ ${valorCancelados.toFixed(2).replace(".", ",")}`;
                 
                 lblDetalhes.innerHTML = `
-                    <strong>Por Forma de Pagamento:</strong><br>
-                    💵 Dinheiro: R$ ${totaisPagamento.Dinheiro.toFixed(2).replace(".", ",")} | 
-                    📱 Pix: R$ ${totaisPagamento.Pix.toFixed(2).replace(".", ",")}<br>
-                    💳 Débito: R$ ${totaisPagamento.Débito.toFixed(2).replace(".", ",")} | 
-                    💳 Crédito: R$ ${totaisPagamento.Crédito.toFixed(2).replace(".", ",")}
+                    <strong>Por Método de Pagamento:</strong><br>
+                    💵 Dinheiro: € ${totaisPagamento.Dinheiro.toFixed(2).replace(".", ",")} | 
+                    📱 MB Way / Pix: € ${totaisPagamento.Pix.toFixed(2).replace(".", ",")}<br>
+                    💳 Débito: € ${totaisPagamento.Débito.toFixed(2).replace(".", ",")} | 
+                    💳 Crédito: € ${totaisPagamento.Crédito.toFixed(2).replace(".", ",")}
                 `;
 
                 if (data.length === 0) {
@@ -402,14 +402,14 @@
                     const dataFormatada = item.data ? item.data.split("-").reverse().join("/") : '--/--/----';
                     let precoServico = calcularPrecoServico(item.servico);
                     const telefoneLimpo = item.telefone ? item.telefone.replace(/\D/g, '') : '';
-                    const mensagemLembrete = encodeURIComponent(`Olá, ${item.cliente}! Passando para lembrar do seu horário hoje às ${item.horario} (${item.servico}) no Studio Bella. Te aguardamos aqui! 🌸`);
-                    const linkZapCliente = telefoneLimpo ? `https://wa.me/55${telefoneLimpo}?text=${mensagemLembrete}` : `#`;
+                    const mensagemLembrete = encodeURIComponent(`Olá, ${item.cliente}! Passando para lembrar do seu horário hoje às ${item.horario} (${item.servico}) no Studio Prime. Aguardamos por si! ✨`);
+                    const linkZapCliente = telefoneLimpo ? `https://wa.me/351${telefoneLimpo}?text=${mensagemLembrete}` : `#`;
 
                     const isConcluido = item.status === 'concluido';
                     const isCancelado = item.status === 'cancelado';
                     const formaPagamentoAtual = item.pagamentos || '';
 
-                    let corBorda = "#d63384";
+                    let corBorda = "#D4AF37"; // Dourado default
                     if (isConcluido) corBorda = "#25D366";
                     if (isCancelado) corBorda = "#e74c3c";
 
@@ -422,27 +422,27 @@
                     
                     card.innerHTML = `
                         <div style="display: flex; justify-content: space-between; margin-bottom: 5px;">
-                            <strong style="color: #d63384; font-size: 1.05rem;"><i class="fa-regular fa-clock"></i> ${item.horario}</strong>
+                            <strong style="color: #D4AF37; font-size: 1.05rem;"><i class="fa-regular fa-clock"></i> ${item.horario}</strong>
                             <span style="font-size: 0.85rem; color: #777;">Data: ${dataFormatada}</span>
                         </div>
                         <p style="margin: 4px 0; color: #333;"><strong>Cliente:</strong> ${item.cliente} ${isCancelado ? '<span style="color: #e74c3c; font-size: 0.85rem; font-weight: bold; margin-left: 8px;">(CANCELADO)</span>' : ''}</p>
                         <p style="margin: 4px 0; color: #555;"><strong>Telefone:</strong> ${item.telefone || 'Não informado'}</p>
-                        <p style="margin: 4px 0; color: #555;"><strong>Serviço:</strong> ${item.servico} <span style="color: #d63384; font-weight: bold; float: right;">R$ ${precoServico},00</span></p>
+                        <p style="margin: 4px 0; color: #555;"><strong>Serviço:</strong> ${item.servico} <span style="color: #D4AF37; font-weight: bold; float: right;">€ ${precoServico},00</span></p>
                         
                         <div style="margin-top: 10px; padding-top: 10px; border-top: 1px solid #EAEAEA; display: flex; flex-direction: column; gap: 8px;">
                             <div style="display: flex; justify-content: space-between; align-items: center;">
-                                <label style="font-size: 0.85rem; color: #555;">Forma de Pagamento:</label>
+                                <label style="font-size: 0.85rem; color: #555;">Método de Pagamento:</label>
                                 <select id="pagamento-${item.id}" style="width: 150px; padding: 5px; font-size: 0.85rem;" ${isCancelado ? 'disabled' : ''}>
                                     <option value="" ${!formaPagamentoAtual ? 'selected' : ''}>Selecione...</option>
                                     <option value="Dinheiro" ${formaPagamentoAtual === 'Dinheiro' ? 'selected' : ''}>Dinheiro</option>
-                                    <option value="Pix" ${formaPagamentoAtual === 'Pix' ? 'selected' : ''}>Pix</option>
+                                    <option value="Pix" ${formaPagamentoAtual === 'Pix' ? 'selected' : ''}>MB Way / Pix</option>
                                     <option value="Débito" ${formaPagamentoAtual === 'Débito' ? 'selected' : ''}>Débito</option>
                                     <option value="Crédito" ${formaPagamentoAtual === 'Crédito' ? 'selected' : ''}>Crédito</option>
                                 </select>
                             </div>
                             
                             <div style="display: flex; justify-content: space-between; align-items: center; margin-top: 4px; gap: 6px;">
-                                <button onclick="confirmarExecucao('${item.id}', '${item.status || ''}')" style="background: ${isConcluido ? '#25D366' : '#FDF2F8'}; color: ${isConcluido ? '#FFF' : '#d63384'}; border: 1px solid #d63384; padding: 6px 10px; border-radius: 4px; cursor: pointer; font-size: 0.8rem; font-weight: bold; display: flex; align-items: center; gap: 5px;" ${isCancelado ? 'disabled' : ''}>
+                                <button onclick="confirmarExecucao('${item.id}', '${item.status || ''}')" style="background: ${isConcluido ? '#25D366' : '#FFFDF5'}; color: ${isConcluido ? '#FFF' : '#D4AF37'}; border: 1px solid #D4AF37; padding: 6px 10px; border-radius: 4px; cursor: pointer; font-size: 0.8rem; font-weight: bold; display: flex; align-items: center; gap: 5px;" ${isCancelado ? 'disabled' : ''}>
                                     <i class="fa-solid ${isConcluido ? 'fa-check-double' : 'fa-check'}"></i> ${isConcluido ? 'Concluído' : 'Confirmar'}
                                 </button>
                                 
@@ -473,7 +473,7 @@
             const lblCanceladosVal = document.getElementById("admin-resumo-cancelados-val");
             const lblDetalhes = document.getElementById("admin-detalhes-pagamento");
 
-            container.innerHTML = "<p style='color: #777; text-align: center;'>Carregando...</p>";
+            container.innerHTML = "<p style='color: #777; text-align: center;'>A carregar...</p>";
 
             try {
                 let query = _supabase.from("agendamento").select("*").order("horario", { ascending: true });
@@ -503,20 +503,20 @@
                 });
 
                 lblQtd.textContent = qtdConcluidos;
-                lblTotal.textContent = `R$ ${faturamentoTotal.toFixed(2).replace(".", ",")}`;
+                lblTotal.textContent = `€ ${faturamentoTotal.toFixed(2).replace(".", ",")}`;
                 lblCanceladosQtd.textContent = qtdCancelados;
-                lblCanceladosVal.textContent = `R$ ${valorCancelados.toFixed(2).replace(".", ",")}`;
+                lblCanceladosVal.textContent = `€ ${valorCancelados.toFixed(2).replace(".", ",")}`;
                 
                 lblDetalhes.innerHTML = `
-                    <strong>Por Forma de Pagamento:</strong><br>
-                    💵 Dinheiro: R$ ${totaisPagamento.Dinheiro.toFixed(2).replace(".", ",")} | 
-                    📱 Pix: R$ ${totaisPagamento.Pix.toFixed(2).replace(".", ",")}<br>
-                    💳 Débito: R$ ${totaisPagamento.Débito.toFixed(2).replace(".", ",")} | 
-                    💳 Crédito: R$ ${totaisPagamento.Crédito.toFixed(2).replace(".", ",")}
+                    <strong>Por Método de Pagamento:</strong><br>
+                    💵 Dinheiro: € ${totaisPagamento.Dinheiro.toFixed(2).replace(".", ",")} | 
+                    📱 MB Way / Pix: € ${totaisPagamento.Pix.toFixed(2).replace(".", ",")}<br>
+                    💳 Débito: € ${totaisPagamento.Débito.toFixed(2).replace(".", ",")} | 
+                    💳 Crédito: € ${totaisPagamento.Crédito.toFixed(2).replace(".", ",")}
                 `;
 
                 if (data.length === 0) {
-                    container.innerHTML = "<p style='color: #777; text-align: center;'>Nenhum registro encontrado para esta data.</p>";
+                    container.innerHTML = "<p style='color: #777; text-align: center;'>Nenhum registo encontrado para esta data.</p>";
                     return;
                 }
 
@@ -527,7 +527,7 @@
                     const isConcluido = item.status === 'concluido';
                     const isCancelado = item.status === 'cancelado';
 
-                    let corBorda = "#d63384";
+                    let corBorda = "#D4AF37";
                     if (isConcluido) corBorda = "#25D366";
                     if (isCancelado) corBorda = "#e74c3c";
 
@@ -540,11 +540,11 @@
                     
                     card.innerHTML = `
                         <div style="display: flex; justify-content: space-between; margin-bottom: 4px;">
-                            <strong style="color: #d63384;"><i class="fa-regular fa-clock"></i> ${item.horario} - Profissional: ${item.profissional || 'Não informado'}</strong>
+                            <strong style="color: #D4AF37;"><i class="fa-regular fa-clock"></i> ${item.horario} - Profissional: ${item.profissional || 'Não informado'}</strong>
                             <span style="font-size: 0.8rem; color: #777;">${dataFormatada}</span>
                         </div>
                         <p style="margin: 2px 0; font-size: 0.9rem; color: #333;"><strong>Cliente:</strong> ${item.cliente} ${isCancelado ? '<span style="color: #e74c3c; font-size: 0.8rem;">(Cancelado)</span>' : isConcluido ? '<span style="color: #25D366; font-size: 0.8rem;">(Concluído)</span>' : ''}</p>
-                        <p style="margin: 2px 0; font-size: 0.9rem; color: #555;"><strong>Serviço:</strong> ${item.servico} | <strong>Pagamento:</strong> ${item.pagamentos || 'Não informado'} <span style="color: #d63384; font-weight: bold; float: right;">R$ ${precoServico},00</span></p>
+                        <p style="margin: 2px 0; font-size: 0.9rem; color: #555;"><strong>Serviço:</strong> ${item.servico} | <strong>Pagamento:</strong> ${item.pagamentos || 'Não informado'} <span style="color: #D4AF37; font-weight: bold; float: right;">€ ${precoServico},00</span></p>
                     `;
                     container.appendChild(card);
                 });
@@ -575,13 +575,13 @@
             const novoStatus = (statusAtual === 'cancelado') ? null : 'cancelado';
             const titulo = novoStatus === 'cancelado' ? "Cancelar Agendamento" : "Reativar Agendamento";
             const mensagem = novoStatus === 'cancelado' 
-                ? "Deseja realmente cancelar este agendamento? O horário será liberado para novos clientes." 
+                ? "Deseja realmente cancelar este agendamento? O horário será libertado para novos clientes." 
                 : "Deseja reativar este agendamento?";
 
             mostrarConfirmacao(titulo, mensagem, async () => {
                 const { error } = await _supabase.from("agendamento").update({ status: novoStatus }).eq("id", id);
                 if (error) {
-                    alert("Erro ao alterar status: " + error.message);
+                    alert("Erro ao alterar estado: " + error.message);
                 } else {
                     carregarAgendamentos();
                 }
