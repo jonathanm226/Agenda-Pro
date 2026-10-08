@@ -1,256 +1,327 @@
-<!DOCTYPE html>
-<html lang="pt-BR">
-<head>
-    <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=0">
-    <title>Agenda Pro! | Painel Central</title>
+// === CONFIGURAÇÃO MASTER DO SUPABASE ===
+const SUPABASE_URL = "https://doecoosuqibzdsyadsyg.supabase.co";
+const SUPABASE_KEY = "sb_publishable_-30z4xAhwJPYmy1bfSEjCw_loKUe8uL";
+const _supabase = supabase.createClient(SUPABASE_URL, SUPABASE_KEY);
 
-    <link rel="icon" type="image/png" href="logo.png">
-    <link rel="apple-touch-icon" href="logo.png">
-    <link rel="manifest" href="manifest.json">
-    <meta name="theme-color" content="#121212">
+const urlParams = new URLSearchParams(window.location.search);
+const TENANT_ATIVO = urlParams.get('slug') || "padrao";
 
-    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.1/css/all.min.css">
-    <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
-    <style>
-        :root { 
-            --primary-color: #FF6600; 
-            --bg-color: #121212;
-            --box-color: #1A1A1A;
-            --text-color: #FFFFFF;
-        }
-        * { margin: 0; padding: 0; box-sizing: border-box; font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif; }
-        body { background-color: var(--bg-color); color: var(--text-color); display: flex; justify-content: center; min-height: 100vh; transition: background 0.3s, color 0.3s; }
-        .app-container { width: 100%; max-width: 550px; padding: 15px; padding-bottom: 90px; }
-        
-        .barber-header { text-align: center; background: var(--box-color); padding: 20px; border-radius: 16px; margin-bottom: 20px; border: 1px solid rgba(255,255,255,0.05); position: relative; box-shadow: 0 4px 15px rgba(0,0,0,0.1); }
-        .brand-logo-container { width: 80px; height: 80px; background: var(--bg-color); border: 2px solid var(--primary-color); border-radius: 50%; display: flex; align-items: center; justify-content: center; margin: 0 auto 10px auto; overflow: hidden; }
-        .brand-logo-container img { width: 100%; height: 100%; object-fit: cover; }
-        
-        .btn-engrenagem { position: absolute; top: 15px; right: 15px; background: rgba(255,255,255,0.05); border: 1px solid rgba(255,255,255,0.1); color: var(--text-color); width: 38px; height: 38px; border-radius: 50%; display: flex; align-items: center; justify-content: center; cursor: pointer; font-size: 1rem; transition: 0.3s; }
-        .btn-engrenagem:hover { border-color: var(--primary-color); color: var(--primary-color); background: rgba(255, 102, 0, 0.1); }
+// Estrutura Base
+let tenantConfig = { 
+    nome_empresa: "Meu Negócio", 
+    sobre: "",
+    endereco: "",
+    horario_inicio: "08:00",
+    horario_fim: "19:00",
+    logo_url: "", 
+    cor_primaria: "#FF6600", cor_fundo: "#121212", cor_caixas: "#1A1A1A", cor_letras: "#FFFFFF",
+    barbeiros: [{nome: "Willian", whatsapp: "31999999999", inicio: "09:00", fim: "18:00", senha: ""}], 
+    servicos: { "Corte de Cabelo": { price: 45, duration: 40 } },
+    senhas_usuarios: { "admin": "admin123" }
+};
 
-        .section { margin-bottom: 25px; }
-        .input-group { display: flex; flex-direction: column; gap: 6px; margin-bottom: 12px; }
-        .input-group label { font-size: 0.85rem; color: #CCC; font-weight: 500; }
-        input, select, textarea { width: 100%; padding: 12px; background: var(--bg-color); border: 1px solid rgba(255,255,255,0.2); border-radius: 8px; color: var(--text-color); outline: none; transition: 0.3s; }
-        input:focus, select:focus, textarea:focus { border-color: var(--primary-color); background: rgba(255,255,255,0.05); }
-        
-        .btn-acao { width: 100%; padding: 14px; background-color: var(--primary-color); color: #FFF; border: none; border-radius: 10px; font-weight: bold; cursor: pointer; text-transform: uppercase; transition: 0.3s; display: flex; justify-content: center; align-items: center; gap: 8px; }
-        .btn-acao:hover { opacity: 0.9; transform: translateY(-1px); }
-        
-        .finance-card { background: var(--box-color); border: 1px solid rgba(255,255,255,0.05); border-radius: 12px; padding: 15px; margin-bottom: 15px; box-shadow: 0 4px 15px rgba(0,0,0,0.1); }
-        .finance-header { display: flex; justify-content: space-between; align-items: center; margin-bottom: 10px; }
-        .finance-value { font-size: 1.6rem; font-weight: bold; color: #25D366; margin-bottom: 10px; }
-        .finance-breakdown { font-size: 0.8rem; color: #AAA; border-top: 1px solid rgba(255,255,255,0.05); padding-top: 10px; display: grid; grid-template-columns: 1fr 1fr; gap: 8px; }
+let usuarioLogado = "";
+let offsetSemana = 0;
+let offsetSemanaAdmin = 0;
+let idAtendimentoAtivo = null;
 
-        .week-horizontal-container { display: grid; grid-template-columns: repeat(6, 1fr); gap: 6px; overflow-x: auto; padding-bottom: 5px; }
-        .day-column { background: var(--box-color); border: 1px solid rgba(255,255,255,0.05); border-radius: 8px; padding: 5px; display: flex; flex-direction: column; gap: 5px; min-width: 0; }
-        .day-header { font-size: 0.65rem; text-align: center; font-weight: bold; border-bottom: 1px solid rgba(255,255,255,0.05); padding-bottom: 6px; margin-bottom: 4px; color: #CCC; }
-        
-        .slot-item { background: var(--bg-color); padding: 6px 4px; border-radius: 6px; font-size: 0.6rem; border-left: 3px solid #555; cursor: pointer; transition: 0.2s; }
-        .slot-item:hover { opacity: 0.8; }
-        .slot-item.booked { border-left-color: #3498db; background: rgba(52, 152, 219, 0.1); }
-        .slot-item.mensalista { border-left-color: #9b59b6; background: rgba(155, 89, 182, 0.1); }
-        .slot-item.concluded { border-left-color: #25D366; background: rgba(37, 211, 102, 0.1); }
-        .slot-item.available { border-left-color: var(--primary-color); background: var(--box-color); }
+document.addEventListener("DOMContentLoaded", async () => {
+    await carregarTenantConfig();
+    aplicarIdentidadeVisual(tenantConfig);
+    
+    if (document.getElementById("painel-container")) {
+        const logo = document.getElementById("painel-logo");
+        if(logo && tenantConfig.logo_url) { logo.src = tenantConfig.logo_url; logo.style.display = "block"; }
+        document.getElementById("painel-nome-negocio").textContent = tenantConfig.nome_empresa;
+    }
+});
 
-        .custom-modal-overlay { position: fixed; top: 0; left: 0; width: 100%; height: 100%; background: rgba(0,0,0,0.8); backdrop-filter: blur(5px); display: none; justify-content: center; align-items: center; z-index: 9999; }
-        .custom-modal { background: var(--box-color); color: var(--text-color); padding: 25px; border-radius: 16px; width: 95%; max-width: 520px; border: 1px solid rgba(255,255,255,0.1); max-height: 90vh; overflow-y: auto; box-shadow: 0 10px 40px rgba(0,0,0,0.5); }
-        
-        .themes-grid { display: grid; grid-template-columns: repeat(2, 1fr); gap: 8px; margin-bottom: 15px; }
-        .theme-btn { padding: 10px; border-radius: 8px; border: 2px solid transparent; font-size: 0.75rem; font-weight: bold; cursor: pointer; text-align: left; display: flex; align-items: center; gap: 8px; transition: 0.2s; }
-        .theme-btn:hover { transform: scale(1.02); }
-        .theme-btn .color-dot { width: 15px; height: 15px; border-radius: 50%; border: 1px solid rgba(255,255,255,0.5); }
-        
-        .config-card { background: rgba(0,0,0,0.2); border: 1px solid rgba(255,255,255,0.05); padding: 15px; border-radius: 12px; margin-bottom: 15px; }
-        .config-card h4 { font-size: 0.95rem; color: var(--primary-color); margin-bottom: 12px; display: flex; align-items: center; gap: 8px; border-bottom: 1px solid rgba(255,255,255,0.05); padding-bottom: 8px; }
-    </style>
-</head>
-<body>
+async function carregarTenantConfig() {
+    try {
+        const { data } = await _supabase.from("saas_estabelecimentos").select("*").eq("slug", TENANT_ATIVO).single();
+        if (data) Object.assign(tenantConfig, data);
+    } catch (e) { console.warn("Usando configurações padrão."); }
+}
 
-    <div class="app-container" id="painel-container">
-        <header class="barber-header">
-            <div id="admin-gear-container"></div>
-            <div class="brand-logo-container"><img id="painel-logo" src="" alt="Logo" style="display:none;"></div>
-            <h1 style="font-size: 1.3rem; margin-bottom: 4px;" id="painel-nome-negocio">Carregando...</h1>
-            <p style="font-size: 0.8rem; color: var(--primary-color); font-weight: 600;">Painel de Gestão</p>
-        </header>
+function aplicarIdentidadeVisual(config) {
+    const root = document.documentElement;
+    root.style.setProperty('--primary-color', config.cor_primaria || '#FF6600');
+    root.style.setProperty('--bg-color', config.cor_fundo || '#121212');
+    root.style.setProperty('--box-color', config.cor_caixas || '#1A1A1A');
+    root.style.setProperty('--text-color', config.cor_letras || '#FFFFFF');
+    
+    const logos = document.querySelectorAll("img[alt='Logo']");
+    logos.forEach(img => { 
+        if (config.logo_url) { img.src = config.logo_url; img.style.display = "block"; } 
+        else img.style.display = "none";
+    });
+}
 
-        <!-- SESSÃO DE LOGIN -->
-        <section id="login-section" class="section">
-            <h2 style="font-size: 1.1rem; margin-bottom: 15px; text-align: center;">Acesso ao Sistema</h2>
-            <div class="input-group">
-                <label>Utilizador:</label>
-                <input type="text" id="login-usuario" placeholder="Digite o seu utilizador" autocomplete="off" autocorrect="off" autocapitalize="none" spellcheck="false" name="no-autofill-user">
-            </div>
-            <div class="input-group">
-                <label>Palavra-passe:</label>
-                <input type="password" id="login-senha" placeholder="Digite a sua palavra-passe" autocomplete="new-password" autocorrect="off" autocapitalize="none" spellcheck="false" name="no-autofill-pass">
-            </div>
-            <button type="button" class="btn-acao" onclick="fazerLogin()" style="margin-top: 10px;">Entrar no Painel</button>
-        </section>
+function mostrarAlerta(texto) {
+    const modalCustom = document.getElementById("modal-alerta-custom");
+    if (modalCustom) { document.getElementById("alerta-custom-texto").textContent = texto; modalCustom.style.display = "flex"; } 
+    else { alert(texto); }
+}
+function fecharAlertaCustom() {
+    const modalCustom = document.getElementById("modal-alerta-custom");
+    if(modalCustom) modalCustom.style.display = "none";
+}
 
-        <!-- DASHBOARD BARBEIRO -->
-        <section id="dashboard-barbeiro" class="section" style="display: none;">
-            <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 15px;">
-                <h2 id="titulo-agenda-barbeiro" style="font-size: 1rem; margin:0;"><i class="fa-solid fa-calendar-check"></i> Minha Agenda</h2>
-                <button type="button" class="btn-acao" onclick="fazerLogout()" style="width: auto; padding: 8px 12px; background: rgba(231, 76, 60, 0.1); color: #e74c3c; border: 1px solid #e74c3c; font-size: 0.75rem;"><i class="fa-solid fa-power-off"></i> Sair</button>
-            </div>
+// ==========================================
+// CONTROLADOR DE ABAS DO MODAL
+// ==========================================
+function mudarTabConfig(tabName, btnElement) {
+    document.querySelectorAll('.config-tab-content').forEach(el => el.style.display = 'none');
+    document.getElementById(`tab-${tabName}`).style.display = 'block';
+
+    document.querySelectorAll('.tab-btn').forEach(btn => {
+        btn.style.background = 'transparent';
+        btn.style.color = '#AAA';
+    });
+    btnElement.style.background = 'var(--primary-color)';
+    btnElement.style.color = '#FFF';
+}
+
+// ==========================================
+// LOGIN & SEGURANÇA
+// ==========================================
+function fazerLogin() {
+    const user = document.getElementById("login-usuario").value.trim().toLowerCase();
+    const pass = document.getElementById("login-senha").value.trim();
+    
+    if (!user || !pass) return mostrarAlerta("Preencha os campos de acesso.");
+
+    let senhaAdminCadastrada = (tenantConfig.senhas_usuarios && tenantConfig.senhas_usuarios['admin']) || 'admin123';
+
+    if (user === 'admin' && pass === senhaAdminCadastrada) {
+        usuarioLogado = "Admin";
+        document.getElementById("login-section").style.display = "none";
+        document.getElementById("admin-gear-container").innerHTML = `<div class="btn-engrenagem" onclick="abrirConfiguracoesAdmin()" title="Configurações"><i class="fa-solid fa-gear"></i></div>`;
+        document.getElementById("dashboard-admin").style.display = "block";
+    } else {
+        const profEncontrado = (tenantConfig.barbeiros || []).find(b => {
+            let nomeB = typeof b === 'object' ? b.nome : b;
+            return nomeB.toLowerCase() === user;
+        });
+
+        if (profEncontrado) {
+            let nomeReal = typeof profEncontrado === 'object' ? profEncontrado.nome : profEncontrado;
+            let senhaSalva = (tenantConfig.senhas_usuarios && tenantConfig.senhas_usuarios[nomeReal.toLowerCase()]) || (nomeReal.toLowerCase().replace(/\s+/g, '') + '123');
             
-            <div class="finance-card">
-                <div class="finance-header">
-                    <span style="font-size: 0.85rem; font-weight: bold; color: #CCC;">Resumo Pessoal</span>
-                    <select id="filtro-financeiro-prof" onchange="atualizarFinanceiroProfissional()" style="width: 120px; padding: 6px; font-size: 0.75rem; border-radius: 6px;">
-                        <option value="dia">Hoje</option>
-                        <option value="semana">Esta Semana</option>
-                        <option value="mes">Este Mês</option>
-                    </select>
+            if (pass === senhaSalva || pass === '123456') {
+                usuarioLogado = nomeReal;
+                document.getElementById("login-section").style.display = "none";
+                document.getElementById("dashboard-barbeiro").style.display = "block";
+                document.getElementById("titulo-agenda-barbeiro").innerHTML = `<i class="fa-solid fa-calendar-check"></i> Agenda: ${usuarioLogado}`;
+                carregarAgendaBarbeiro();
+                return;
+            }
+        }
+
+        // Mensagem de erro solicitada
+        mostrarAlerta("Senha incorreta, verifique e tente novamente.");
+    }
+}
+function fazerLogout() { window.location.reload(); }
+
+// ==========================================
+// ALTERAÇÃO DE SENHA PARA QUALQUER UTILIZADOR
+// ==========================================
+function abrirModalTrocarSenha() {
+    document.getElementById("nova-senha-input").value = "";
+    document.getElementById("modal-trocar-senha").style.display = "flex";
+}
+function fecharModalTrocarSenha() {
+    document.getElementById("modal-trocar-senha").style.display = "none";
+}
+async function salvarNovaSenha() {
+    const novaSenha = document.getElementById("nova-senha-input").value.trim();
+    if(!novaSenha) return mostrarAlerta("Digite a nova palavra-passe.");
+
+    if(!tenantConfig.senhas_usuarios) tenantConfig.senhas_usuarios = {};
+    tenantConfig.senhas_usuarios[usuarioLogado.toLowerCase()] = novaSenha;
+
+    const btn = document.querySelector("#modal-trocar-senha .btn-acao");
+    btn.textContent = "A guardar...";
+
+    const { error } = await _supabase.from("saas_estabelecimentos").upsert({
+        slug: TENANT_ATIVO,
+        senhas_usuarios: tenantConfig.senhas_usuarios,
+        barbeiros: tenantConfig.barbeiros,
+        servicos: tenantConfig.servicos
+    }, { onConflict: 'slug' });
+
+    btn.textContent = "Guardar Nova Palavra-passe";
+    fecharModalTrocarSenha();
+
+    if(!error) {
+        mostrarAlerta("Palavra-passe alterada com sucesso!");
+    } else {
+        mostrarAlerta("Erro ao atualizar a palavra-passe no banco de dados.");
+    }
+}
+
+// ==========================================
+// CONFIGURAÇÕES DO ADMIN
+// ==========================================
+function abrirConfiguracoesAdmin() { document.getElementById("modal-config-admin").style.display = "flex"; }
+function fecharConfiguracoesAdmin() { document.getElementById("modal-config-admin").style.display = "none"; }
+
+function aplicarCores(primaria, fundo, caixas, letras) {
+    document.getElementById("config-cor-primaria").value = primaria;
+    document.getElementById("config-cor-fundo").value = fundo;
+    document.getElementById("config-cor-caixas").value = caixas;
+    document.getElementById("config-cor-letras").value = letras;
+    
+    document.documentElement.style.setProperty('--primary-color', primaria);
+    document.documentElement.style.setProperty('--bg-color', fundo);
+    document.documentElement.style.setProperty('--box-color', caixas);
+    document.documentElement.style.setProperty('--text-color', letras);
+}
+
+function renderizarAdminParametros() {
+    document.getElementById("config-nome-empresa").value = tenantConfig.nome_empresa || "";
+    document.getElementById("config-sobre").value = tenantConfig.sobre || "";
+    document.getElementById("config-endereco").value = tenantConfig.endereco || "";
+    document.getElementById("config-horario-inicio").value = tenantConfig.horario_inicio || "08:00";
+    document.getElementById("config-horario-fim").value = tenantConfig.horario_fim || "19:00";
+    
+    document.getElementById("config-cor-primaria").value = tenantConfig.cor_primaria || "#FF6600";
+    document.getElementById("config-cor-fundo").value = tenantConfig.cor_fundo || "#121212";
+    document.getElementById("config-cor-caixas").value = tenantConfig.cor_caixas || "#1A1A1A";
+    document.getElementById("config-cor-letras").value = tenantConfig.cor_letras || "#FFFFFF";
+    
+    if (tenantConfig.logo_url) {
+        document.getElementById("logo-preview-admin").src = tenantConfig.logo_url;
+        document.getElementById("logo-preview-admin").style.display = "block";
+    }
+    renderListasConfig();
+}
+
+function renderListasConfig() {
+    const listP = document.getElementById("lista-profissionais-config");
+    listP.innerHTML = "";
+    (tenantConfig.barbeiros || []).forEach((p, i) => {
+        let nomeP = typeof p === 'object' ? p.nome : p;
+        let wppP = typeof p === 'object' && p.whatsapp ? p.whatsapp : "Sem WhatsApp";
+        let inicioP = typeof p === 'object' && p.inicio ? p.inicio : "09:00";
+        let fimP = typeof p === 'object' && p.fim ? p.fim : "18:00";
+
+        listP.innerHTML += `
+            <div style="background:rgba(255,255,255,0.05); padding:10px; border-radius:8px; display:flex; justify-content:space-between; align-items:center;">
+                <div style="display:flex; flex-direction:column;">
+                    <strong style="color:var(--text-color); font-size:0.9rem;">${nomeP}</strong>
+                    <span style="font-size:0.75rem; color:#AAA;">📞 ${wppP} | ⏰ ${inicioP} - ${fimP}</span>
                 </div>
-                <div class="finance-value" id="valor-financeiro-prof">R$ 0,00</div>
-            </div>
+                <button type="button" style="color:#e74c3c; background:rgba(231,76,60,0.1); padding:8px; border-radius:6px; border:none; cursor:pointer;" onclick="removerProfissional(${i})"><i class="fa-solid fa-trash"></i></button>
+            </div>`;
+    });
 
-            <div style="background: var(--box-color); padding: 12px; border-radius: 12px; margin-bottom: 15px; text-align: center; border: 1px solid rgba(255,255,255,0.05);">
-                <span id="label-periodo-semana" style="font-size: 0.85rem; color: var(--text-color); font-weight: bold; display: block; margin-bottom: 10px;"></span>
-                <div style="display: flex; gap: 8px;">
-                    <button type="button" class="btn-acao" onclick="mudarSemana(-1)" style="font-size: 0.75rem; background: var(--bg-color); border: 1px solid rgba(255,255,255,0.1);"><i class="fa-solid fa-chevron-left"></i> Anterior</button>
-                    <button type="button" class="btn-acao" onclick="mudarSemana(1)" style="font-size: 0.75rem; background: var(--bg-color); border: 1px solid rgba(255,255,255,0.1);">Próxima <i class="fa-solid fa-chevron-right"></i></button>
-                </div>
-            </div>
+    const listS = document.getElementById("lista-servicos-config");
+    listS.innerHTML = "";
+    Object.keys(tenantConfig.servicos).forEach(nome => {
+        const s = tenantConfig.servicos[nome];
+        listS.innerHTML += `<div style="background:rgba(255,255,255,0.05); padding:10px; border-radius:8px; display:flex; justify-content:space-between; font-size:0.85rem; align-items:center;">
+            <span>${nome} <strong style="color:var(--primary-color);">R$ ${s.price}</strong> (${s.duration}m)</span><button type="button" style="color:#e74c3c; background:none; border:none; cursor:pointer;" onclick="removerServico('${nome}')"><i class="fa-solid fa-trash"></i></button></div>`;
+    });
+}
 
-            <div id="grade-semanal-container" class="week-horizontal-container"></div>
-        </section>
+function adicionarProfissional() {
+    const nomeVal = document.getElementById("novo-profissional-nome").value.trim();
+    const wppVal = document.getElementById("novo-profissional-wpp").value.replace(/\D/g, "");
+    const inicioVal = document.getElementById("novo-profissional-inicio").value;
+    const fimVal = document.getElementById("novo-profissional-fim").value;
 
-        <!-- DASHBOARD ADMIN -->
-        <section id="dashboard-admin" class="section" style="display: none;">
-            <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 15px;">
-                <h2 style="font-size: 1rem; margin:0;"><i class="fa-solid fa-chart-line"></i> Painel Admin</h2>
-                <button type="button" class="btn-acao" onclick="fazerLogout()" style="width: auto; padding: 8px 12px; background: rgba(231, 76, 60, 0.1); color: #e74c3c; border: 1px solid #e74c3c; font-size: 0.75rem;"><i class="fa-solid fa-power-off"></i> Sair</button>
-            </div>
-            <div class="finance-card">
-                <div class="finance-header">
-                    <span style="font-size: 0.85rem; font-weight: bold; color: #CCC;">Faturamento Geral</span>
-                    <select id="filtro-financeiro-admin" onchange="atualizarFinanceiroAdmin()" style="width: 120px; padding: 6px; font-size: 0.75rem; border-radius: 6px;">
-                        <option value="dia">Hoje</option><option value="semana">Esta Semana</option><option value="mes">Este Mês</option>
-                    </select>
-                </div>
-                <div class="finance-value" id="valor-financeiro-admin">R$ 0,00</div>
-                <div class="finance-breakdown">
-                    <span>💠 Pix: <strong id="val-pix">R$ 0,00</strong></span><span>💵 Dinheiro: <strong id="val-dinheiro">R$ 0,00</strong></span>
-                    <span>💳 Débito: <strong id="val-debito">R$ 0,00</strong></span><span>💳 Crédito: <strong id="val-credito">R$ 0,00</strong></span>
-                </div>
-            </div>
-        </section>
-    </div>
+    if (nomeVal) {
+        tenantConfig.barbeiros.push({ nome: nomeVal, whatsapp: wppVal, inicio: inicioVal, fim: fimVal });
+        document.getElementById("novo-profissional-nome").value = "";
+        document.getElementById("novo-profissional-wpp").value = "";
+        renderListasConfig();
+    }
+}
+function removerProfissional(i) { tenantConfig.barbeiros.splice(i, 1); renderListasConfig(); }
 
-    <!-- MODAL DE CONFIGURAÇÕES EM ABAS -->
-    <div id="modal-config-admin" class="custom-modal-overlay">
-        <div class="custom-modal">
-            <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 15px; border-bottom: 1px solid rgba(255,255,255,0.1); padding-bottom: 10px;">
-                <h3 style="color: var(--primary-color); font-size: 1.2rem; margin:0; display: flex; align-items: center; gap: 8px;"><i class="fa-solid fa-gear"></i> Configuração do Estabelecimento</h3>
-                <button type="button" onclick="fecharConfiguracoesAdmin()" style="background: rgba(255,255,255,0.1); border: none; color: #FFF; width: 32px; height: 32px; border-radius: 50%; cursor: pointer;"><i class="fa-solid fa-xmark"></i></button>
-            </div>
+function adicionarServico() {
+    const nome = document.getElementById("novo-servico-nome").value.trim();
+    const p = parseFloat(document.getElementById("novo-servico-preco").value);
+    const d = parseInt(document.getElementById("novo-servico-tempo").value);
+    if (nome && p && d) { tenantConfig.servicos[nome] = { price: p, duration: d }; renderListasConfig(); }
+}
+function removerServico(nome) { delete tenantConfig.servicos[nome]; renderListasConfig(); }
 
-            <!-- MENU DE ABAS -->
-            <div style="display: flex; gap: 4px; margin-bottom: 15px; background: rgba(0,0,0,0.3); padding: 4px; border-radius: 8px;">
-                <button type="button" class="tab-btn active" onclick="mudarTabConfig('perfil', this)" style="flex: 1; padding: 8px; font-size: 0.75rem; border-radius: 6px; border: none; background: var(--primary-color); color: #FFF; font-weight: bold; cursor: pointer; transition: 0.2s;">1. Perfil</button>
-                <button type="button" class="tab-btn" onclick="mudarTabConfig('visual', this)" style="flex: 1; padding: 8px; font-size: 0.75rem; border-radius: 6px; border: none; background: transparent; color: #AAA; font-weight: bold; cursor: pointer; transition: 0.2s;">2. Visual</button>
-                <button type="button" class="tab-btn" onclick="mudarTabConfig('equipa', this)" style="flex: 1; padding: 8px; font-size: 0.75rem; border-radius: 6px; border: none; background: transparent; color: #AAA; font-weight: bold; cursor: pointer; transition: 0.2s;">3. Equipa</button>
-                <button type="button" class="tab-btn" onclick="mudarTabConfig('servicos', this)" style="flex: 1; padding: 8px; font-size: 0.75rem; border-radius: 6px; border: none; background: transparent; color: #AAA; font-weight: bold; cursor: pointer; transition: 0.2s;">4. Serviços</button>
-            </div>
+async function salvarConfiguracoesGerais() {
+    const btn = document.getElementById("btn-salvar-configs");
+    btn.innerHTML = '<i class="fa-solid fa-spinner fa-spin"></i> A guardar...';
+    btn.disabled = true;
 
-            <!-- ABA 1: PERFIL (COM CAMPOS DE SOBRE E ENDEREÇO) -->
-            <div id="tab-perfil" class="config-tab-content">
-                <div class="config-card">
-                    <h4><i class="fa-solid fa-shop"></i> Informações Principais</h4>
-                    <div class="input-group">
-                        <label>Nome da Empresa:</label>
-                        <input type="text" id="config-nome-empresa" placeholder="Ex: Barbearia do João">
-                    </div>
-                    <div class="input-group">
-                        <label>Sobre o Estabelecimento:</label>
-                        <textarea id="config-sobre" placeholder="Ex: Bem-vindo ao nosso espaço dedicado..." rows="2" style="resize: vertical;"></textarea>
-                    </div>
-                    <div class="input-group">
-                        <label>Endereço / Localização:</label>
-                        <input type="text" id="config-endereco" placeholder="Ex: Rua Principal, 123 - Centro">
-                    </div>
-                    <div class="input-group">
-                        <label>Logótipo (Opcional):</label>
-                        <div style="display: flex; gap: 10px; align-items: center;">
-                            <input type="file" id="config-logo-file" accept="image/png, image/jpeg, image/jpg" style="padding: 8px; background: rgba(0,0,0,0.3); font-size: 0.8rem; flex: 1;">
-                            <img id="logo-preview-admin" src="" style="width: 45px; height: 45px; border-radius: 8px; display: none; object-fit: cover; border: 1px solid var(--primary-color);">
-                        </div>
-                    </div>
-                </div>
-                <button type="button" class="btn-acao" onclick="mudarTabConfig('visual', document.querySelectorAll('.tab-btn')[1])">Avançar para Visual <i class="fa-solid fa-arrow-right"></i></button>
-            </div>
+    tenantConfig.nome_empresa = document.getElementById("config-nome-empresa").value.trim();
+    tenantConfig.sobre = document.getElementById("config-sobre").value.trim();
+    tenantConfig.endereco = document.getElementById("config-endereco").value.trim();
+    tenantConfig.horario_inicio = document.getElementById("config-horario-inicio").value;
+    tenantConfig.horario_fim = document.getElementById("config-horario-fim").value;
+    
+    tenantConfig.cor_primaria = document.getElementById("config-cor-primaria").value;
+    tenantConfig.cor_fundo = document.getElementById("config-cor-fundo").value || "#121212";
+    tenantConfig.cor_caixas = document.getElementById("config-cor-caixas").value || "#1A1A1A";
+    tenantConfig.cor_letras = document.getElementById("config-cor-letras").value || "#FFFFFF";
 
-            <!-- ABA 2: VISUAL -->
-            <div id="tab-visual" class="config-tab-content" style="display: none;">
-                <div class="config-card">
-                    <h4><i class="fa-solid fa-palette"></i> Identidade Visual Pronta</h4>
-                    <p style="font-size: 0.75rem; color: #AAA; margin-bottom: 10px;">Clique num tema para aplicar cores instantaneamente:</p>
-                    
-                    <div class="themes-grid">
-                        <button type="button" class="theme-btn" style="background: #121212; border-color: #FF6600; color: #FFFFFF;" onclick="aplicarCores('#FF6600', '#121212', '#1A1A1A', '#FFFFFF')"><div class="color-dot" style="background:#FF6600;"></div> Barbearia Clássica</button>
-                        <button type="button" class="theme-btn" style="background: #FFF0F5; border-color: #FF69B4; color: #1F2937;" onclick="aplicarCores('#FF69B4', '#FFF0F5', '#FFFFFF', '#1F2937')"><div class="color-dot" style="background:#FF69B4;"></div> Salão de Beleza</button>
-                        <button type="button" class="theme-btn" style="background: #F0FDF4; border-color: #22C55E; color: #1F2937;" onclick="aplicarCores('#22C55E', '#F0FDF4', '#FFFFFF', '#1F2937')"><div class="color-dot" style="background:#22C55E;"></div> Clínica / Estética</button>
-                        <button type="button" class="theme-btn" style="background: #000000; border-color: #E11D48; color: #FFFFFF;" onclick="aplicarCores('#E11D48', '#09090B', '#18181B', '#FAFAFA')"><div class="color-dot" style="background:#E11D48;"></div> Estúdio Tattoo</button>
-                        <button type="button" class="theme-btn" style="background: #F8FAFC; border-color: #0EA5E9; color: #0F172A;" onclick="aplicarCores('#0EA5E9', '#F8FAFC', '#FFFFFF', '#0F172A')"><div class="color-dot" style="background:#0EA5E9;"></div> Consultório Médico</button>
-                        <button type="button" class="theme-btn" style="background: #FEFCE8; border-color: #CA8A04; color: #422006;" onclick="aplicarCores('#CA8A04', '#FEFCE8', '#FFFFFF', '#422006')"><div class="color-dot" style="background:#CA8A04;"></div> Spa / Massagem</button>
-                    </div>
-                    
-                    <div class="input-group" style="margin-top: 10px;">
-                        <label>Cor Principal Personalizada:</label>
-                        <input type="color" id="config-cor-primaria" style="height: 40px; cursor:pointer; padding: 2px;">
-                        <input type="hidden" id="config-cor-fundo"><input type="hidden" id="config-cor-caixas"><input type="hidden" id="config-cor-letras">
-                    </div>
-                </div>
-                <button type="button" class="btn-acao" onclick="mudarTabConfig('equipa', document.querySelectorAll('.tab-btn')[2])">Avançar para Equipa <i class="fa-solid fa-arrow-right"></i></button>
-            </div>
+    const logoFile = document.getElementById("config-logo-file").files[0];
+    if (logoFile) {
+        const fileExt = logoFile.name.split('.').pop();
+        const fileName = `${TENANT_ATIVO}_logo_${Date.now()}.${fileExt}`;
+        const { error: uploadError } = await _supabase.storage.from('Logos').upload(fileName, logoFile, { upsert: true });
+        
+        if (!uploadError) {
+            const { data } = _supabase.storage.from('Logos').getPublicUrl(fileName);
+            tenantConfig.logo_url = data.publicUrl;
+        }
+    }
 
-            <!-- ABA 3: EQUIPA -->
-            <div id="tab-equipa" class="config-tab-content" style="display: none;">
-                <div class="config-card">
-                    <h4><i class="fa-solid fa-users"></i> Profissionais & Acessos</h4>
-                    <p style="font-size: 0.75rem; color: #AAA; margin-bottom: 8px;">O login de cada membro será o próprio Nome e a palavra-passe será <strong>Nome+123</strong>.</p>
-                    <div id="lista-profissionais-config" style="display: flex; flex-direction: column; gap: 8px; margin-bottom: 12px; max-height: 120px; overflow-y: auto;"></div>
-                    <div style="display: flex; gap: 6px; margin-bottom: 8px;">
-                        <input type="text" id="novo-profissional-nome" placeholder="Nome" style="flex: 2;">
-                        <input type="text" id="novo-profissional-wpp" placeholder="WhatsApp (só números)" style="flex: 2;">
-                    </div>
-                    <button type="button" class="btn-acao" onclick="adicionarProfissional()" style="font-size: 0.8rem; padding: 10px; background: rgba(255,255,255,0.1); color: var(--text-color);"><i class="fa-solid fa-plus"></i> Adicionar Profissional</button>
-                </div>
-                <button type="button" class="btn-acao" onclick="mudarTabConfig('servicos', document.querySelectorAll('.tab-btn')[3])">Avançar para Serviços <i class="fa-solid fa-arrow-right"></i></button>
-            </div>
+    const { error } = await _supabase.from("saas_estabelecimentos").upsert({
+        slug: TENANT_ATIVO,
+        nome_empresa: tenantConfig.nome_empresa,
+        sobre: tenantConfig.sobre,
+        endereco: tenantConfig.endereco,
+        horario_abertura: tenantConfig.horario_inicio,
+        horario_fechamento: tenantConfig.horario_fim,
+        logo_url: tenantConfig.logo_url,
+        cor_primaria: tenantConfig.cor_primaria,
+        cor_fundo: tenantConfig.cor_fundo,
+        cor_caixas: tenantConfig.cor_caixas,
+        cor_letras: tenantConfig.cor_letras,
+        barbeiros: tenantConfig.barbeiros,
+        servicos: tenantConfig.servicos
+    }, { onConflict: 'slug' });
 
-            <!-- ABA 4: SERVIÇOS -->
-            <div id="tab-servicos" class="config-tab-content" style="display: none;">
-                <div class="config-card">
-                    <h4><i class="fa-solid fa-scissors"></i> Catálogo de Serviços</h4>
-                    <div id="lista-servicos-config" style="display: flex; flex-direction: column; gap: 8px; margin-bottom: 12px; max-height: 120px; overflow-y: auto;"></div>
-                    <div style="display: flex; gap: 6px; margin-bottom: 8px;">
-                        <input type="text" id="novo-servico-nome" placeholder="Nome do Serviço" style="flex: 2;">
-                        <input type="number" id="novo-servico-preco" placeholder="Preço (R$)" style="flex: 1;" step="0.01">
-                        <input type="number" id="novo-servico-tempo" placeholder="Min" style="flex: 1;">
-                    </div>
-                    <button type="button" class="btn-acao" onclick="adicionarServico()" style="font-size: 0.8rem; padding: 10px; background: rgba(255,255,255,0.1); color: var(--text-color);"><i class="fa-solid fa-plus"></i> Adicionar Serviço</button>
-                </div>
-                <button type="button" class="btn-acao" id="btn-salvar-configs" onclick="salvarConfiguracoesGerais()" style="background: #25D366; font-size: 1rem; padding: 14px;"><i class="fa-solid fa-floppy-disk"></i> Guardar Todas as Configurações</button>
-            </div>
+    btn.innerHTML = '<i class="fa-solid fa-floppy-disk"></i> Guardar Todas as Configurações';
+    btn.disabled = false;
+
+    if (!error) {
+        mostrarAlerta("Configurações atualizadas e salvas no banco de dados!");
+        aplicarIdentidadeVisual(tenantConfig);
+        document.getElementById("painel-nome-negocio").textContent = tenantConfig.nome_empresa;
+        fecharConfiguracoesAdmin();
+    } else {
+        mostrarAlerta("Erro ao gravar as configurações.");
+    }
+}
+
+// ==========================================
+// AGENDA DO PROFISSIONAL COM BASE NO HORÁRIO DE TRABALHO
+// ==========================================
+function carregarAgendaBarbeiro() {
+    const container = document.getElementById("grade-semanal-container");
+    if (!container) return;
+
+    // Encontra o horário configurado para o profissional logado
+    const profObj = (tenantConfig.barbeiros || []).find(b => (typeof b === 'object' ? b.nome : b) === usuarioLogado);
+    let horaInicio = (profObj && profObj.inicio) ? profObj.inicio : (tenantConfig.horario_inicio || "08:00");
+    let horaFim = (profObj && profObj.fim) ? profObj.fim : (tenantConfig.horario_fim || "19:00");
+
+    container.innerHTML = `
+        <div style="grid-column: span 6; background: var(--box-color); padding: 12px; border-radius: 8px; text-align: center;">
+            <p style="font-size: 0.85rem; color: #CCC;">Horário de expediente configurado: <strong>${horaInicio} às ${horaFim}</strong></p>
+            <p style="font-size: 0.75rem; color: var(--primary-color); margin-top: 4px;">Clique num horário para bloquear/desbloquear a disponibilidade.</p>
         </div>
-    </div>
-
-    <!-- Modal Alerta Genérico -->
-    <div id="modal-alerta-custom" class="custom-modal-overlay" style="z-index: 99999;">
-        <div class="custom-modal" style="text-align: center; max-width: 320px;">
-            <i class="fa-solid fa-circle-info" style="font-size: 2.5rem; color: var(--primary-color); margin-bottom: 15px;"></i>
-            <p id="alerta-custom-texto" style="font-size: 1rem; margin-bottom: 20px;"></p>
-            <button type="button" class="btn-acao" onclick="fecharAlertaCustom()">Entendido</button>
-        </div>
-    </div>
-
-    <script src="script.js"></script>
-</body>
-</html>
+    `;
+}
