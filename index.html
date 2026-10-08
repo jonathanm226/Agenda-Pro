@@ -7,89 +7,44 @@
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.1/css/all.min.css">
     <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
     <style>
-        :root { 
-            --primary-color: #FF6600; 
-            --bg-color: #121212;
-            --box-color: #1A1A1A;
-            --text-color: #FFFFFF;
-        }
+        :root { --primary-color: #FF6600; --bg-color: #121212; --box-color: #1A1A1A; --text-color: #FFFFFF; }
         * { margin: 0; padding: 0; box-sizing: border-box; font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif; }
         body { background-color: var(--bg-color); color: var(--text-color); display: flex; justify-content: center; min-height: 100vh; }
         .app-container { width: 100%; max-width: 500px; padding: 20px 15px; display: flex; flex-direction: column; gap: 20px; }
-        
         .landing-header { text-align: center; background: var(--box-color); padding: 25px 15px; border-radius: 12px; border: 1px solid #333; }
         .brand-logo-container { width: 85px; height: 85px; background: var(--bg-color); border: 2px solid var(--primary-color); border-radius: 50%; display: flex; align-items: center; justify-content: center; margin: 0 auto 12px auto; overflow: hidden; }
         .brand-logo-container img { width: 100%; height: 100%; object-fit: cover; }
-        .landing-header h1 { font-size: 1.5rem; margin-bottom: 5px; color: var(--text-color); }
+        .landing-header h1 { font-size: 1.5rem; margin-bottom: 5px; }
         .tagline { color: var(--primary-color); font-size: 0.9rem; font-weight: 600; }
-
         .section { background: var(--box-color); border: 1px solid #333; border-radius: 10px; padding: 15px; }
         .section h2 { font-size: 1rem; color: var(--primary-color); margin-bottom: 8px; }
         .section p { font-size: 0.85rem; color: #DDD; line-height: 1.4; }
-
-        .info-card { display: flex; align-items: flex-start; gap: 12px; }
-        .info-card i { font-size: 1.2rem; color: var(--primary-color); margin-top: 2px; }
-        .info-card h3 { font-size: 0.85rem; color: var(--text-color); margin-bottom: 2px; }
-        .info-card p { font-size: 0.8rem; color: #AAA; }
-
-        .landing-action { text-align: center; margin-top: 10px; }
-        .btn-primary-action { display: block; width: 100%; padding: 14px; background-color: var(--primary-color); color: #FFF; border: none; border-radius: 8px; font-weight: bold; font-size: 0.95rem; text-transform: uppercase; text-decoration: none; text-align: center; box-shadow: 0 4px 10px rgba(0,0,0,0.3); }
-        .btn-primary-action:hover { opacity: 0.9; }
-
-        .landing-footer { text-align: center; font-size: 0.75rem; color: #666; margin-top: auto; padding-bottom: 10px; }
+        .btn-primary-action { display: block; width: 100%; padding: 14px; background-color: var(--primary-color); color: #FFF; border-radius: 8px; font-weight: bold; text-align: center; text-decoration: none; text-transform: uppercase; }
     </style>
-
-    <!-- Configurações para Redes Sociais e WhatsApp -->
-<meta property="og:title" content="Agenda Pro! | Bem-vindo">
-<meta property="og:description" content="Agende o seu horário de forma rápida e prática.">
-<meta property="og:image" content="https://agenda-pro-tech.vercel.app/logo.png">
-<meta property="og:url" content="https://agenda-pro-tech.vercel.app/index.html">
-<meta property="og:type" content="website">
 </head>
 <body>
-
     <div class="app-container">
-        
         <header class="landing-header">
-            <div class="brand-logo-container">
-                <img id="landing-logo" src="" alt="Logo" style="display:none;">
-            </div>
+            <div class="brand-logo-container"><img id="landing-logo" src="" alt="Logo" style="display:none;"></div>
             <h1 id="landing-nome">Carregando...</h1>
-            <p class="tagline" id="landing-slogan">Gestão inteligente com Agenda Pro!</p>
+            <p class="tagline" id="landing-slogan">Gestão inteligente</p>
         </header>
-
         <section class="section">
             <h2>Sobre o Estabelecimento</h2>
-            <p id="landing-sobre">Bem-vindo ao espaço dedicado ao seu atendimento! Contamos com profissionais qualificados e um serviço de excelência.</p>
+            <p id="landing-sobre">Bem-vindo ao espaço dedicado ao seu atendimento!</p>
         </section>
-
         <section class="section">
-            <div class="info-card">
-                <i class="fa-solid fa-location-dot"></i>
-                <div>
-                    <h3>Localização / Endereço</h3>
-                    <p id="landing-endereco">Endereço não informado.</p>
-                </div>
-            </div>
+            <h2>Localização / Endereço</h2>
+            <p id="landing-endereco">Endereço não informado.</p>
         </section>
-
         <div class="landing-action">
-            <a href="#" id="btn-ir-agendar" class="btn-primary-action">
-                <i class="fa-regular fa-calendar-check"></i> Agendar Horário
-            </a>
+            <a href="#" id="btn-ir-agendar" class="btn-primary-action"><i class="fa-regular fa-calendar-check"></i> Agendar Horário</a>
         </div>
-
-        <footer class="landing-footer">
-            <p id="landing-footer-ano">&copy; 2026 - Todos os direitos reservados.</p>
-        </footer>
-
     </div>
-
     <script>
         const SUPABASE_URL = "https://doecoosuqibzdsyadsyg.supabase.co";
         const SUPABASE_KEY = "sb_publishable_-30z4xAhwJPYmy1bfSEjCw_loKUe8uL";
         const _supabase = supabase.createClient(SUPABASE_URL, SUPABASE_KEY);
-
         const urlParams = new URLSearchParams(window.location.search);
         const TENANT_ATIVO = urlParams.get('slug') || "padrao";
 
@@ -97,35 +52,18 @@
             try {
                 const { data } = await _supabase.from("saas_estabelecimentos").select("*").eq("slug", TENANT_ATIVO).single();
                 if (data) {
-                    const nome = data.nome_empresa || "Meu Negócio";
-                    const slogan = data.slogan || "Agenda pro! Gestão inteligente";
-                    const sobre = data.sobre || "Bem-vindo ao nosso espaço dedicado ao seu atendimento de qualidade!";
-                    const endereco = data.endereco || "Endereço não cadastrado pelo administrador.";
-                    
-                    document.getElementById("page-title").textContent = `${nome} | Bem-vindo`;
-                    document.getElementById("landing-nome").textContent = nome;
-                    document.getElementById("landing-slogan").textContent = slogan;
-                    document.getElementById("landing-sobre").textContent = sobre;
-                    document.getElementById("landing-endereco").textContent = endereco;
-                    document.getElementById("landing-footer-ano").innerHTML = `&copy; 2026 ${nome}. Todos os direitos reservados.`;
-
-                    if (data.logo_url && data.logo_url.trim() !== "") {
-                        const img = document.getElementById("landing-logo");
-                        img.src = data.logo_url;
-                        img.style.display = "block";
-                    }
-
+                    document.getElementById("page-title").textContent = `${data.nome_empresa || 'Negócio'} | Bem-vindo`;
+                    document.getElementById("landing-nome").textContent = data.nome_empresa || "Meu Negócio";
+                    document.getElementById("landing-sobre").textContent = data.sobre || "Bem-vindo ao nosso espaço!";
+                    document.getElementById("landing-endereco").textContent = data.endereco || "Não cadastrado.";
+                    if (data.logo_url) { const img = document.getElementById("landing-logo"); img.src = data.logo_url; img.style.display = "block"; }
                     if (data.cor_primaria) document.documentElement.style.setProperty('--primary-color', data.cor_primaria);
                     if (data.cor_fundo) document.documentElement.style.setProperty('--bg-color', data.cor_fundo);
                     if (data.cor_caixas) document.documentElement.style.setProperty('--box-color', data.cor_caixas);
                     if (data.cor_letras) document.documentElement.style.setProperty('--text-color', data.cor_letras);
                 }
-            } catch (e) {
-                console.warn("Usando dados padrão na landing page.");
-            }
-
-            const btnAgendar = document.getElementById("btn-ir-agendar");
-            btnAgendar.href = `agendar.html${window.location.search}`;
+            } catch (e) {}
+            document.getElementById("btn-ir-agendar").href = `agendar.html${window.location.search}`;
         });
     </script>
 </body>
