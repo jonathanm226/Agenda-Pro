@@ -1,7 +1,7 @@
 {
   "name": "Agenda Pro! - Sistema de Gestão",
   "short_name": "Agenda Pro",
-  "start_url": "/index.html",
+  "start_url": "./painel.html",
   "display": "standalone",
   "background_color": "#121212",
   "theme_color": "#FF6600",
