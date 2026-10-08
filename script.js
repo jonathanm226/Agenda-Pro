@@ -3,7 +3,6 @@ const SUPABASE_URL = "https://doecoosuqibzdsyadsyg.supabase.co";
 const SUPABASE_KEY = "sb_publishable_-30z4xAhwJPYmy1bfSEjCw_loKUe8uL";
 const _supabase = supabase.createClient(SUPABASE_URL, SUPABASE_KEY);
 
-// Captura o tenant dinâmico via parâmetro na URL (ex: ?slug=diniz-car-wash)
 const urlParams = new URLSearchParams(window.location.search);
 const TENANT_ATIVO = urlParams.get('slug') || "padrao";
 
@@ -12,11 +11,13 @@ let tenantConfig = {
     slogan: "Agenda pro! Gestão inteligente", 
     whatsapp: "", 
     logo_url: "", 
+    endereco: "",
+    sobre: "",
     cor_primaria: "#FF6600",
     cor_fundo: "#121212",
     cor_caixas: "#1A1A1A",
     cor_letras: "#FFFFFF",
-    barbeiros: [], // Guardará objetos ou nomes
+    barbeiros: [], 
     servicos: {} 
 };
 
@@ -58,6 +59,8 @@ async function carregarTenantConfig() {
             tenantConfig.slogan = data.slogan || "Agenda pro! Gestão inteligente";
             tenantConfig.whatsapp = data.whatsapp || "";
             tenantConfig.logo_url = data.logo_url || "";
+            tenantConfig.endereco = data.endereco || "";
+            tenantConfig.sobre = data.sobre || "";
             tenantConfig.cor_primaria = data.cor_primaria || "#FF6600";
             tenantConfig.cor_fundo = data.cor_fundo || "#121212";
             tenantConfig.cor_caixas = data.cor_caixas || "#1A1A1A";
@@ -233,7 +236,6 @@ async function checkAvailableTimes() {
         for(let i=0; i<numB; i++) ocupados.add(minInicio + (30*i));
     });
 
-    // Ponto 2: Bloquear horários passados caso a data selecionada seja hoje
     const hojeStr = new Date().toISOString().split("T")[0];
     const agoraMin = new Date().getHours() * 60 + new Date().getMinutes();
     const eHoje = (dateEl.value === hojeStr);
@@ -288,7 +290,6 @@ async function confirmarEEnviar() {
     if (!error) {
         mostrarAlerta("Agendamento efetuado com sucesso!");
         
-        // Ponto 4: Enviar WhatsApp diretamente para o profissional selecionado
         let wppProfissional = tenantConfig.whatsapp;
         const profObj = tenantConfig.barbeiros.find(b => (typeof b === 'object' ? b.nome : b) === selectedBarber);
         if (profObj && typeof profObj === 'object' && profObj.whatsapp) {
@@ -320,7 +321,6 @@ function fazerLogin() {
         atualizarFinanceiroAdmin();
         carregarAtendimentosAdminSemanal();
     } else {
-        // Verificar se é um profissional cadastrado
         const profEncontrado = tenantConfig.barbeiros.find(b => {
             let nomeB = typeof b === 'object' ? b.nome : b;
             return nomeB.toLowerCase() === user;
@@ -523,7 +523,7 @@ async function executarAcaoAtendimento(status) {
 }
 
 // ==========================================
-// MENSALISTAS (PONTO 1)
+// MENSALISTAS
 // ==========================================
 function abrirModalMensalista() {
     modoMensalistaAtivo = true;
@@ -658,6 +658,8 @@ function renderizarAdminParametros() {
     }
     document.getElementById("config-nome-empresa").value = tenantConfig.nome_empresa || "";
     document.getElementById("config-whatsapp").value = tenantConfig.whatsapp || "";
+    document.getElementById("config-endereco").value = tenantConfig.endereco || "";
+    document.getElementById("config-sobre").value = tenantConfig.sobre || "";
     document.getElementById("config-cor-primaria").value = tenantConfig.cor_primaria || "#FF6600";
     document.getElementById("config-cor-fundo").value = tenantConfig.cor_fundo || "#121212";
     document.getElementById("config-cor-caixas").value = tenantConfig.cor_caixas || "#1A1A1A";
@@ -730,6 +732,8 @@ async function salvarConfiguracoesGerais() {
 
     tenantConfig.nome_empresa = document.getElementById("config-nome-empresa").value.trim() || "Meu Negócio";
     tenantConfig.whatsapp = document.getElementById("config-whatsapp").value.trim();
+    tenantConfig.endereco = document.getElementById("config-endereco").value.trim();
+    tenantConfig.sobre = document.getElementById("config-sobre").value.trim();
     tenantConfig.cor_primaria = document.getElementById("config-cor-primaria").value;
     tenantConfig.cor_fundo = document.getElementById("config-cor-fundo").value;
     tenantConfig.cor_caixas = document.getElementById("config-cor-caixas").value;
@@ -740,6 +744,8 @@ async function salvarConfiguracoesGerais() {
         nome_empresa: tenantConfig.nome_empresa,
         whatsapp: tenantConfig.whatsapp,
         logo_url: tenantConfig.logo_url,
+        endereco: tenantConfig.endereco,
+        sobre: tenantConfig.sobre,
         cor_primaria: tenantConfig.cor_primaria,
         cor_fundo: tenantConfig.cor_fundo,
         cor_caixas: tenantConfig.cor_caixas,
