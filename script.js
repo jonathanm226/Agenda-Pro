@@ -17,17 +17,18 @@ let usuarioLogado = ""; let offsetSemana = 0; let servicosSelecionados = {}; let
 document.addEventListener("DOMContentLoaded", async () => {
     await carregarTenantConfig();
     aplicarIdentidadeVisual(tenantConfig);
-    if (document.getElementById("painel-container")) {
-        const logo = document.getElementById("painel-logo");
-        if (logo && tenantConfig.logo_url) { logo.src = tenantConfig.logo_url; logo.style.display = "block"; }
-        const nomeElement = document.getElementById("painel-nome-negocio");
-        if (nomeElement) nomeElement.textContent = tenantConfig.nome_empresa;
-    }
-    if (document.getElementById("agendar-container")) {
-        const logo = document.getElementById("tenant-logo");
-        if (logo && tenantConfig.logo_url) { logo.src = logo.style.display = "block"; }
-        carregarDadosAgendamentoCliente();
-    }
+    
+    // Carregamento correto da logo em qualquer página
+    const logoUrls = ["tenant-logo", "painel-logo", "landing-logo"];
+    logoUrls.forEach(id => {
+        const el = document.getElementById(id);
+        if (el && tenantConfig.logo_url) {
+            el.src = tenantConfig.logo_url;
+            el.style.display = "block";
+        }
+    });
+
+    if (document.getElementById("agendar-container")) carregarDadosAgendamentoCliente();
 });
 
 async function carregarTenantConfig() {
@@ -50,9 +51,21 @@ function aplicarIdentidadeVisual(config) {
     root.style.setProperty('--text-color', config.cor_letras || '#FFFFFF');
 }
 
-function mostrarAlerta(texto) { alert(texto); }
+function mostrarAlerta(texto) {
+    const modal = document.getElementById("modal-alerta-custom");
+    if(modal) {
+        document.getElementById("alerta-custom-texto").textContent = texto;
+        modal.style.display = "flex";
+    } else { alert(texto); }
+}
+function fecharAlertaCustom() {
+    const modal = document.getElementById("modal-alerta-custom");
+    if(modal) modal.style.display = "none";
+}
 
-// CLIENTE
+// ==========================================
+// CLIENTE (AGENDAR.HTML)
+// ==========================================
 function carregarDadosAgendamentoCliente() { renderizarBarbeiros(); renderizarServicos(); }
 function renderizarBarbeiros() {
     const grid = document.getElementById("barbers-grid"); if (!grid) return; grid.innerHTML = "";
@@ -88,29 +101,70 @@ function atualizarResumo() {
         resumoBox.style.display = "flex"; document.getElementById("resumo-qtd-servicos").textContent = `${qtd} serviço(s)`;
         document.getElementById("resumo-valor-total").textContent = `R$ ${total.toFixed(2)}`; document.getElementById("resumo-duracao").textContent = `${tempo} min`;
     } else { resumoBox.style.display = "none"; }
+    checkAvailableTimes();
 }
+
+// LÓGICA DE CONSUMO DE TEMPO NA AGENDA
 async function checkAvailableTimes() {
     const dateInput = document.getElementById("date").value; const timeSelect = document.getElementById("time");
     if (!dateInput || !timeSelect || !barbeiroSelecionado) return;
-    timeSelect.innerHTML = '<option value="">A carregar...</option>';
-    const { data: ocupados } = await _supabase.from('saas_agendamentos').select('hora_inicio').eq('slug', TENANT_ATIVO).eq('barbeiro', barbeiroSelecionado).eq('data_agendamento', dateInput);
-    const horariosOcupados = (ocupados || []).map(o => o.hora_inicio);
+    
+    let duracaoTotalServicos = 30;
+    let tempTempo = 0;
+    Object.values(servicosSelecionados).forEach(s => { tempTempo += s.duracao; });
+    if(tempTempo > 0) duracaoTotalServicos = tempTempo;
+
+    timeSelect.innerHTML = '<option value="">A calcular horários...</option>';
+    const { data: ocupados } = await _supabase.from('saas_agendamentos').select('hora_inicio, duracao_total').eq('slug', TENANT_ATIVO).eq('barbeiro', barbeiroSelecionado).eq('data_agendamento', dateInput).neq('status', 'cancelado');
+    
     const profObj = (tenantConfig.barbeiros || []).find(b => (typeof b === 'object' ? b.nome : b) === barbeiroSelecionado);
     let hInicio = (profObj && profObj.inicio) ? parseInt(profObj.inicio.split(':')[0]) : parseInt(tenantConfig.horario_inicio.split(':')[0]);
     let hFim = (profObj && profObj.fim) ? parseInt(profObj.fim.split(':')[0]) : parseInt(tenantConfig.horario_fim.split(':')[0]);
-    timeSelect.innerHTML = '<option value="">Selecione</option>';
-    for (let h = hInicio; h <= hFim; h++) {
+
+    timeSelect.innerHTML = '<option value="">Selecione um horário</option>';
+    let temHorario = false;
+
+    // Gera blocos de hora em hora e valida se há sobreposição com a duração total dos serviços
+    for (let h = hInicio; h < hFim; h++) {
         let timeStr = `${h.toString().padStart(2, '0')}:00`;
-        if (!horariosOcupados.includes(timeStr)) timeSelect.innerHTML += `<option value="${timeStr}">${timeStr}</option>`;
+        
+        // Verifica conflito de horário com base no tempo consumido
+        let slotMinutos = h * 60;
+        let slotFimMinutos = slotMinutos + duracaoTotalServicos;
+        let conflito = false;
+
+        if(ocupados) {
+            ocupados.forEach(ag => {
+                let [ah, am] = ag.hora_inicio.split(':').map(Number);
+                let agInicioMin = ah * 60 + am;
+                let agFimMin = agInicioMin + (ag.duracao_total || 30);
+
+                // Se houver cruzamento de intervalos
+                if (slotMinutos < agFimMin && slotFimMinutos > agInicioMin) {
+                    conflito = true;
+                }
+            });
+        }
+
+        if (!conflito) {
+            timeSelect.innerHTML += `<option value="${timeStr}">${timeStr} (${duracaoTotalServicos} min)</option>`;
+            temHorario = true;
+        }
     }
+    if (!temHorario) timeSelect.innerHTML = '<option value="">Nenhum horário disponível para esta duração</option>';
 }
+
 function abrirModalConfirmacao() {
     if (!barbeiroSelecionado) return mostrarAlerta("Selecione o profissional.");
     if (Object.keys(servicosSelecionados).length === 0) return mostrarAlerta("Selecione os serviços.");
     if (!document.getElementById("date").value || !document.getElementById("time").value) return mostrarAlerta("Escolha data e horário.");
     if (!document.getElementById("client-name").value || !document.getElementById("client-phone").value) return mostrarAlerta("Preencha os seus dados.");
+    
     let servicosStr = Object.keys(servicosSelecionados).join(', ');
-    document.getElementById("resumo-agendamento").innerHTML = `<strong>Profissional:</strong> ${barbeiroSelecionado}<br><strong>Serviços:</strong> ${servicosStr}<br><strong>Data:</strong> ${document.getElementById("date").value.split('-').reverse().join('/')} às ${document.getElementById("time").value}<br><strong>Cliente:</strong> ${document.getElementById("client-name").value}`;
+    let total = 0; let duracao = 0;
+    Object.values(servicosSelecionados).forEach(s => { total += s.preco; duracao += s.duracao; });
+
+    document.getElementById("resumo-agendamento").innerHTML = `<strong>Profissional:</strong> ${barbeiroSelecionado}<br><strong>Serviços:</strong> ${servicosStr} (${duracao} min)<br><strong>Data:</strong> ${document.getElementById("date").value.split('-').reverse().join('/')} às ${document.getElementById("time").value}<br><strong>Valor:</strong> R$ ${total.toFixed(2)}`;
     document.getElementById("modal-confirmacao").style.display = "flex";
 }
 function fecharModalConfirmacao() { document.getElementById("modal-confirmacao").style.display = "none"; }
@@ -119,29 +173,31 @@ async function confirmarEEnviar() {
     const btn = document.getElementById("btn-confirmar-agendamento"); btn.disabled = true;
     const cliente = document.getElementById("client-name").value; const telefone = document.getElementById("client-phone").value.replace(/\D/g, "");
     const dataSQL = document.getElementById("date").value; const horaStr = document.getElementById("time").value;
-    let total = 0; let tempo = 0; Object.values(servicosSelecionados).forEach(s => { total += s.preco; tempo += s.duracao; });
+    let total = 0; let duracao = 0; Object.values(servicosSelecionados).forEach(s => { total += s.preco; duracao += s.duracao; });
     const servs = Object.keys(servicosSelecionados).join(', ');
 
     const { error } = await _supabase.from('saas_agendamentos').insert({
         slug: TENANT_ATIVO, barbeiro: barbeiroSelecionado, cliente_nome: cliente, cliente_telefone: telefone,
-        servicos: servs, data_agendamento: dataSQL, hora_inicio: horaStr, duracao_total: tempo, valor_total: total, status: 'pendente'
+        servicos: servs, data_agendamento: dataSQL, hora_inicio: horaStr, duracao_total: duracao, valor_total: total, status: 'pendente'
     });
 
     if (error) { btn.disabled = false; return mostrarAlerta("Erro ao salvar."); }
 
-    // Envio correto para o WhatsApp do profissional ou admin cadastrado (Print 5)
+    // Mensagem enviada ao profissional com destaque em AGENDAMENTO CONFIRMADO
     const profObj = (tenantConfig.barbeiros || []).find(b => (typeof b === 'object' ? b.nome : b) === barbeiroSelecionado);
     let numeroProf = (profObj && profObj.whatsapp) ? profObj.whatsapp : tenantConfig.admin_contato;
     if (numeroProf) {
         const dataStr = dataSQL.split('-').reverse().join('/');
-        const msg = `*Novo Agendamento!*\n*Cliente:* ${cliente}\n*Serviços:* ${servs}\n*Data:* ${dataStr} às ${horaStr}\n*Total:* R$ ${total.toFixed(2)}`;
+        const msg = `*NOVO AGENDAMENTO*\n*Cliente:* ${cliente}\n*Serviços:* ${servs} (${duracao} min)\n*Data:* ${dataStr} às ${horaStr}\n*Total:* R$ ${total.toFixed(2)}\n\n✨ *AGENDAMENTO CONFIRMADO* ✨`;
         window.open(`https://api.whatsapp.com/send?phone=55${numeroProf.replace(/\D/g, "")}&text=${encodeURIComponent(msg)}`, '_blank');
     }
 
     fecharModalConfirmacao(); mostrarAlerta("Agendamento concluído!"); setTimeout(() => window.location.reload(), 2000);
 }
 
-// PAINEL
+// ==========================================
+// PAINEL (PAINEL.HTML)
+// ==========================================
 function fazerLogin() {
     const user = document.getElementById("login-usuario").value.trim().toLowerCase();
     const pass = document.getElementById("login-senha").value.trim();
@@ -149,8 +205,9 @@ function fazerLogin() {
     let senhaAdmin = (tenantConfig.senhas_usuarios && tenantConfig.senhas_usuarios['admin']) ? tenantConfig.senhas_usuarios['admin'] : 'admin123';
     if (user === 'admin' && pass === senhaAdmin) {
         usuarioLogado = "Admin"; document.getElementById("login-section").style.display = "none";
-        document.getElementById("admin-gear-container").innerHTML = '<div class="btn-engrenagem" onclick="abrirConfiguracoesAdmin()"><i class="fa-solid fa-gear"></i></div>';
-        document.getElementById("dashboard-admin").style.display = "block"; atualizarFinanceiroAdmin();
+        document.getElementById("dashboard-barbeiro").style.display = "block";
+        document.getElementById("label-resumo-financeiro").textContent = "Faturamento Geral (Admin)";
+        carregarAgendaBarbeiro();
     } else {
         const prof = (tenantConfig.barbeiros || []).find(b => (typeof b === 'object' ? b.nome : b).toLowerCase() === user);
         if (prof) {
@@ -169,15 +226,16 @@ function mudarSemana(d) { offsetSemana += (d * 7); carregarAgendaBarbeiro(); }
 async function carregarAgendaBarbeiro() {
     const container = document.getElementById("grade-semanal-container"); if (!container) return;
     container.innerHTML = "<p style='text-align:center; padding: 20px; color: #AAA;'>A sincronizar...</p>";
-    const profObj = (tenantConfig.barbeiros || []).find(b => (typeof b === 'object' ? b.nome : b) === usuarioLogado);
-    let hInicio = parseInt(((profObj && profObj.inicio) ? profObj.inicio : tenantConfig.horario_inicio).split(':')[0]);
-    let hFim = parseInt(((profObj && profObj.fim) ? profObj.fim : tenantConfig.horario_fim).split(':')[0]);
+    
+    let barbeiroFiltro = usuarioLogado === 'Admin' ? ((tenantConfig.barbeiros[0]) ? (typeof tenantConfig.barbeiros[0] === 'object' ? tenantConfig.barbeiros[0].nome : tenantConfig.barbeiros[0]) : 'jonathan') : usuarioLogado;
+    
+    let hInicio = 8; let hFim = 19;
     const datas = []; const hoje = new Date();
     for (let i=0; i<6; i++) {
         let d = new Date(hoje); d.setDate(hoje.getDate() + i + offsetSemana);
         datas.push(d.toISOString().split('T')[0]);
     }
-    const { data: agendamentos } = await _supabase.from('saas_agendamentos').select('*').eq('slug', TENANT_ATIVO).eq('barbeiro', usuarioLogado).in('data_agendamento', datas);
+    const { data: agendamentos } = await _supabase.from('saas_agendamentos').select('*').eq('slug', TENANT_ATIVO).eq('barbeiro', barbeiroFiltro).in('data_agendamento', datas);
     let html = "";
     for (let i=0; i<6; i++) {
         let dataSQL = datas[i]; let dObj = new Date(dataSQL + 'T12:00:00');
@@ -199,7 +257,7 @@ async function carregarAgendaBarbeiro() {
     container.innerHTML = html; atualizarFinanceiroProfissional();
 }
 
-// MODAL GERENCIAR ATENDIMENTO (PRINTS 1 E 2)
+// GERENCIAR ATENDIMENTO (MODAL)
 let atendimentoAtual = null;
 function abrirModalGerenciarAtendimento(ag) {
     atendimentoAtual = ag;
@@ -207,53 +265,94 @@ function abrirModalGerenciarAtendimento(ag) {
     const box = document.getElementById("detalhes-atendimento-box");
     box.innerHTML = `<strong>Cliente:</strong> ${ag.cliente_nome}<br>
                      <strong>Telefone:</strong> ${ag.cliente_telefone || 'Não informado'}<br>
-                     <strong>Serviço Atual:</strong> ${ag.servicos || 'Serviço Padrão'}<br>
+                     <strong>Serviço Atual:</strong> ${ag.servicos || 'Padrão'} (${ag.duracao_total || 30} min)<br>
                      <strong>Valor Base:</strong> R$ ${(ag.valor_total || 0).toFixed(2)}<br>
                      <strong>Data/Hora:</strong> ${dataF} às ${ag.hora_inicio}`;
     
-    document.getElementById("btn-modal-concluir").onclick = () => concluirAtendimento(ag.id);
-    document.getElementById("btn-modal-reagendar").onclick = () => reagendarAtendimento(ag.id);
-    document.getElementById("btn-modal-cancelar").onclick = () => cancelarAtendimento(ag.id);
+    document.getElementById("box-forma-pagamento").style.display = "none";
+    document.getElementById("box-reagendar").style.display = "none";
+    document.getElementById("botoes-gerenciar-box").style.display = "flex";
+
+    document.getElementById("btn-modal-concluir").onclick = () => {
+        document.getElementById("box-forma-pagamento").style.display = "block";
+        document.getElementById("botoes-gerenciar-box").style.display = "none";
+    };
+    document.getElementById("btn-modal-reagendar").onclick = () => {
+        document.getElementById("box-reagendar").style.display = "block";
+        document.getElementById("botoes-gerenciar-box").style.display = "none";
+    };
+    document.getElementById("btn-modal-cancelar").onclick = () => abrirModalCancelamentoEstilizado(ag.id);
     document.getElementById("btn-modal-lembrete").onclick = () => enviarLembreteWhatsApp(ag);
 
     document.getElementById("modal-gerenciar-atendimento").style.display = "flex";
 }
 function fecharModalGerenciar() { document.getElementById("modal-gerenciar-atendimento").style.display = "none"; }
 
-async function concluirAtendimento(id) {
-    await _supabase.from('saas_agendamentos').update({ status: 'concluido' }).eq('id', id);
+async function confirmarConclusaoComPgto() {
+    const formaPgto = document.getElementById("select-forma-pgto").value;
+    await _supabase.from('saas_agendamentos').update({ status: 'concluido', forma_pagamento: formaPgto }).eq('id', atendimentoAtual.id);
     fecharModalGerenciar(); carregarAgendaBarbeiro();
 }
-async function cancelarAtendimento(id) {
-    if(confirm("Deseja realmente cancelar este agendamento?")) {
-        await _supabase.from('saas_agendamentos').delete().eq('id', id);
-        fecharModalGerenciar(); carregarAgendaBarbeiro();
-    }
+
+// REAGENDAR HORÁRIO CORRIGIDO
+async function salvarReagendamento() {
+    const novaData = document.getElementById("reagendar-data").value;
+    const novaHora = document.getElementById("reagendar-hora").value;
+    if(!novaData || !novaHora) return alert("Selecione data e hora.");
+
+    const { error } = await _supabase.from('saas_agendamentos').update({ data_agendamento: novaData, hora_inicio: novaHora }).eq('id', atendimentoAtual.id);
+    if(error) return alert("Erro ao reagendar.");
+    fecharModalGerenciar(); carregarAgendaBarbeiro(); alert("Reagendado com sucesso!");
 }
-function reagendarAtendimento(id) {
-    alert("Funcionalidade de reagendamento direto. Selecione nova data na agenda.");
-    fecharModalGerenciar();
+
+// CANCELAMENTO COM MODAL ESTILIZADO (SEM ALERT NATIVO)
+let idParaCancelar = null;
+function abrirModalCancelamentoEstilizado(id) {
+    idParaCancelar = id;
+    document.getElementById("modal-confirmar-cancelamento").style.display = "flex";
+    document.getElementById("btn-confirma-cancelamento-sim").onclick = async () => {
+        await _supabase.from('saas_agendamentos').delete().eq('id', idParaCancelar);
+        fecharModalCancelamentoEstilizado();
+        fecharModalGerenciar();
+        carregarAgendaBarbeiro();
+    };
 }
+function fecharModalCancelamentoEstilizado() {
+    document.getElementById("modal-confirmar-cancelamento").style.display = "none";
+    idParaCancelar = null;
+}
+
 function enviarLembreteWhatsApp(ag) {
     const dataF = ag.data_agendamento.split('-').reverse().join('/');
-    const msg = `*Olá ${ag.cliente_nome}!* Passando para lembrar do seu agendamento hoje (${dataF} às ${ag.hora_inicio}) com ${usuarioLogado}.`;
+    const msg = `*Olá ${ag.cliente_nome}!* Lembramos do seu agendamento hoje (${dataF} às ${ag.hora_inicio}).`;
     let tel = ag.cliente_telefone ? ag.cliente_telefone.replace(/\D/g, "") : "31994951564";
     window.open(`https://api.whatsapp.com/send?phone=55${tel}&text=${encodeURIComponent(msg)}`, '_blank');
 }
 
-// NOVO AGENDAMENTO PELO PAINEL / MODO ENCAIXE (PRINT 4)
+// NOVO AGENDAMENTO PELO PAINEL COM NOVO ESTILO DE SERVIÇOS (PRINT 3)
 function abrirModalMensalistas() { document.getElementById("modal-mensalistas").style.display = "flex"; }
 function abrirModalNovoAgendamento() {
     const container = document.getElementById("lista-servicos-checkboxes"); container.innerHTML = "";
     Object.keys(tenantConfig.servicos || {}).forEach(nome => {
         const s = tenantConfig.servicos[nome];
-        container.innerHTML += `<label style="font-size:0.8rem; display:flex; align-items:center; gap:6px; cursor:pointer;">
-            <input type="checkbox" class="chk-servico-novo" value="${nome}" data-preco="${s.price}" data-tempo="${s.duration}" onchange="calcularTotalNovoServico()"> ${nome} (R$ ${s.price})</label>`;
+        container.innerHTML += `<div class="service-check-card" onclick="toggleCardServico(this)">
+            <div style="display:flex; align-items:center; gap:8px;">
+                <input type="checkbox" class="chk-servico-novo" value="${nome}" data-preco="${s.price}" data-tempo="${s.duration}" onchange="calcularTotalNovoServico()" style="width:18px; height:18px;">
+                <span style="font-size:0.85rem; font-weight:600;">${nome} (${s.duration} min)</span>
+            </div>
+            <strong style="color:var(--primary-color); font-size:0.85rem;">R$ ${s.price.toFixed(2)}</strong>
+        </div>`;
     });
     document.getElementById("novo-cli-nome").value = "";
     document.getElementById("novo-cli-tel").value = "";
     document.getElementById("check-encaixe").checked = false;
     document.getElementById("modal-novo-agendamento").style.display = "flex";
+}
+function toggleCardServico(card) {
+    const chk = card.querySelector('input[type="checkbox"]');
+    chk.checked = !chk.checked;
+    if(chk.checked) card.classList.add('selected'); else card.classList.remove('selected');
+    calcularTotalNovoServico();
 }
 function fecharModalNovoAgendamento() { document.getElementById("modal-novo-agendamento").style.display = "none"; }
 
@@ -279,15 +378,12 @@ async function salvarNovoAgendamentoBarbeiro() {
         duracao += parseInt(chk.dataset.tempo);
     });
     let servicosStr = servsArray.length > 0 ? servsArray.join(', ') : "Atendimento Avulso";
+    if(duracao === 0) duracao = 30;
 
-    // Se NÃO for modo encaixe, verifica se já existe agendamento no horário
-    if (!isEncaixe) {
-        const { data: existe } = await _supabase.from('saas_agendamentos').select('id').eq('slug', TENANT_ATIVO).eq('barbeiro', usuarioLogado).eq('data_agendamento', data).eq('hora_inicio', hora);
-        if (existe && existe.length > 0) return alert("Horário já ocupado! Utilize o 'Modo Encaixe' se desejar inserir neste horário.");
-    }
+    let barbeiroAtual = usuarioLogado === 'Admin' ? 'jonathan' : usuarioLogado;
 
     const { error } = await _supabase.from('saas_agendamentos').insert({
-        slug: TENANT_ATIVO, barbeiro: usuarioLogado, cliente_nome: nome, cliente_telefone: tel,
+        slug: TENANT_ATIVO, barbeiro: barbeiroAtual, cliente_nome: nome, cliente_telefone: tel,
         servicos: servicosStr, data_agendamento: data, hora_inicio: hora, duracao_total: duracao, valor_total: total, status: 'pendente'
     });
 
@@ -296,8 +392,9 @@ async function salvarNovoAgendamentoBarbeiro() {
 }
 
 function bloquearHorario(data, hora) {
+    let barbeiroAtual = usuarioLogado === 'Admin' ? 'jonathan' : usuarioLogado;
     if(confirm(`Bloquear agenda no dia ${data.split('-').reverse().join('/')} às ${hora}?`)) {
-        _supabase.from('saas_agendamentos').insert({ slug: TENANT_ATIVO, barbeiro: usuarioLogado, data_agendamento: data, hora_inicio: hora, status: 'bloqueado' }).then(() => carregarAgendaBarbeiro());
+        _supabase.from('saas_agendamentos').insert({ slug: TENANT_ATIVO, barbeiro: barbeiroAtual, data_agendamento: data, hora_inicio: hora, status: 'bloqueado', duracao_total: 30 }).then(() => carregarAgendaBarbeiro());
     }
 }
 function desbloquearHorario(id) {
@@ -306,21 +403,15 @@ function desbloquearHorario(id) {
     }
 }
 
+// FINANCEIRO COM INFORMAÇÕES INDIVIDUAIS DE PAGAMENTO
 async function atualizarFinanceiroProfissional() {
-    if (!usuarioLogado || usuarioLogado === 'Admin') return;
+    let barbeiroFiltro = usuarioLogado === 'Admin' ? 'jonathan' : usuarioLogado;
+    if (!barbeiroFiltro) return;
     const filtro = document.getElementById('filtro-financeiro-prof').value;
-    const { data: ags } = await _supabase.from('saas_agendamentos').select('valor_total, data_agendamento').eq('slug', TENANT_ATIVO).eq('barbeiro', usuarioLogado).eq('status', 'concluido');
-    document.getElementById('valor-financeiro-prof').textContent = `R$ ${calcularTotalDash(ags || [], filtro)}`;
-}
-async function atualizarFinanceiroAdmin() {
-    if (usuarioLogado !== 'Admin') return;
-    const filtro = document.getElementById('filtro-financeiro-admin').value;
-    const { data: ags } = await _supabase.from('saas_agendamentos').select('valor_total, data_agendamento').eq('slug', TENANT_ATIVO).eq('status', 'concluido');
-    document.getElementById('valor-financeiro-admin').textContent = `R$ ${calcularTotalDash(ags || [], filtro)}`;
-}
-function calcularTotalDash(ags, filtro) {
-    const hoje = new Date(); let total = 0;
-    ags.forEach(ag => {
+    const { data: ags } = await _supabase.from('saas_agendamentos').select('*').eq('slug', TENANT_ATIVO).eq('barbeiro', barbeiroFiltro).eq('status', 'concluido');
+    
+    const hoje = new Date(); let total = 0; let listaPgtoHtml = "";
+    (ags || []).forEach(ag => {
         const dAg = new Date(ag.data_agendamento + 'T12:00:00'); let contar = false;
         if (filtro === 'dia' && dAg.toDateString() === hoje.toDateString()) contar = true;
         if (filtro === 'mes' && dAg.getMonth() === hoje.getMonth() && dAg.getFullYear() === hoje.getFullYear()) contar = true;
@@ -329,20 +420,12 @@ function calcularTotalDash(ags, filtro) {
             const fim = new Date(inicio); fim.setDate(inicio.getDate() + 6);
             if (dAg >= inicio && dAg <= fim) contar = true;
         }
-        if (contar) total += Number(ag.valor_total);
+        if (contar) {
+            total += Number(ag.valor_total || 0);
+            listaPgtoHtml += `• ${ag.cliente_nome}: R$ ${(ag.valor_total||0).toFixed(2)} (${ag.forma_pagamento || 'Dinheiro'})<br>`;
+        }
     });
-    return total.toFixed(2).replace('.', ',');
-}
 
-function aplicarCores(p, f, c, l) {
-    document.documentElement.style.setProperty('--primary-color', p); document.documentElement.style.setProperty('--bg-color', f);
-    document.documentElement.style.setProperty('--box-color', c); document.documentElement.style.setProperty('--text-color', l);
+    document.getElementById('valor-financeiro-prof').textContent = `R$ ${total.toFixed(2).replace('.', ',')}`;
+    document.getElementById('detalhes-pagamentos-individuais').innerHTML = listaPgtoHtml || "Nenhum pagamento registrado no período.";
 }
-function mudarTabConfig(t, b) {
-    document.querySelectorAll('.config-tab-content').forEach(el => el.style.display = 'none');
-    document.getElementById("tab-" + t).style.display = 'block';
-    document.querySelectorAll('.tab-btn').forEach(btn => { btn.style.background = 'transparent'; btn.style.color = '#AAA'; });
-    b.style.background = 'var(--primary-color)'; b.style.color = '#FFF';
-}
-function abrirConfiguracoesAdmin() { document.getElementById("modal-config-admin").style.display = "flex"; }
-function fecharConfiguracoesAdmin() { document.getElementById("modal-config-admin").style.display = "none"; }
