@@ -33,7 +33,7 @@
         .slot-item.available { border-left-color: var(--primary-color); background: var(--box-color); color: var(--text-color); }
         .slot-item.blocked { border-left-color: #e74c3c; background: rgba(231, 76, 60, 0.1); color: #888; text-decoration: line-through; }
         .custom-modal-overlay { position: fixed; top: 0; left: 0; width: 100%; height: 100%; background: rgba(0,0,0,0.8); display: none; justify-content: center; align-items: center; z-index: 9999; }
-        .custom-modal { background: var(--box-color); color: var(--text-color); padding: 25px; border-radius: 16px; width: 95%; max-width: 520px; }
+        .custom-modal { background: var(--box-color); color: var(--text-color); padding: 25px; border-radius: 16px; width: 95%; max-width: 420px; }
         .themes-grid { display: grid; grid-template-columns: 1fr; gap: 8px; margin-bottom: 15px; }
         .theme-btn { padding: 12px; border-radius: 8px; border: 2px solid transparent; font-size: 0.8rem; font-weight: bold; cursor: pointer; text-align: left; }
         .config-card { background: rgba(0,0,0,0.2); border: 1px solid rgba(255,255,255,0.05); padding: 15px; border-radius: 12px; margin-bottom: 15px; }
@@ -47,17 +47,27 @@
             <h1 style="font-size: 1.3rem;" id="painel-nome-negocio">Carregando...</h1>
             <p style="font-size: 0.8rem; color: var(--primary-color); font-weight: 600;">Painel de Gestão</p>
         </header>
+
         <section id="login-section" class="section">
             <h2 style="font-size: 1.1rem; margin-bottom: 15px; text-align: center;">Acesso ao Sistema</h2>
             <div class="input-group"><label>Utilizador:</label><input type="text" id="login-usuario" placeholder="Utilizador"></div>
             <div class="input-group"><label>Palavra-passe:</label><input type="password" id="login-senha" placeholder="Palavra-passe"></div>
             <button type="button" class="btn-acao" onclick="fazerLogin()">Entrar no Painel</button>
         </section>
+
         <section id="dashboard-barbeiro" class="section" style="display: none;">
             <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 15px;">
                 <h2 id="titulo-agenda-barbeiro" style="font-size: 1rem; margin:0;"><i class="fa-solid fa-calendar-check"></i> Minha Agenda</h2>
                 <button type="button" class="btn-acao" onclick="fazerLogout()" style="width: auto; padding: 8px 10px; background: rgba(231, 76, 60, 0.1); color: #e74c3c; font-size: 0.75rem;">Sair</button>
             </div>
+
+            <!-- BOTÕES SOLICITADOS NO PRINT 3 -->
+            <div style="display: grid; grid-template-columns: repeat(3, 1fr); gap: 8px; margin-bottom: 15px;">
+                <button type="button" class="btn-acao" onclick="abrirModalMensalistas()" style="font-size: 0.75rem; background: #3498db;"><i class="fa-solid fa-users"></i> Mensalistas</button>
+                <button type="button" class="btn-acao" onclick="carregarAgendaBarbeiro()" style="font-size: 0.75rem; background: #2ecc71;"><i class="fa-solid fa-rotate"></i> Atualizar</button>
+                <button type="button" class="btn-acao" onclick="abrirModalNovoAgendamento()" style="font-size: 0.75rem; background: var(--primary-color);"><i class="fa-solid fa-plus"></i> Novo</button>
+            </div>
+
             <div class="finance-card">
                 <div class="finance-header">
                     <span style="font-size: 0.85rem; font-weight: bold; color: #CCC;">Resumo Pessoal</span>
@@ -67,12 +77,14 @@
                 </div>
                 <div class="finance-value" id="valor-financeiro-prof">R$ 0,00</div>
             </div>
+
             <div style="display: flex; gap: 8px; margin-bottom: 15px;">
                 <button type="button" class="btn-acao" onclick="mudarSemana(-1)" style="font-size: 0.75rem; background: var(--box-color);"><i class="fa-solid fa-chevron-left"></i> Anterior</button>
                 <button type="button" class="btn-acao" onclick="mudarSemana(1)" style="font-size: 0.75rem; background: var(--box-color);">Próxima <i class="fa-solid fa-chevron-right"></i></button>
             </div>
             <div id="grade-semanal-container" class="week-horizontal-container"></div>
         </section>
+
         <section id="dashboard-admin" class="section" style="display: none;">
             <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 15px;">
                 <h2 style="font-size: 1rem; margin:0;">Painel Admin</h2>
@@ -84,73 +96,68 @@
             </div>
         </section>
     </div>
-    <!-- MODAL CONFIG -->
-    <div id="modal-config-admin" class="custom-modal-overlay">
-        <div class="custom-modal">
-            <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 15px;">
-                <h3 style="color: var(--primary-color);">Configurações</h3>
-                <button type="button" onclick="fecharConfiguracoesAdmin()" style="background: rgba(255,255,255,0.1); border: none; color: #FFF; width: 32px; height: 32px; border-radius: 50%; cursor: pointer;"><i class="fa-solid fa-xmark"></i></button>
-            </div>
-            <div style="display: flex; gap: 4px; margin-bottom: 15px;">
-                <button type="button" class="tab-btn active" onclick="mudarTabConfig('perfil', this)" style="flex: 1; padding: 8px; font-size: 0.75rem; background: var(--primary-color); color: #FFF; border: none; border-radius: 6px;">1. Perfil</button>
-                <button type="button" class="tab-btn" onclick="mudarTabConfig('visual', this)" style="flex: 1; padding: 8px; font-size: 0.75rem; background: transparent; color: #AAA; border: none; border-radius: 6px;">2. Visual</button>
-                <button type="button" class="tab-btn" onclick="mudarTabConfig('equipa', this)" style="flex: 1; padding: 8px; font-size: 0.75rem; background: transparent; color: #AAA; border: none; border-radius: 6px;">3. Equipa</button>
-                <button type="button" class="tab-btn" onclick="mudarTabConfig('servicos', this)" style="flex: 1; padding: 8px; font-size: 0.75rem; background: transparent; color: #AAA; border: none; border-radius: 6px;">4. Serviços</button>
-            </div>
-            <div id="tab-perfil" class="config-tab-content">
-                <div class="config-card">
-                    <div class="input-group"><label>Nome da Empresa:</label><input type="text" id="config-nome-empresa"></div>
-                    <div class="input-group"><label>Contato Admin (WhatsApp):</label><input type="text" id="config-admin-contato"></div>
-                </div>
-                <button type="button" class="btn-acao" onclick="mudarTabConfig('visual', document.querySelectorAll('.tab-btn')[1])">Avançar</button>
-            </div>
-            <div id="tab-visual" class="config-tab-content" style="display: none;">
-                <div class="config-card">
-                    <h4 style="margin-bottom: 10px; color: var(--primary-color);">10 Temas Visuais</h4>
-                    <div class="themes-grid">
-                        <button type="button" class="theme-btn" style="background:#121212; border-color:#FF6600; color:#FFF;" onclick="aplicarCores('#FF6600','#121212','#1A1A1A','#FFF')">1. Padrão Escuro (Laranja)</button>
-                        <button type="button" class="theme-btn" style="background:#FFF0F5; border-color:#FF69B4; color:#1F2937;" onclick="aplicarCores('#FF69B4','#FFF0F5','#FFF','#1F2937')">2. Salão Estética (Rosa)</button>
-                        <button type="button" class="theme-btn" style="background:#F0FDF4; border-color:#22C55E; color:#1F2937;" onclick="aplicarCores('#22C55E','#F0FDF4','#FFF','#1F2937')">3. Saúde e Clínica (Verde)</button>
-                        <button type="button" class="theme-btn" style="background:#09090B; border-color:#E11D48; color:#FAFAFA;" onclick="aplicarCores('#E11D48','#09090B','#18181B','#FAFAFA')">4. Estúdio Moderno (Vermelho)</button>
-                        <button type="button" class="theme-btn" style="background:#0F172A; border-color:#3B82F6; color:#F8FAFC;" onclick="aplicarCores('#3B82F6','#0F172A','#1E293B','#F8FAFC')">5. Oceano Profundo (Azul)</button>
-                        <button type="button" class="theme-btn" style="background:#1C1917; border-color:#D97706; color:#FAFAF9;" onclick="aplicarCores('#D97706','#1C1917','#292524','#FAFAF9')">6. Barbearia Clássica (Dourado)</button>
-                        <button type="button" class="theme-btn" style="background:#FAFAFA; border-color:#000000; color:#111827;" onclick="aplicarCores('#000000','#FAFAFA','#FFF','#111827')">7. Minimalista Elegante (Branco)</button>
-                        <button type="button" class="theme-btn" style="background:#FEF3C7; border-color:#059669; color:#064E3B;" onclick="aplicarCores('#059669','#FEF3C7','#FFFBEB','#064E3B')">8. Natureza Zen (Bege)</button>
-                        <button type="button" class="theme-btn" style="background:#170F1E; border-color:#A855F7; color:#F3E8FF;" onclick="aplicarCores('#A855F7','#170F1E','#2D1B38','#F3E8FF')">9. Roxo Neon (Roxo)</button>
-                        <button type="button" class="theme-btn" style="background:#F5E6D3; border-color:#8B4513; color:#3E2723;" onclick="aplicarCores('#8B4513','#F5E6D3','#FFF8ED','#3E2723')">10. Café Vintage (Marrom)</button>
-                    </div>
-                    <input type="hidden" id="config-cor-primaria"><input type="hidden" id="config-cor-fundo"><input type="hidden" id="config-cor-caixas"><input type="hidden" id="config-cor-letras">
-                </div>
-                <button type="button" class="btn-acao" onclick="mudarTabConfig('equipa', document.querySelectorAll('.tab-btn')[2])">Avançar</button>
-            </div>
-            <div id="tab-equipa" class="config-tab-content" style="display: none;">
-                <div class="config-card"><div id="lista-profissionais-config" style="max-height:100px; overflow-y:auto; margin-bottom:8px;"></div><input type="text" id="novo-profissional-nome" placeholder="Nome" style="margin-bottom:6px;"><input type="text" id="novo-profissional-wpp" placeholder="WhatsApp" style="margin-bottom:6px;"><button type="button" class="btn-acao" onclick="adicionarProfissional()" style="background:rgba(255,255,255,0.1);">Adicionar</button></div>
-                <button type="button" class="btn-acao" onclick="mudarTabConfig('servicos', document.querySelectorAll('.tab-btn')[3])">Avançar</button>
-            </div>
-            <div id="tab-servicos" class="config-tab-content" style="display: none;">
-                <div class="config-card"><div id="lista-servicos-config" style="max-height:100px; overflow-y:auto; margin-bottom:8px;"></div><div style="display:flex; gap:6px; margin-bottom:6px;"><input type="text" id="novo-servico-nome" placeholder="Serviço" style="flex:2;"><input type="number" id="novo-servico-preco" placeholder="R$" style="flex:1;"><input type="number" id="novo-servico-tempo" placeholder="Min" style="flex:1;"></div><button type="button" class="btn-acao" onclick="adicionarServico()" style="background:rgba(255,255,255,0.1);">Adicionar</button></div>
-                <button type="button" class="btn-acao" id="btn-salvar-configs" onclick="salvarConfiguracoesGerais()" style="background:#25D366;">Guardar Tudo</button>
+
+    <!-- MODAL DE GERENCIAR ATENDIMENTO (PRINTS 1 E 2) -->
+    <div id="modal-gerenciar-atendimento" class="custom-modal-overlay">
+        <div class="custom-modal" style="max-width: 380px;">
+            <h3 style="text-align: center; margin-bottom: 15px; font-size: 1.1rem; color: #FFF; text-transform: uppercase; letter-spacing: 1px;">Gerenciar Atendimento</h3>
+            <div id="detalhes-atendimento-box" style="background: rgba(0,0,0,0.4); border: 1px solid rgba(255,255,255,0.1); padding: 15px; border-radius: 10px; margin-bottom: 20px; font-size: 0.85rem; line-height: 1.6;"></div>
+            <div style="display: flex; flex-direction: column; gap: 10px;">
+                <button type="button" id="btn-modal-concluir" class="btn-acao" style="background: #25D366; font-size: 0.85rem;"><i class="fa-solid fa-check"></i> Concluir e Confirmar Pgto</button>
+                <button type="button" id="btn-modal-reagendar" class="btn-acao" style="background: #3498db; font-size: 0.85rem;"><i class="fa-regular fa-calendar"></i> Reagendar Horário</button>
+                <button type="button" id="btn-modal-cancelar" class="btn-acao" style="background: #c0392b; font-size: 0.85rem;"><i class="fa-solid fa-ban"></i> Cancelar Agendamento</button>
+                <button type="button" id="btn-modal-lembrete" class="btn-acao" style="background: #27ae60; font-size: 0.85rem;"><i class="fa-brands fa-whatsapp"></i> Enviar Lembrete WhatsApp</button>
+                <button type="button" onclick="fecharModalGerenciar()" class="btn-acao" style="background: rgba(255,255,255,0.1); font-size: 0.85rem;">Fechar</button>
             </div>
         </div>
     </div>
-    <!-- MODAL AÇÕES -->
-    <div id="modal-acao-custom" class="custom-modal-overlay" style="z-index: 99999;">
+
+    <!-- MODAL NOVO AGENDAMENTO / MODO ENCAIXE (PRINT 4) -->
+    <div id="modal-novo-agendamento" class="custom-modal-overlay">
+        <div class="custom-modal" style="max-width: 440px; max-height: 90vh; overflow-y: auto;">
+            <h3 style="text-align: center; margin-bottom: 15px; font-size: 1.1rem; color: #FFF; text-transform: uppercase;">Agendamento Avulso (Barbeiro)</h3>
+            <div class="input-group"><label>Nome do Cliente:</label><input type="text" id="novo-cli-nome" placeholder="Nome do Cliente"></div>
+            <div class="input-group"><label>Telefone / WhatsApp:</label><input type="text" id="novo-cli-tel" placeholder="00000000000"></div>
+            
+            <div class="input-group">
+                <label>Serviços (Selecione um ou mais):</label>
+                <div id="lista-servicos-checkboxes" style="display: grid; grid-template-columns: 1fr 1fr; gap: 8px; max-height: 150px; overflow-y: auto; background: rgba(0,0,0,0.3); padding: 10px; border-radius: 8px;"></div>
+            </div>
+
+            <div style="background: rgba(0,0,0,0.3); padding: 10px; border-radius: 8px; margin-bottom: 12px; display: flex; justify-content: space-between; align-items: center;">
+                <span style="font-size: 0.85rem; color: #AAA;">Total Estimado:</span>
+                <strong id="novo-cli-total" style="font-size: 1.1rem; color: var(--primary-color);">R$ 0,00</strong>
+            </div>
+
+            <!-- MODO ENCAIXE CONFORME PRINT 4 -->
+            <div style="background: rgba(255, 102, 0, 0.05); border: 1px solid var(--primary-color); padding: 12px; border-radius: 8px; margin-bottom: 12px; display: flex; align-items: flex-start; gap: 10px; cursor: pointer;" onclick="document.getElementById('check-encaixe').click()">
+                <input type="checkbox" id="check-encaixe" style="width: 18px; height: 18px; margin-top: 2px;">
+                <div>
+                    <strong style="font-size: 0.9rem; display: block; color: var(--primary-color);">Modo Encaixe</strong>
+                    <span style="font-size: 0.75rem; color: #AAA;">Permite inserir em qualquer horário sem validar conflitos na agenda.</span>
+                </div>
+            </div>
+
+            <div class="input-group"><label>Data:</label><input type="date" id="novo-cli-data"></div>
+            <div class="input-group"><label>Horário:</label><input type="time" id="novo-cli-hora" value="09:00"></div>
+
+            <div style="display: flex; gap: 10px; margin-top: 15px;">
+                <button type="button" onclick="fecharModalNovoAgendamento()" class="btn-acao" style="background: rgba(255,255,255,0.1);">Cancelar</button>
+                <button type="button" onclick="salvarNovoAgendamentoBarbeiro()" class="btn-acao" style="background: #25D366;">Salvar Agendamento</button>
+            </div>
+        </div>
+    </div>
+
+    <!-- MODAL MENSALISTAS -->
+    <div id="modal-mensalistas" class="custom-modal-overlay">
         <div class="custom-modal" style="text-align: center; max-width: 350px;">
-            <i class="fa-solid fa-circle-question" style="font-size: 2.5rem; color: var(--primary-color); margin-bottom: 15px;"></i>
-            <h3 style="margin-bottom: 10px;">Confirmação</h3>
-            <p id="alerta-acao-texto" style="font-size: 0.95rem; margin-bottom: 25px; color: #CCC;"></p>
-            <div style="display: flex; gap: 10px;">
-                <button type="button" onclick="fecharModalAcao()" style="flex:1; padding: 12px; border-radius: 8px; border: 1px solid rgba(255,255,255,0.2); background: transparent; color: var(--text-color); cursor: pointer;">Cancelar</button>
-                <button type="button" onclick="confirmarAcaoPendente()" style="flex:1; padding: 12px; border-radius: 8px; border: none; background: var(--primary-color); color: #FFF; cursor: pointer;">Confirmar</button>
-            </div>
+            <i class="fa-solid fa-users" style="font-size: 2.5rem; color: var(--primary-color); margin-bottom: 15px;"></i>
+            <h3 style="margin-bottom: 10px;">Mensalistas</h3>
+            <p style="font-size: 0.9rem; color: #CCC; margin-bottom: 20px;">Módulo de gestão de clientes mensalistas em desenvolvimento.</p>
+            <button type="button" class="btn-acao" onclick="document.getElementById('modal-mensalistas').style.display='none'">Entendido</button>
         </div>
     </div>
-    <div id="modal-alerta-custom" class="custom-modal-overlay" style="z-index: 99999;">
-        <div class="custom-modal" style="text-align: center; max-width: 320px;">
-            <p id="alerta-custom-texto" style="font-size: 1rem; margin-bottom: 20px;"></p>
-            <button type="button" class="btn-acao" onclick="fecharAlertaCustom()">Entendido</button>
-        </div>
-    </div>
+
     <script src="script.js"></script>
 </body>
 </html>
