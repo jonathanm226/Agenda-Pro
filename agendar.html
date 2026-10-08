@@ -4,139 +4,88 @@
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=0">
     <title>Agendamento | Agenda Pro</title>
-
     <link rel="icon" type="image/svg+xml" href="logo.svg">
     <link rel="apple-touch-icon" href="logo.svg">
     <link rel="manifest" href="manifest.json">
     <meta name="theme-color" content="#121212">
-
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.1/css/all.min.css">
     <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
     <style>
-        :root {
-            --primary-color: #FF6600; 
-            --bg-color: #121212;
-            --box-color: #1A1A1A;
-            --text-color: #FFFFFF;
-        }
+        :root { --primary-color: #FF6600; --bg-color: #121212; --box-color: #1A1A1A; --text-color: #FFFFFF; }
         * { margin: 0; padding: 0; box-sizing: border-box; font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif; }
-        body { background-color: var(--bg-color); color: var(--text-color); margin: 0; padding: 0; display: flex; justify-content: center; }
+        body { background-color: var(--bg-color); color: var(--text-color); display: flex; justify-content: center; }
         .app-container { width: 100%; max-width: 500px; padding: 20px 15px 90px 15px; display: flex; flex-direction: column; gap: 20px; }
-        
-        .barber-header { text-align: center; background: var(--box-color); padding: 20px 15px; border-radius: 16px; border: 1px solid rgba(255,255,255,0.05); box-shadow: 0 4px 20px rgba(0,0,0,0.15); }
-        .brand-logo-container { width: 80px; height: 80px; margin: 0 auto 12px auto; border: 2px solid var(--primary-color); border-radius: 50%; overflow: hidden; background: var(--bg-color); box-shadow: 0 0 15px rgba(255, 102, 0, 0.2); }
+        .barber-header { text-align: center; background: var(--box-color); padding: 20px 15px; border-radius: 16px; border: 1px solid rgba(255,255,255,0.05); }
+        .brand-logo-container { width: 80px; height: 80px; margin: 0 auto 12px auto; border: 2px solid var(--primary-color); border-radius: 50%; overflow: hidden; background: var(--bg-color); }
         .brand-logo-container img { width: 100%; height: 100%; object-fit: cover; }
-        .barber-header h1 { font-size: 1.4rem; margin-bottom: 4px; font-weight: 700; }
-        .barber-header p { color: var(--primary-color); font-size: 0.85rem; font-weight: 600; text-transform: uppercase; letter-spacing: 1px; }
-        
-        .section { background: transparent; }
+        .barber-header h1 { font-size: 1.4rem; margin-bottom: 4px; }
+        .barber-header p { color: var(--primary-color); font-size: 0.85rem; font-weight: 600; text-transform: uppercase; }
         .section h2 { font-size: 1.05rem; margin-bottom: 12px; color: var(--text-color); display: flex; align-items: center; gap: 8px; }
         .section h2 i { color: var(--primary-color); }
-        
         .barbers-grid { display: grid; grid-template-columns: repeat(auto-fit, minmax(110px, 1fr)); gap: 10px; }
-        .barber-card { background: var(--box-color); border: 1px solid rgba(255,255,255,0.1); padding: 15px 10px; border-radius: 12px; text-align: center; cursor: pointer; transition: all 0.3s ease; }
-        .barber-card:hover { transform: translateY(-2px); border-color: rgba(255,255,255,0.3); }
-        .barber-card.active { border-color: var(--primary-color); background: rgba(255, 102, 0, 0.1); box-shadow: 0 4px 15px rgba(255, 102, 0, 0.15); }
-        
+        .barber-card { background: var(--box-color); border: 1px solid rgba(255,255,255,0.1); padding: 15px 10px; border-radius: 12px; text-align: center; cursor: pointer; transition: 0.3s; }
+        .barber-card.active { border-color: var(--primary-color); background: rgba(255, 102, 0, 0.1); }
         .services-grid { display: grid; gap: 10px; }
-        .service-card { background: var(--box-color); border: 1px solid rgba(255,255,255,0.1); padding: 16px; border-radius: 12px; display: flex; justify-content: space-between; align-items: center; cursor: pointer; transition: all 0.3s ease; }
-        .service-card:hover { border-color: rgba(255,255,255,0.3); }
+        .service-card { background: var(--box-color); border: 1px solid rgba(255,255,255,0.1); padding: 16px; border-radius: 12px; display: flex; justify-content: space-between; align-items: center; cursor: pointer; }
         .service-card.active { border-color: var(--primary-color); background: rgba(255, 102, 0, 0.1); }
-        .service-info h3 { font-size: 0.95rem; margin-bottom: 4px; display: flex; align-items: center; gap: 8px; font-weight: 600; }
+        .service-info h3 { font-size: 0.95rem; margin-bottom: 4px; font-weight: 600; }
         .service-info span { font-size: 0.75rem; color: #AAA; }
         .price { color: var(--primary-color); font-weight: 700; font-size: 1.05rem; }
-        
         .input-group { display: flex; flex-direction: column; gap: 6px; margin-bottom: 12px; }
         .input-group label { font-size: 0.85rem; color: #CCC; font-weight: 500; }
-        .input-group input, .input-group select { padding: 14px; background: var(--box-color); border: 1px solid rgba(255,255,255,0.1); border-radius: 10px; color: var(--text-color); font-size: 1rem; outline: none; transition: 0.3s; color-scheme: dark; }
-        .input-group input:focus, .input-group select:focus { border-color: var(--primary-color); background: rgba(255, 102, 0, 0.02); }
-        
-        .btn-whatsapp { width: 100%; padding: 16px; background: var(--primary-color); color: #FFF; border: none; border-radius: 12px; font-weight: 700; font-size: 1rem; cursor: pointer; display: flex; justify-content: center; align-items: center; gap: 8px; text-transform: uppercase; box-shadow: 0 4px 15px rgba(255, 102, 0, 0.3); transition: 0.3s; }
-        .btn-whatsapp:hover { opacity: 0.9; transform: translateY(-2px); }
-        
-        #resumo-flutuante { display: none; background: var(--box-color); border: 1px solid var(--primary-color); border-radius: 12px; padding: 15px; margin-bottom: 20px; justify-content: space-between; align-items: center; box-shadow: 0 4px 20px rgba(255, 102, 0, 0.15); }
-        
-        /* Modal Style */
-        .custom-modal-overlay { position: fixed; top: 0; left: 0; width: 100%; height: 100%; background: rgba(0,0,0,0.75); backdrop-filter: blur(5px); display: none; justify-content: center; align-items: center; z-index: 9999; }
-        .custom-modal { background: var(--box-color); border: 1px solid rgba(255,255,255,0.1); padding: 24px; border-radius: 16px; width: 90%; max-width: 400px; box-shadow: 0 10px 40px rgba(0,0,0,0.5); }
+        .input-group input, .input-group select { padding: 14px; background: var(--box-color); border: 1px solid rgba(255,255,255,0.1); border-radius: 10px; color: var(--text-color); font-size: 1rem; outline: none; color-scheme: dark; }
+        .input-group select option { background-color: var(--bg-color); color: var(--text-color); }
+        .btn-whatsapp { width: 100%; padding: 16px; background: var(--primary-color); color: #FFF; border: none; border-radius: 12px; font-weight: 700; font-size: 1rem; cursor: pointer; display: flex; justify-content: center; align-items: center; gap: 8px; text-transform: uppercase; }
+        #resumo-flutuante { display: none; background: var(--box-color); border: 1px solid var(--primary-color); border-radius: 12px; padding: 15px; margin-bottom: 20px; justify-content: space-between; align-items: center; }
+        .custom-modal-overlay { position: fixed; top: 0; left: 0; width: 100%; height: 100%; background: rgba(0,0,0,0.75); display: none; justify-content: center; align-items: center; z-index: 9999; }
+        .custom-modal { background: var(--box-color); border: 1px solid rgba(255,255,255,0.1); padding: 24px; border-radius: 16px; width: 90%; max-width: 400px; }
         .custom-modal h3 { margin-bottom: 15px; font-size: 1.2rem; text-align: center; color: var(--text-color); }
     </style>
 </head>
 <body>
-
     <div class="app-container" id="agendar-container">
-        
         <header class="barber-header">
-            <div class="brand-logo-container">
-                <img id="tenant-logo" src="" alt="Logo" style="display:none;">
-            </div>
+            <div class="brand-logo-container"><img id="tenant-logo" src="" alt="Logo" style="display:none;"></div>
             <h1 id="tenant-name">Carregando...</h1>
             <p id="tenant-slogan">Sistema de Agendamento</p>
         </header>
-
         <section class="section">
             <h2><i class="fa-solid fa-user-tie"></i> Escolha o Profissional</h2>
             <div id="barbers-grid" class="barbers-grid"></div>
         </section>
-
         <section class="section">
             <h2><i class="fa-solid fa-scissors"></i> Escolha os Serviços</h2>
             <div id="services-grid" class="services-grid"></div>
         </section>
-
         <div id="resumo-flutuante">
             <div>
-                <span id="resumo-qtd-servicos" style="font-size: 0.8rem; color: #AAA; display: block; margin-bottom: 2px;">Nenhum serviço</span>
+                <span id="resumo-qtd-servicos" style="font-size: 0.8rem; color: #AAA; display: block;">Nenhum serviço</span>
                 <strong id="resumo-valor-total" style="font-size: 1.2rem; color: var(--primary-color);">R$ 0,00</strong>
             </div>
-            <span id="resumo-duracao" style="font-size: 0.8rem; color: #FFF; background: rgba(255,255,255,0.1); padding: 6px 10px; border-radius: 6px; font-weight: 600;">0 min</span>
+            <span id="resumo-duracao" style="font-size: 0.8rem; color: #FFF; background: rgba(255,255,255,0.1); padding: 6px 10px; border-radius: 6px;">0 min</span>
         </div>
-
         <section class="section">
             <h2><i class="fa-regular fa-calendar-days"></i> Data e Horário</h2>
-            <div class="input-group">
-                <label for="date">Data Desejada:</label>
-                <input type="date" id="date" onchange="checkAvailableTimes()">
-            </div>
-            <div class="input-group">
-                <label for="time">Horário Disponível:</label>
-                <select id="time"></select>
-            </div>
+            <div class="input-group"><label for="date">Data Desejada:</label><input type="date" id="date" onchange="checkAvailableTimes()"></div>
+            <div class="input-group"><label for="time">Horário Disponível:</label><select id="time"></select></div>
         </section>
-
         <section class="section">
             <h2><i class="fa-regular fa-address-card"></i> Os Seus Dados</h2>
-            <div class="input-group">
-                <label for="client-name">Nome Completo:</label>
-                <input type="text" id="client-name" placeholder="Como devemos lhe chamar?" required>
-            </div>
-            <div class="input-group">
-                <label for="client-phone">WhatsApp (com DDD):</label>
-                <input type="tel" id="client-phone" placeholder="Ex: 31 99999-9999" required>
-            </div>
+            <div class="input-group"><label for="client-name">Nome Completo:</label><input type="text" id="client-name" placeholder="O seu nome" required></div>
+            <div class="input-group"><label for="client-phone">WhatsApp (com DDD):</label><input type="tel" id="client-phone" placeholder="Ex: 31 99999-9999" required></div>
         </section>
-
         <button class="btn-whatsapp" onclick="abrirModalConfirmacao()">Continuar Agendamento <i class="fa-solid fa-arrow-right"></i></button>
     </div>
-
-    <!-- Modal de Confirmação -->
     <div id="modal-confirmacao" class="custom-modal-overlay">
         <div class="custom-modal">
             <h3>Resumo do Agendamento</h3>
             <div id="resumo-agendamento" style="background: rgba(0,0,0,0.3); padding: 15px; border-radius: 12px; margin-bottom: 20px; font-size: 0.9rem; line-height: 1.6;"></div>
-            
             <div style="display: flex; flex-direction: column; gap: 10px;">
-                <button id="btn-confirmar-agendamento" onclick="confirmarEEnviar()" style="padding: 14px; border-radius: 10px; font-weight: bold; border: none; background: #25D366; color: #FFF; cursor: pointer; font-size: 0.95rem; display: flex; justify-content: center; align-items: center; gap: 8px;">
-                    <i class="fa-brands fa-whatsapp"></i> Confirmar e Enviar
-                </button>
-                <button onclick="fecharModalConfirmacao()" style="padding: 14px; border-radius: 10px; font-weight: bold; border: 1px solid rgba(255,255,255,0.2); background: transparent; color: #FFF; cursor: pointer; font-size: 0.95rem;">
-                    Voltar e Editar
-                </button>
+                <button id="btn-confirmar-agendamento" onclick="confirmarEEnviar()" style="padding: 14px; border-radius: 10px; font-weight: bold; border: none; background: #25D366; color: #FFF; cursor: pointer;"><i class="fa-brands fa-whatsapp"></i> Confirmar e Enviar</button>
+                <button onclick="fecharModalConfirmacao()" style="padding: 14px; border-radius: 10px; font-weight: bold; border: 1px solid rgba(255,255,255,0.2); background: transparent; color: #FFF; cursor: pointer;">Voltar e Editar</button>
             </div>
         </div>
     </div>
-
-    <!-- Modal de Alerta Genérico -->
     <div id="modal-alerta-custom" class="custom-modal-overlay">
         <div class="custom-modal" style="text-align: center; max-width: 320px;">
             <i class="fa-solid fa-circle-exclamation" style="font-size: 2.5rem; color: var(--primary-color); margin-bottom: 15px;"></i>
@@ -144,7 +93,6 @@
             <button onclick="fecharAlertaCustom()" style="padding: 12px; width: 100%; border-radius: 8px; font-weight: bold; border: none; background: var(--primary-color); color: #FFF; cursor: pointer;">Entendido</button>
         </div>
     </div>
-
     <script src="script.js"></script>
 </body>
 </html>
