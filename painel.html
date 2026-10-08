@@ -4,44 +4,51 @@
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=0">
     <title>Agenda pro! | Painel Central</title>
+
+    <!-- Ícone e Manifesto PWA -->
+    <link rel="icon" type="image/svg+xml" href="logo.svg">
+    <link rel="apple-touch-icon" href="logo.svg">
+    <link rel="manifest" href="manifest.json">
+    <meta name="theme-color" content="#0072FF">
+
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.1/css/all.min.css">
     <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
     <style>
         :root { 
-            --primary-color: #FF6600; 
-            --bg-color: #121212;
-            --box-color: #1A1A1A;
+            --primary-color: #0072FF; 
+            --bg-color: #0B132B;
+            --box-color: #1C2541;
             --text-color: #FFFFFF;
         }
         * { margin: 0; padding: 0; box-sizing: border-box; font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif; }
         body { background-color: var(--bg-color); color: var(--text-color); display: flex; justify-content: center; min-height: 100vh; }
         .app-container { width: 100%; max-width: 500px; padding: 10px; padding-bottom: 90px; }
         
-        .barber-header { text-align: center; background: var(--box-color); padding: 15px; border-radius: 8px; margin-bottom: 15px; border-bottom: 1px solid #333; position: relative; }
+        .barber-header { text-align: center; background: var(--box-color); padding: 15px; border-radius: 8px; margin-bottom: 15px; border-bottom: 1px solid #2B3A67; position: relative; }
         .brand-logo-container { width: 70px; height: 70px; background: var(--bg-color); border: 2px solid var(--primary-color); border-radius: 50%; display: flex; align-items: center; justify-content: center; margin: 0 auto 10px auto; overflow: hidden; }
         .brand-logo-container img { width: 100%; height: 100%; object-fit: cover; }
         
-        .btn-engrenagem { position: absolute; top: 15px; right: 15px; background: var(--bg-color); border: 1px solid #444; color: var(--text-color); width: 35px; height: 35px; border-radius: 50%; display: flex; align-items: center; justify-content: center; cursor: pointer; font-size: 1rem; }
+        .btn-engrenagem { position: absolute; top: 15px; right: 15px; background: var(--bg-color); border: 1px solid #2B3A67; color: var(--text-color); width: 35px; height: 35px; border-radius: 50%; display: flex; align-items: center; justify-content: center; cursor: pointer; font-size: 1rem; }
         .btn-engrenagem:hover { border-color: var(--primary-color); color: var(--primary-color); }
 
         .section { margin-bottom: 20px; }
         .input-group { display: flex; flex-direction: column; gap: 5px; margin-bottom: 10px; }
         .input-group label { font-size: 0.8rem; color: #AAA; }
-        input, select { width: 100%; padding: 10px; background: var(--bg-color); border: 1px solid #333; border-radius: 6px; color: var(--text-color); outline: none; }
+        input, select { width: 100%; padding: 10px; background: var(--bg-color); border: 1px solid #2B3A67; border-radius: 6px; color: var(--text-color); outline: none; }
         input:focus, select:focus { border-color: var(--primary-color); }
         
         .btn-acao { width: 100%; padding: 12px; background-color: var(--primary-color); color: #FFF; border: none; border-radius: 6px; font-weight: bold; cursor: pointer; text-transform: uppercase; }
         
-        .finance-card { background: var(--box-color); border: 1px solid #333; border-radius: 8px; padding: 12px; margin-bottom: 15px; }
+        .finance-card { background: var(--box-color); border: 1px solid #2B3A67; border-radius: 8px; padding: 12px; margin-bottom: 15px; }
         .finance-header { display: flex; justify-content: space-between; align-items: center; margin-bottom: 10px; }
         .finance-value { font-size: 1.3rem; font-weight: bold; color: #25D366; margin-bottom: 8px; }
-        .finance-breakdown { font-size: 0.75rem; color: #AAA; border-top: 1px solid #333; padding-top: 6px; display: flex; justify-content: space-between; flex-wrap: wrap; gap: 5px; }
+        .finance-breakdown { font-size: 0.75rem; color: #AAA; border-top: 1px solid #2B3A67; padding-top: 6px; display: flex; justify-content: space-between; flex-wrap: wrap; gap: 5px; }
 
-        .admin-atendimento-item { background: var(--box-color); border: 1px solid #333; border-radius: 6px; padding: 10px; margin-bottom: 8px; font-size: 0.8rem; display: flex; justify-content: space-between; align-items: center; }
+        .admin-atendimento-item { background: var(--box-color); border: 1px solid #2B3A67; border-radius: 6px; padding: 10px; margin-bottom: 8px; font-size: 0.8rem; display: flex; justify-content: space-between; align-items: center; }
         
         .week-horizontal-container { display: grid; grid-template-columns: repeat(6, 1fr); gap: 4px; overflow-x: auto; }
-        .day-column { background: var(--box-color); border: 1px solid #333; border-radius: 4px; padding: 4px; display: flex; flex-direction: column; gap: 4px; }
-        .day-header { font-size: 0.65rem; text-align: center; font-weight: bold; border-bottom: 1px solid #333; padding-bottom: 4px; margin-bottom: 4px; }
+        .day-column { background: var(--box-color); border: 1px solid #2B3A67; border-radius: 4px; padding: 4px; display: flex; flex-direction: column; gap: 4px; }
+        .day-header { font-size: 0.65rem; text-align: center; font-weight: bold; border-bottom: 1px solid #2B3A67; padding-bottom: 4px; margin-bottom: 4px; }
         .slot-item { background: var(--bg-color); padding: 4px; border-radius: 4px; font-size: 0.6rem; border-left: 3px solid #555; cursor: pointer; }
         .slot-item.booked { border-left-color: #3498db; background: #192530; }
         .slot-item.mensalista { border-left-color: #9b59b6; background: #261933; }
@@ -60,7 +67,7 @@
             <div id="admin-gear-container"></div>
             <div class="brand-logo-container"><img id="painel-logo" src="" alt="Logo" style="display:none;"></div>
             <h1 style="font-size: 1.2rem; margin-bottom: 2px;" id="painel-nome-negocio">Carregando...</h1>
-            <p style="font-size: 0.75rem; color: var(--primary-color); font-weight: 600;">Agenda pro! Gestão inteligente</p>
+            <p style="font-size: 0.75rem; color: var(--primary-color); font-weight: 600;">Agenda pro! | JM Tech Systems</p>
         </header>
 
         <section id="login-section" class="section">
@@ -99,11 +106,11 @@
                 <button class="btn-acao" onclick="abrirModalMensalista()" style="font-size: 0.7rem; background: #9b59b6;">+ Mensalista</button>
             </div>
 
-            <div style="background: var(--box-color); padding: 8px; border-radius: 6px; margin-bottom: 10px; text-align: center; border: 1px solid #333;">
+            <div style="background: var(--box-color); padding: 8px; border-radius: 6px; margin-bottom: 10px; text-align: center; border: 1px solid #2B3A67;">
                 <span id="label-periodo-semana" style="font-size: 0.75rem; color: var(--text-color); font-weight: bold; display: block; margin-bottom: 5px;"></span>
                 <div style="display: flex; gap: 5px;">
-                    <button class="btn-acao" onclick="mudarSemana(-1)" style="font-size: 0.7rem; background: #242424; border: 1px solid #444;">Anterior</button>
-                    <button class="btn-acao" onclick="mudarSemana(1)" style="font-size: 0.7rem; background: #242424; border: 1px solid #444;">Próxima</button>
+                    <button class="btn-acao" onclick="mudarSemana(-1)" style="font-size: 0.7rem; background: #121212; border: 1px solid #2B3A67;">Anterior</button>
+                    <button class="btn-acao" onclick="mudarSemana(1)" style="font-size: 0.7rem; background: #121212; border: 1px solid #2B3A67;">Próxima</button>
                 </div>
             </div>
 
@@ -134,15 +141,15 @@
                 </div>
             </div>
 
-            <div style="background: var(--box-color); padding: 8px; border-radius: 6px; margin-bottom: 12px; text-align: center; border: 1px solid #333;">
+            <div style="background: var(--box-color); padding: 8px; border-radius: 6px; margin-bottom: 12px; text-align: center; border: 1px solid #2B3A67;">
                 <span id="label-periodo-admin" style="font-size: 0.75rem; color: var(--text-color); font-weight: bold; display: block; margin-bottom: 5px;"></span>
                 <div style="display: flex; gap: 5px;">
-                    <button class="btn-acao" onclick="mudarSemanaAdmin(-1)" style="font-size: 0.7rem; background: #242424; border: 1px solid #444;">Semana Anterior</button>
-                    <button class="btn-acao" onclick="mudarSemanaAdmin(1)" style="font-size: 0.7rem; background: #242424; border: 1px solid #444;">Próxima Semana</button>
+                    <button class="btn-acao" onclick="mudarSemanaAdmin(-1)" style="font-size: 0.7rem; background: #121212; border: 1px solid #2B3A67;">Semana Anterior</button>
+                    <button class="btn-acao" onclick="mudarSemanaAdmin(1)" style="font-size: 0.7rem; background: #121212; border: 1px solid #2B3A67;">Próxima Semana</button>
                 </div>
             </div>
 
-            <div style="background: var(--box-color); padding: 12px; border-radius: 8px; border: 1px solid #333;">
+            <div style="background: var(--box-color); padding: 12px; border-radius: 8px; border: 1px solid #2B3A67;">
                 <h3 style="font-size: 0.85rem; color: var(--primary-color); margin-bottom: 10px;">Atendimentos da Semana</h3>
                 <div id="lista-atendimentos-admin" style="display: flex; flex-direction: column; gap: 6px; max-height: 350px; overflow-y: auto;">
                     <span style="font-size: 0.75rem; color: #777;">A carregar agendamentos...</span>
@@ -177,7 +184,7 @@
 
             <div class="input-group">
                 <label>Texto "Sobre a Empresa":</label>
-                <input type="text" id="config-sobre" placeholder="Ex: Tradição, estilo e o melhor corte da região.">
+                <input type="text" id="config-sobre" placeholder="Ex: Tradição, estilo e o melhor serviço da região.">
             </div>
 
             <div class="input-group">
@@ -210,7 +217,7 @@
                 <div class="input-group"><label>Cor das Letras:</label><input type="color" id="config-cor-letras" style="height: 35px; cursor:pointer;"></div>
             </div>
 
-            <hr style="border: 0; border-top: 1px solid #333; margin: 12px 0;">
+            <hr style="border: 0; border-top: 1px solid #2B3A67; margin: 12px 0;">
 
             <h4 style="font-size: 0.85rem; color: var(--primary-color); margin-bottom: 6px;">Profissionais (Nome e WhatsApp)</h4>
             <div id="lista-profissionais-config" style="display: flex; flex-direction: column; gap: 4px; margin-bottom: 6px;"></div>
@@ -248,7 +255,7 @@
             <h3 style="margin-bottom: 10px;">Gerenciar Atendimento</h3>
             <div id="action-modal-details" style="font-size: 0.85rem; margin-bottom: 15px; background: var(--bg-color); padding: 10px; border-radius: 6px;"></div>
             
-            <div id="secao-conclusao-pagamento" style="display:none; margin-bottom: 15px; background: var(--bg-color); padding: 10px; border-radius: 6px; border: 1px solid #333;">
+            <div id="secao-conclusao-pagamento" style="display:none; margin-bottom: 15px; background: var(--bg-color); padding: 10px; border-radius: 6px; border: 1px solid #2B3A67;">
                 <label style="font-size: 0.8rem; color: var(--primary-color); font-weight: bold; display: block; margin-bottom: 5px;">Forma de Pagamento:</label>
                 <select id="select-forma-pagamento" style="margin-bottom: 10px;">
                     <option value="Pix">💠 Pix</option>
@@ -259,7 +266,7 @@
                 <button class="btn-acao" style="background: #25D366; font-size: 0.8rem;" onclick="confirmarConclusaoComPagamento()">Confirmar Conclusão</button>
             </div>
 
-            <div id="secao-reagendamento" style="display:none; margin-bottom: 15px; background: var(--bg-color); padding: 10px; border-radius: 6px; border: 1px solid #333;">
+            <div id="secao-reagendamento" style="display:none; margin-bottom: 15px; background: var(--bg-color); padding: 10px; border-radius: 6px; border: 1px solid #2B3A67;">
                 <label style="font-size: 0.8rem; color: #3498db; font-weight: bold; display: block; margin-bottom: 5px;">Reagendar Atendimento:</label>
                 <div class="input-group"><input type="date" id="reagendar-data"></div>
                 <div class="input-group"><input type="time" id="reagendar-horario"></div>
@@ -271,7 +278,7 @@
                 <button class="btn-acao" style="background: #3498db;" onclick="mostrarSecaoReagendamento()">Reagendar</button>
                 <button class="btn-acao" style="background: #25D366;" onclick="enviarLembreteWhatsApp()"><i class="fa-brands fa-whatsapp"></i> Lembrete WhatsApp</button>
                 <button class="btn-acao" style="background: #e74c3c;" onclick="executarAcaoAtendimento('cancelado')">Cancelar Atendimento</button>
-                <button class="btn-acao" style="background: #333;" onclick="fecharModalAtendimento()">Fechar</button>
+                <button class="btn-acao" style="background: #121212;" onclick="fecharModalAtendimento()">Fechar</button>
             </div>
         </div>
     </div>
@@ -307,7 +314,7 @@
             </div>
             <div style="display: flex; gap: 5px;">
                 <button class="btn-acao" onclick="salvarAgendamentoManual()">Salvar</button>
-                <button class="btn-acao" onclick="fecharModalAgendamentoManual()" style="background: #333;">Cancelar</button>
+                <button class="btn-acao" onclick="fecharModalAgendamentoManual()" style="background: #121212;">Cancelar</button>
             </div>
         </div>
     </div>
