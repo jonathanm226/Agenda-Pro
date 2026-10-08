@@ -6,17 +6,20 @@ const _supabase = supabase.createClient(SUPABASE_URL, SUPABASE_KEY);
 const urlParams = new URLSearchParams(window.location.search);
 const TENANT_ATIVO = urlParams.get('slug') || "padrao";
 
-// Estrutura Base
+// Estrutura Base 100% Limpa e Dinâmica
 let tenantConfig = { 
-    nome_empresa: "Meu Negócio", 
+    nome_empresa: "Meu Estabelecimento", 
     sobre: "",
     endereco: "",
     horario_inicio: "08:00",
     horario_fim: "19:00",
     logo_url: "", 
-    cor_primaria: "#FF6600", cor_fundo: "#121212", cor_caixas: "#1A1A1A", cor_letras: "#FFFFFF",
-    barbeiros: [{nome: "Willian", whatsapp: "31999999999", inicio: "09:00", fim: "18:00", senha: ""}], 
-    servicos: { "Corte de Cabelo": { price: 45, duration: 40 } },
+    cor_primaria: "#FF6600", 
+    cor_fundo: "#121212", 
+    cor_caixas: "#1A1A1A", 
+    cor_letras: "#FFFFFF",
+    barbeiros: [], 
+    servicios: {},
     senhas_usuarios: { "admin": "admin123" }
 };
 
@@ -67,9 +70,6 @@ function fecharAlertaCustom() {
     if(modalCustom) modalCustom.style.display = "none";
 }
 
-// ==========================================
-// CONTROLADOR DE ABAS DO MODAL
-// ==========================================
 function mudarTabConfig(tabName, btnElement) {
     document.querySelectorAll('.config-tab-content').forEach(el => el.style.display = 'none');
     document.getElementById(`tab-${tabName}`).style.display = 'block';
@@ -82,9 +82,6 @@ function mudarTabConfig(tabName, btnElement) {
     btnElement.style.color = '#FFF';
 }
 
-// ==========================================
-// LOGIN & SEGURANÇA
-// ==========================================
 function fazerLogin() {
     const user = document.getElementById("login-usuario").value.trim().toLowerCase();
     const pass = document.getElementById("login-senha").value.trim();
@@ -118,15 +115,13 @@ function fazerLogin() {
             }
         }
 
-        // Mensagem de erro solicitada
+        // Mensagem de erro exata solicitada
         mostrarAlerta("Senha incorreta, verifique e tente novamente.");
     }
 }
+
 function fazerLogout() { window.location.reload(); }
 
-// ==========================================
-// ALTERAÇÃO DE SENHA PARA QUALQUER UTILIZADOR
-// ==========================================
 function abrirModalTrocarSenha() {
     document.getElementById("nova-senha-input").value = "";
     document.getElementById("modal-trocar-senha").style.display = "flex";
@@ -134,6 +129,7 @@ function abrirModalTrocarSenha() {
 function fecharModalTrocarSenha() {
     document.getElementById("modal-trocar-senha").style.display = "none";
 }
+
 async function salvarNovaSenha() {
     const novaSenha = document.getElementById("nova-senha-input").value.trim();
     if(!novaSenha) return mostrarAlerta("Digite a nova palavra-passe.");
@@ -161,10 +157,10 @@ async function salvarNovaSenha() {
     }
 }
 
-// ==========================================
-// CONFIGURAÇÕES DO ADMIN
-// ==========================================
-function abrirConfiguracoesAdmin() { document.getElementById("modal-config-admin").style.display = "flex"; }
+function abrirConfiguracoesAdmin() { 
+    document.getElementById("modal-config-admin").style.display = "flex";
+    renderizarAdminParametros();
+}
 function fecharConfiguracoesAdmin() { document.getElementById("modal-config-admin").style.display = "none"; }
 
 function aplicarCores(primaria, fundo, caixas, letras) {
@@ -219,7 +215,7 @@ function renderListasConfig() {
 
     const listS = document.getElementById("lista-servicos-config");
     listS.innerHTML = "";
-    Object.keys(tenantConfig.servicos).forEach(nome => {
+    Object.keys(tenantConfig.servicos || {}).forEach(nome => {
         const s = tenantConfig.servicos[nome];
         listS.innerHTML += `<div style="background:rgba(255,255,255,0.05); padding:10px; border-radius:8px; display:flex; justify-content:space-between; font-size:0.85rem; align-items:center;">
             <span>${nome} <strong style="color:var(--primary-color);">R$ ${s.price}</strong> (${s.duration}m)</span><button type="button" style="color:#e74c3c; background:none; border:none; cursor:pointer;" onclick="removerServico('${nome}')"><i class="fa-solid fa-trash"></i></button></div>`;
@@ -233,6 +229,7 @@ function adicionarProfissional() {
     const fimVal = document.getElementById("novo-profissional-fim").value;
 
     if (nomeVal) {
+        if(!tenantConfig.barbeiros) tenantConfig.barbeiros = [];
         tenantConfig.barbeiros.push({ nome: nomeVal, whatsapp: wppVal, inicio: inicioVal, fim: fimVal });
         document.getElementById("novo-profissional-nome").value = "";
         document.getElementById("novo-profissional-wpp").value = "";
@@ -245,7 +242,11 @@ function adicionarServico() {
     const nome = document.getElementById("novo-servico-nome").value.trim();
     const p = parseFloat(document.getElementById("novo-servico-preco").value);
     const d = parseInt(document.getElementById("novo-servico-tempo").value);
-    if (nome && p && d) { tenantConfig.servicos[nome] = { price: p, duration: d }; renderListasConfig(); }
+    if (nome && p && d) { 
+        if(!tenantConfig.servicos) tenantConfig.servicos = {};
+        tenantConfig.servicos[nome] = { price: p, duration: d }; 
+        renderListasConfig(); 
+    }
 }
 function removerServico(nome) { delete tenantConfig.servicos[nome]; renderListasConfig(); }
 
@@ -306,14 +307,10 @@ async function salvarConfiguracoesGerais() {
     }
 }
 
-// ==========================================
-// AGENDA DO PROFISSIONAL COM BASE NO HORÁRIO DE TRABALHO
-// ==========================================
 function carregarAgendaBarbeiro() {
     const container = document.getElementById("grade-semanal-container");
     if (!container) return;
 
-    // Encontra o horário configurado para o profissional logado
     const profObj = (tenantConfig.barbeiros || []).find(b => (typeof b === 'object' ? b.nome : b) === usuarioLogado);
     let horaInicio = (profObj && profObj.inicio) ? profObj.inicio : (tenantConfig.horario_inicio || "08:00");
     let horaFim = (profObj && profObj.fim) ? profObj.fim : (tenantConfig.horario_fim || "19:00");
@@ -321,7 +318,7 @@ function carregarAgendaBarbeiro() {
     container.innerHTML = `
         <div style="grid-column: span 6; background: var(--box-color); padding: 12px; border-radius: 8px; text-align: center;">
             <p style="font-size: 0.85rem; color: #CCC;">Horário de expediente configurado: <strong>${horaInicio} às ${horaFim}</strong></p>
-            <p style="font-size: 0.75rem; color: var(--primary-color); margin-top: 4px;">Clique num horário para bloquear/desbloquear a disponibilidade.</p>
+            <p style="font-size: 0.75rem; color: var(--primary-color); margin-top: 4px;">Clique num horário para gerir a disponibilidade.</p>
         </div>
     `;
 }
