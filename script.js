@@ -117,7 +117,7 @@ function fazerLogin() {
 function fazerLogout() { window.location.reload(); }
 
 // ==========================================
-// CONFIGURAÇÕES DO ADMIN
+// CONFIGURAÇÕES DO ADMIN (COM AJUSTE INTELIGENTE DE COR DE TEXTO PARA FUNDOS CLAROS)
 // ==========================================
 function abrirConfiguracoesAdmin() { document.getElementById("modal-config-admin").style.display = "flex"; }
 function fecharConfiguracoesAdmin() { document.getElementById("modal-config-admin").style.display = "none"; }
