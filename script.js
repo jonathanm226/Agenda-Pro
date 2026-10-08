@@ -110,13 +110,6 @@ function fazerLogin() {
                 return;
             }
         }
-        
-        if(user === 'willian' && pass === 'willian123'){
-            usuarioLogado = "Willian";
-            document.getElementById("login-section").style.display = "none";
-            document.getElementById("dashboard-barbeiro").style.display = "block";
-            return;
-        }
 
         mostrarAlerta("Credenciais de acesso inválidas. Dica: A palavra-passe é o seu nome junto de 123.");
     }
