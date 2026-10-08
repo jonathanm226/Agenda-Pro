@@ -3,21 +3,28 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Agendamento | Plataforma</title>
-    <link rel="stylesheet" href="style.css"> <!-- O teu CSS externo opcional -->
+    <title>Agendamento | Agenda Pro</title>
+
+    <!-- Ícone e Manifesto PWA -->
+    <link rel="icon" type="image/svg+xml" href="logo.svg">
+    <link rel="apple-touch-icon" href="logo.svg">
+    <link rel="manifest" href="manifest.json">
+    <meta name="theme-color" content="#0072FF">
+
+    <link rel="stylesheet" href="style.css">
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.1/css/all.min.css">
     <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
     <style>
         :root {
-            --primary-color: #FF6600; 
-            --bg-dark: #121212;
-            --card-bg: #1A1A1A;
+            --primary-color: #0072FF; 
+            --bg-dark: #0B132B;
+            --card-bg: #1C2541;
             --text-light: #FFFFFF;
         }
         body { background-color: var(--bg-dark); color: var(--text-light); font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif; margin: 0; padding: 0; }
         .app-container { max-width: 500px; margin: 0 auto; padding: 15px; }
         .barber-header { text-align: center; margin-bottom: 20px; }
-        .brand-logo-container { width: 80px; height: 80px; margin: 0 auto 10px auto; border: 2px solid var(--primary-color); border-radius: 50%; overflow: hidden; }
+        .brand-logo-container { width: 80px; height: 80px; margin: 0 auto 10px auto; border: 2px solid var(--primary-color); border-radius: 50%; overflow: hidden; background: var(--card-bg); }
         .brand-logo-container img { width: 100%; height: 100%; object-fit: cover; }
         .brand-info h1 { font-size: 1.5rem; margin: 0 0 5px 0; }
         .brand-info p { color: var(--primary-color); font-size: 0.9rem; margin: 0; }
@@ -27,19 +34,19 @@
         
         .barbers-grid, .services-grid { display: grid; gap: 10px; }
         .barbers-grid { grid-template-columns: repeat(auto-fit, minmax(120px, 1fr)); }
-        .barber-card, .service-card { background: var(--card-bg); border: 1px solid #333; padding: 15px; border-radius: 8px; text-align: center; cursor: pointer; transition: 0.2s; }
+        .barber-card, .service-card { background: var(--card-bg); border: 1px solid #2B3A67; padding: 15px; border-radius: 8px; text-align: center; cursor: pointer; transition: 0.2s; }
         .service-card { display: flex; justify-content: space-between; align-items: center; text-align: left; }
-        .barber-card.active, .service-card.active { border-color: var(--primary-color); background: #2D221B; }
+        .barber-card.active, .service-card.active { border-color: var(--primary-color); background: #24305E; }
         .price { color: var(--primary-color); font-weight: bold; }
         
         .input-group { display: flex; flex-direction: column; gap: 5px; margin-bottom: 15px; }
-        .input-group input, .input-group select { padding: 12px; background: var(--card-bg); border: 1px solid #333; border-radius: 6px; color: #FFF; outline: none; }
+        .input-group input, .input-group select { padding: 12px; background: var(--card-bg); border: 1px solid #2B3A67; border-radius: 6px; color: #FFF; outline: none; }
         .input-group input:focus, .input-group select:focus { border-color: var(--primary-color); }
         
         .btn-whatsapp { width: 100%; padding: 15px; background: var(--primary-color); color: #FFF; border: none; border-radius: 8px; font-weight: bold; font-size: 1rem; cursor: pointer; }
         
         #modal-confirmacao { position: fixed; top: 0; left: 0; width: 100%; height: 100%; background: rgba(0,0,0,0.8); display: none; justify-content: center; align-items: center; z-index: 9999; }
-        .modal-content { background: var(--card-bg); border: 1px solid #333; padding: 20px; border-radius: 10px; width: 90%; max-width: 400px; }
+        .modal-content { background: var(--card-bg); border: 1px solid #2B3A67; padding: 20px; border-radius: 10px; width: 90%; max-width: 400px; }
     </style>
 </head>
 <body>
@@ -49,7 +56,7 @@
         <header class="barber-header">
             <div class="brand-info">
                 <div class="brand-logo-container">
-                    <img id="tenant-logo" src="" alt="Logo">
+                    <img id="tenant-logo" src="" alt="Logo" style="display:none;">
                 </div>
                 <div>
                     <h1 id="tenant-name">Carregando...</h1>
@@ -68,12 +75,12 @@
             <div id="services-grid" class="services-grid"></div>
         </section>
 
-        <div id="resumo-flutuante" style="display: none; background: #242424; border: 1px solid #333; border-radius: 8px; padding: 12px 15px; margin-bottom: 20px; justify-content: space-between; align-items: center;">
+        <div id="resumo-flutuante" style="display: none; background: #1C2541; border: 1px solid #2B3A67; border-radius: 8px; padding: 12px 15px; margin-bottom: 20px; justify-content: space-between; align-items: center;">
             <div>
                 <span id="resumo-qtd-servicos" style="font-size: 0.85rem; color: #AAAAAA; display: block;">Nenhum serviço selecionado</span>
                 <strong id="resumo-valor-total" style="font-size: 1.1rem; color: #FFFFFF;">R$ 0,00</strong>
             </div>
-            <span id="resumo-duracao" style="font-size: 0.8rem; color: #FFF; background: #333; padding: 4px 8px; border-radius: 4px; font-weight: bold;">0 min</span>
+            <span id="resumo-duracao" style="font-size: 0.8rem; color: #FFF; background: #2B3A67; padding: 4px 8px; border-radius: 4px; font-weight: bold;">0 min</span>
         </div>
 
         <section class="section">
@@ -92,7 +99,7 @@
             <h2>4. Os Seus Dados</h2>
             <div class="input-group">
                 <label for="client-phone">WhatsApp / Telefone:</label>
-                <input type="tel" id="client-phone" placeholder="Seu WhatsApp (com DDD)" required onblur="buscarClientePorTelefone()">
+                <input type="tel" id="client-phone" placeholder="Seu WhatsApp (com DDD)" required>
             </div>
             <div class="input-group">
                 <label for="client-name">Nome Completo:</label>
@@ -107,10 +114,10 @@
     <div id="modal-confirmacao">
         <div class="modal-content">
             <h3 style="margin-top: 0;">Confirmar Agendamento</h3>
-            <div id="resumo-agendamento" style="background: #242424; padding: 15px; border-radius: 8px; margin-bottom: 15px; font-size: 0.9rem;"></div>
+            <div id="resumo-agendamento" style="background: #0B132B; padding: 15px; border-radius: 8px; margin-bottom: 15px; font-size: 0.9rem;"></div>
             <div style="display: flex; flex-direction: column; gap: 10px;">
                 <button onclick="confirmarEEnviar()" style="padding: 12px; border-radius: 8px; font-weight: bold; border: none; background: #25D366; color: #FFF; cursor: pointer;">Confirmar e Enviar</button>
-                <button onclick="fecharModalConfirmacao()" style="padding: 12px; border-radius: 8px; font-weight: bold; border: 1px solid #444; background: #1A1A1A; color: #FFF; cursor: pointer;">Voltar</button>
+                <button onclick="fecharModalConfirmacao()" style="padding: 12px; border-radius: 8px; font-weight: bold; border: 1px solid #2B3A67; background: #1C2541; color: #FFF; cursor: pointer;">Voltar</button>
             </div>
         </div>
     </div>
