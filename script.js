@@ -9,6 +9,8 @@ const TENANT_ATIVO = urlParams.get('slug') || "padrao";
 // Estrutura Base
 let tenantConfig = { 
     nome_empresa: "Meu Negócio", 
+    sobre: "",
+    endereco: "",
     logo_url: "", 
     cor_primaria: "#FF6600", cor_fundo: "#121212", cor_caixas: "#1A1A1A", cor_letras: "#FFFFFF",
     barbeiros: [{nome: "Willian", whatsapp: "31999999999"}], 
@@ -117,7 +119,7 @@ function fazerLogin() {
 function fazerLogout() { window.location.reload(); }
 
 // ==========================================
-// CONFIGURAÇÕES DO ADMIN (COM AJUSTE INTELIGENTE DE COR DE TEXTO PARA FUNDOS CLAROS)
+// CONFIGURAÇÕES DO ADMIN
 // ==========================================
 function abrirConfiguracoesAdmin() { document.getElementById("modal-config-admin").style.display = "flex"; }
 function fecharConfiguracoesAdmin() { document.getElementById("modal-config-admin").style.display = "none"; }
@@ -136,6 +138,8 @@ function aplicarCores(primaria, fundo, caixas, letras) {
 
 function renderizarAdminParametros() {
     document.getElementById("config-nome-empresa").value = tenantConfig.nome_empresa || "";
+    document.getElementById("config-sobre").value = tenantConfig.sobre || "";
+    document.getElementById("config-endereco").value = tenantConfig.endereco || "";
     document.getElementById("config-cor-primaria").value = tenantConfig.cor_primaria || "#FF6600";
     document.getElementById("config-cor-fundo").value = tenantConfig.cor_fundo || "#121212";
     document.getElementById("config-cor-caixas").value = tenantConfig.cor_caixas || "#1A1A1A";
@@ -199,6 +203,8 @@ async function salvarConfiguracoesGerais() {
     btn.disabled = true;
 
     tenantConfig.nome_empresa = document.getElementById("config-nome-empresa").value.trim();
+    tenantConfig.sobre = document.getElementById("config-sobre").value.trim();
+    tenantConfig.endereco = document.getElementById("config-endereco").value.trim();
     tenantConfig.cor_primaria = document.getElementById("config-cor-primaria").value;
     tenantConfig.cor_fundo = document.getElementById("config-cor-fundo").value || "#121212";
     tenantConfig.cor_caixas = document.getElementById("config-cor-caixas").value || "#1A1A1A";
@@ -219,6 +225,8 @@ async function salvarConfiguracoesGerais() {
     const { error } = await _supabase.from("saas_estabelecimentos").upsert({
         slug: TENANT_ATIVO,
         nome_empresa: tenantConfig.nome_empresa,
+        sobre: tenantConfig.sobre,
+        endereco: tenantConfig.endereco,
         logo_url: tenantConfig.logo_url,
         cor_primaria: tenantConfig.cor_primaria,
         cor_fundo: tenantConfig.cor_fundo,
