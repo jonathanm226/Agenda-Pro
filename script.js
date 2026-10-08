@@ -24,15 +24,6 @@ document.addEventListener("DOMContentLoaded", async () => {
     await carregarTenantConfig();
     aplicarIdentidadeVisual(tenantConfig);
     
-    // Se estiver na Landing ou Agendar
-    if (document.getElementById("agendar-container")) {
-        const logo = document.getElementById("tenant-logo");
-        if(logo && tenantConfig.logo_url) { logo.src = tenantConfig.logo_url; logo.style.display = "block"; }
-        document.getElementById("tenant-name").textContent = tenantConfig.nome_empresa;
-        // Inicia funções do cliente (omiti a reescrita do checkAvailableTimes para brevidade, mantenha o que estava a funcionar no ficheiro anterior)
-    }
-    
-    // Se estiver no Painel
     if (document.getElementById("painel-container")) {
         const logo = document.getElementById("painel-logo");
         if(logo && tenantConfig.logo_url) { logo.src = tenantConfig.logo_url; logo.style.display = "block"; }
@@ -72,7 +63,22 @@ function fecharAlertaCustom() {
 }
 
 // ==========================================
-// PAINEL DE GESTÃO - LOGIN DINÂMICO (Nome + 123)
+// CONTROLADOR DE ABAS DO MODAL DE CONFIGURAÇÕES
+// ==========================================
+function mudarTabConfig(tabName, btnElement) {
+    document.querySelectorAll('.config-tab-content').forEach(el => el.style.display = 'none');
+    document.getElementById(`tab-${tabName}`).style.display = 'block';
+
+    document.querySelectorAll('.tab-btn').forEach(btn => {
+        btn.style.background = 'transparent';
+        btn.style.color = '#AAA';
+    });
+    btnElement.style.background = 'var(--primary-color)';
+    btnElement.style.color = '#FFF';
+}
+
+// ==========================================
+// PAINEL DE GESTÃO - LOGIN DINÂMICO
 // ==========================================
 function fazerLogin() {
     const user = document.getElementById("login-usuario").value.trim().toLowerCase();
@@ -87,7 +93,6 @@ function fazerLogin() {
         document.getElementById("dashboard-admin").style.display = "block";
         renderizarAdminParametros();
     } else {
-        // Validação Dinâmica de Profissionais
         const profEncontrado = (tenantConfig.barbeiros || []).find(b => {
             let nomeB = typeof b === 'object' ? b.nome : b;
             return nomeB.toLowerCase() === user;
@@ -95,7 +100,6 @@ function fazerLogin() {
 
         if (profEncontrado) {
             let nomeReal = typeof profEncontrado === 'object' ? profEncontrado.nome : profEncontrado;
-            // Cria a regra: nome (tudo minúsculo sem espaço) + 123
             let expectedPass = nomeReal.toLowerCase().replace(/\s+/g, '') + '123';
             
             if (pass === expectedPass || pass === '123456') {
@@ -103,12 +107,10 @@ function fazerLogin() {
                 document.getElementById("login-section").style.display = "none";
                 document.getElementById("dashboard-barbeiro").style.display = "block";
                 document.getElementById("titulo-agenda-barbeiro").innerHTML = `<i class="fa-solid fa-calendar-check"></i> Agenda: ${usuarioLogado}`;
-                carregarAgendaSemanal();
                 return;
             }
         }
         
-        // Fallback admin master local
         if(user === 'willian' && pass === 'willian123'){
             usuarioLogado = "Willian";
             document.getElementById("login-section").style.display = "none";
@@ -122,7 +124,7 @@ function fazerLogin() {
 function fazerLogout() { window.location.reload(); }
 
 // ==========================================
-// CONFIGURAÇÕES DO ADMIN - TEMAS, LOGO E WPP
+// CONFIGURAÇÕES DO ADMIN
 // ==========================================
 function abrirConfiguracoesAdmin() { document.getElementById("modal-config-admin").style.display = "flex"; }
 function fecharConfiguracoesAdmin() { document.getElementById("modal-config-admin").style.display = "none"; }
@@ -132,7 +134,7 @@ function aplicarCores(primaria, fundo, caixas, letras) {
     document.getElementById("config-cor-fundo").value = fundo;
     document.getElementById("config-cor-caixas").value = caixas;
     document.getElementById("config-cor-letras").value = letras;
-    // Pre-visualizar na hora
+    
     document.documentElement.style.setProperty('--primary-color', primaria);
     document.documentElement.style.setProperty('--bg-color', fundo);
     document.documentElement.style.setProperty('--box-color', caixas);
@@ -165,7 +167,7 @@ function renderListasConfig() {
                     <strong style="color:var(--text-color); font-size:0.9rem;">${nomeP}</strong>
                     <span style="font-size:0.75rem; color:#AAA;">📞 ${wppP}</span>
                 </div>
-                <button style="color:#e74c3c; background:rgba(231,76,60,0.1); padding:8px; border-radius:6px; border:none; cursor:pointer;" onclick="removerProfissional(${i})"><i class="fa-solid fa-trash"></i></button>
+                <button type="button" style="color:#e74c3c; background:rgba(231,76,60,0.1); padding:8px; border-radius:6px; border:none; cursor:pointer;" onclick="removerProfissional(${i})"><i class="fa-solid fa-trash"></i></button>
             </div>`;
     });
 
@@ -174,7 +176,7 @@ function renderListasConfig() {
     Object.keys(tenantConfig.servicos).forEach(nome => {
         const s = tenantConfig.servicos[nome];
         listS.innerHTML += `<div style="background:rgba(255,255,255,0.05); padding:10px; border-radius:8px; display:flex; justify-content:space-between; font-size:0.85rem; align-items:center;">
-            <span>${nome} <strong style="color:var(--primary-color);">R$ ${s.price}</strong> (${s.duration}m)</span><button style="color:#e74c3c; background:none; border:none; cursor:pointer;" onclick="removerServico('${nome}')"><i class="fa-solid fa-trash"></i></button></div>`;
+            <span>${nome} <strong style="color:var(--primary-color);">R$ ${s.price}</strong> (${s.duration}m)</span><button type="button" style="color:#e74c3c; background:none; border:none; cursor:pointer;" onclick="removerServico('${nome}')"><i class="fa-solid fa-trash"></i></button></div>`;
     });
 }
 
@@ -182,7 +184,6 @@ function adicionarProfissional() {
     const nomeVal = document.getElementById("novo-profissional-nome").value.trim();
     const wppVal = document.getElementById("novo-profissional-wpp").value.replace(/\D/g, "");
     if (nomeVal) {
-        // Agora adicionamos como Objeto[cite: 18]
         tenantConfig.barbeiros.push({ nome: nomeVal, whatsapp: wppVal });
         document.getElementById("novo-profissional-nome").value = "";
         document.getElementById("novo-profissional-wpp").value = "";
@@ -210,7 +211,6 @@ async function salvarConfiguracoesGerais() {
     tenantConfig.cor_caixas = document.getElementById("config-cor-caixas").value || "#1A1A1A";
     tenantConfig.cor_letras = document.getElementById("config-cor-letras").value || "#FFFFFF";
 
-    // Upload da Logo para o Supabase Storage (se houver ficheiro)
     const logoFile = document.getElementById("config-logo-file").files[0];
     if (logoFile) {
         const fileExt = logoFile.name.split('.').pop();
@@ -220,8 +220,6 @@ async function salvarConfiguracoesGerais() {
         if (!uploadError) {
             const { data } = _supabase.storage.from('Logos').getPublicUrl(fileName);
             tenantConfig.logo_url = data.publicUrl;
-        } else {
-            console.error("Erro no upload da logo:", uploadError);
         }
     }
 
@@ -237,7 +235,7 @@ async function salvarConfiguracoesGerais() {
         servicos: tenantConfig.servicos
     }, { onConflict: 'slug' });
 
-    btn.innerHTML = '<i class="fa-solid fa-floppy-disk"></i> Salvar Configurações';
+    btn.innerHTML = '<i class="fa-solid fa-floppy-disk"></i> Guardar Todas as Configurações';
     btn.disabled = false;
 
     if (!error) {
