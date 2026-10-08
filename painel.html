@@ -1,9 +1,9 @@
 <!DOCTYPE html>
-<html lang="pt-PT">
+<html lang="pt-BR">
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=0">
-    <title>Agenda pro! | Painel Central</title>
+    <title>Agenda Pro! | Painel Central</title>
 
     <link rel="icon" type="image/svg+xml" href="logo.svg">
     <link rel="apple-touch-icon" href="logo.svg">
@@ -71,6 +71,7 @@
             <p style="font-size: 0.8rem; color: var(--primary-color); font-weight: 600;">Painel de Gestão</p>
         </header>
 
+        <!-- SESSÃO DE LOGIN -->
         <section id="login-section" class="section">
             <h2 style="font-size: 1.1rem; margin-bottom: 15px; text-align: center;">Acesso ao Sistema</h2>
             <div class="input-group">
@@ -84,6 +85,7 @@
             <button class="btn-acao" onclick="fazerLogin()" style="margin-top: 10px;">Entrar no Painel</button>
         </section>
 
+        <!-- DASHBOARD BARBEIRO -->
         <section id="dashboard-barbeiro" class="section" style="display: none;">
             <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 15px;">
                 <h2 id="titulo-agenda-barbeiro" style="font-size: 1rem; margin:0;"><i class="fa-solid fa-calendar-check"></i> Minha Agenda</h2>
@@ -103,7 +105,7 @@
             </div>
 
             <div style="display: flex; gap: 8px; margin-bottom: 15px;">
-                <button class="btn-acao" onclick="abrirModalAgendamentoManual()" style="font-size: 0.75rem; background: #25D366;"><i class="fa-solid fa-plus"></i> Avulso/Encaixe</button>
+                <button class="btn-acao" onclick="abrirModalAgendamentoManual()" style="font-size: 0.75rem; background: #25D366;"><i class="fa-solid fa-plus"></i> Avulso / Encaixe</button>
                 <button class="btn-acao" onclick="abrirModalMensalista()" style="font-size: 0.75rem; background: #9b59b6;"><i class="fa-solid fa-star"></i> Mensalista</button>
             </div>
 
@@ -118,13 +120,49 @@
             <div id="grade-semanal-container" class="week-horizontal-container"></div>
         </section>
 
-        <!-- Admin mantido conforme padrão... -->
-        <!-- Omissão visual do admin HTML para brevidade, já que mantém a mesma estrutura acima, 
-             apenas com o painel de faturamento detalhado -->
+        <!-- DASHBOARD ADMIN -->
+        <section id="dashboard-admin" class="section" style="display: none;">
+            <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 15px;">
+                <h2 style="font-size: 1rem; margin:0;"><i class="fa-solid fa-chart-line"></i> Painel Admin</h2>
+                <button class="btn-acao" onclick="fazerLogout()" style="width: auto; padding: 8px 12px; background: rgba(231, 76, 60, 0.1); color: #e74c3c; border: 1px solid #e74c3c; font-size: 0.75rem;"><i class="fa-solid fa-power-off"></i> Sair</button>
+            </div>
 
+            <div class="finance-card">
+                <div class="finance-header">
+                    <span style="font-size: 0.85rem; font-weight: bold; color: #CCC;">Faturamento Geral</span>
+                    <select id="filtro-financeiro-admin" onchange="atualizarFinanceiroAdmin()" style="width: 120px; padding: 6px; font-size: 0.75rem; border-radius: 6px;">
+                        <option value="dia">Hoje</option>
+                        <option value="semana">Esta Semana</option>
+                        <option value="mes">Este Mês</option>
+                    </select>
+                </div>
+                <div class="finance-value" id="valor-financeiro-admin">R$ 0,00</div>
+                <div class="finance-breakdown">
+                    <span>💠 Pix: <strong id="val-pix">R$ 0,00</strong></span>
+                    <span>💵 Dinheiro: <strong id="val-dinheiro">R$ 0,00</strong></span>
+                    <span>💳 Débito: <strong id="val-debito">R$ 0,00</strong></span>
+                    <span>💳 Crédito: <strong id="val-credito">R$ 0,00</strong></span>
+                </div>
+            </div>
+
+            <div style="background: var(--box-color); padding: 12px; border-radius: 12px; margin-bottom: 15px; text-align: center; border: 1px solid rgba(255,255,255,0.05);">
+                <span id="label-periodo-admin" style="font-size: 0.85rem; color: var(--text-color); font-weight: bold; display: block; margin-bottom: 10px;"></span>
+                <div style="display: flex; gap: 8px;">
+                    <button class="btn-acao" onclick="mudarSemanaAdmin(-1)" style="font-size: 0.75rem; background: var(--bg-color); border: 1px solid rgba(255,255,255,0.1);"><i class="fa-solid fa-chevron-left"></i> Anterior</button>
+                    <button class="btn-acao" onclick="mudarSemanaAdmin(1)" style="font-size: 0.75rem; background: var(--bg-color); border: 1px solid rgba(255,255,255,0.1);">Próxima <i class="fa-solid fa-chevron-right"></i></button>
+                </div>
+            </div>
+
+            <div style="background: var(--box-color); padding: 15px; border-radius: 12px; border: 1px solid rgba(255,255,255,0.05);">
+                <h3 style="font-size: 0.9rem; color: var(--primary-color); margin-bottom: 15px;"><i class="fa-solid fa-list-check"></i> Atendimentos da Semana</h3>
+                <div id="lista-atendimentos-admin" style="display: flex; flex-direction: column; gap: 8px; max-height: 400px; overflow-y: auto; padding-right: 5px;">
+                    <span style="font-size: 0.8rem; color: #777;">A carregar agendamentos...</span>
+                </div>
+            </div>
+        </section>
     </div>
 
-    <!-- Modais de Atendimento com Cálculos Dinâmicos -->
+    <!-- Modais de Atendimento -->
     <div id="custom-action-modal" class="custom-modal-overlay">
         <div class="custom-modal">
             <h3 style="margin-bottom: 15px;"><i class="fa-solid fa-clipboard-user"></i> Gerenciar Atendimento</h3>
@@ -149,13 +187,59 @@
                     <option value="Débito">💳 Débito</option>
                     <option value="Crédito">💳 Crédito</option>
                 </select>
-                <button class="btn-acao" style="background: #25D366;" onclick="confirmarConclusaoComPagamento()"><i class="fa-solid fa-check-double"></i> Confirmar Conclusão</button>
+                <button class="btn-acao" style="background: #25D366;" onclick="confirmarConclusaoComPagamento()"><i class="fa-solid fa-check-double"></i> Confirmar Pagamento</button>
             </div>
 
-            <!-- Demais seções (Reagendar / Botoes) ... -->
+            <div id="secao-reagendamento" style="display:none; margin-bottom: 15px; background: rgba(255,255,255,0.05); padding: 15px; border-radius: 10px; border: 1px solid rgba(255,255,255,0.1);">
+                <label style="font-size: 0.85rem; color: #3498db; font-weight: bold; display: block; margin-bottom: 8px;">Reagendar:</label>
+                <div class="input-group"><input type="date" id="reagendar-data"></div>
+                <div class="input-group"><input type="time" id="reagendar-horario"></div>
+                <button class="btn-acao" style="background: #3498db; font-size: 0.85rem;" onclick="salvarReagendamento()">Salvar Novo Horário</button>
+            </div>
+
             <div id="secao-botoes-principais" style="display: flex; flex-direction: column; gap: 10px;">
                 <button class="btn-acao" style="background: #25D366;" onclick="mostrarSecaoConclusao()">Concluir Atendimento</button>
+                <button class="btn-acao" style="background: #3498db;" onclick="mostrarSecaoReagendamento()">Reagendar Horário</button>
+                <button class="btn-acao" style="background: #25D366;" onclick="enviarLembreteWhatsApp()"><i class="fa-brands fa-whatsapp"></i> Lembrete WhatsApp</button>
+                <button class="btn-acao" style="background: rgba(231, 76, 60, 0.1); color: #e74c3c; border: 1px solid #e74c3c;" onclick="executarAcaoAtendimento('cancelado')">Cancelar Atendimento</button>
                 <button class="btn-acao" style="background: rgba(255,255,255,0.1);" onclick="fecharModalAtendimento()">Fechar</button>
+            </div>
+        </div>
+    </div>
+
+    <!-- Modal Novo Agendamento Avulso / Encaixe -->
+    <div id="modal-agendamento-manual" class="custom-modal-overlay">
+        <div class="custom-modal">
+            <h3 id="titulo-modal-manual">Novo Agendamento</h3>
+            <div class="input-group"><input type="text" id="manual-cliente" placeholder="Nome Cliente"></div>
+            <div class="input-group"><input type="text" id="manual-telefone" placeholder="WhatsApp / Telefone"></div>
+            <div class="input-group"><input type="text" id="manual-servico" placeholder="Serviço (ex: Corte, Barba)"></div>
+            <div class="input-group"><input type="number" id="manual-preco" placeholder="Preço" step="0.01"></div>
+            <div class="input-group">
+                <label>Forma de Pagamento:</label>
+                <select id="manual-pagamento">
+                    <option value="Pix">💠 Pix</option>
+                    <option value="Dinheiro">💵 Dinheiro</option>
+                    <option value="Débito">💳 Débito</option>
+                    <option value="Crédito">💳 Crédito</option>
+                </select>
+            </div>
+            <div class="input-group"><input type="date" id="manual-data"></div>
+            <div class="input-group"><input type="time" id="manual-horario"></div>
+            
+            <div id="bloco-mensalista-opcoes" style="display:none; margin: 10px 0; background: rgba(255,255,255,0.05); padding: 15px; border-radius: 10px;">
+                <label style="font-size: 0.85rem; color: #9b59b6; font-weight: bold; display: block; margin-bottom: 8px;">Repetir por quantas semanas?</label>
+                <input type="number" id="manual-recorrencia-semanas" value="4" min="1" max="12">
+            </div>
+
+            <div style="margin: 10px 0; background: rgba(255,255,255,0.05); padding: 15px; border-radius: 10px;">
+                <input type="checkbox" id="manual-encaixe" style="width:auto; display:inline-block; transform: scale(1.2); margin-right: 8px; accent-color: #f39c12;"> 
+                <label style="color: #f39c12; font-weight:bold; cursor:pointer;" for="manual-encaixe">Marcar como Encaixe Livre 🚨</label>
+            </div>
+            
+            <div style="display: flex; gap: 8px;">
+                <button class="btn-acao" onclick="salvarAgendamentoManual()">Salvar</button>
+                <button class="btn-acao" onclick="fecharModalAgendamentoManual()" style="background: rgba(255,255,255,0.1);">Cancelar</button>
             </div>
         </div>
     </div>
@@ -166,6 +250,44 @@
             <i class="fa-solid fa-circle-info" style="font-size: 2.5rem; color: var(--primary-color); margin-bottom: 15px;"></i>
             <p id="alerta-custom-texto" style="font-size: 1rem; margin-bottom: 20px;"></p>
             <button class="btn-acao" onclick="fecharAlertaCustom()">Entendido</button>
+        </div>
+    </div>
+
+    <!-- Modal Configurações de Admin (MANTIDO) -->
+    <div id="modal-config-admin" class="custom-modal-overlay">
+        <div class="custom-modal">
+            <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 15px;">
+                <h3 style="color: var(--primary-color); font-size: 1.1rem; margin:0;"><i class="fa-solid fa-gear"></i> Configurações SaaS</h3>
+                <button onclick="fecharConfiguracoesAdmin()" style="background: none; border: none; color: #FFF; font-size: 1.2rem; cursor: pointer;"><i class="fa-solid fa-xmark"></i></button>
+            </div>
+
+            <div class="input-group">
+                <label>Nome do Estabelecimento:</label>
+                <input type="text" id="config-nome-empresa">
+            </div>
+
+            <div class="input-group">
+                <label>Cor Principal (Botões e Destaques):</label>
+                <input type="color" id="config-cor-primaria" style="height: 40px; cursor:pointer;">
+            </div>
+
+            <h4 style="font-size: 0.9rem; color: var(--primary-color); margin: 15px 0 10px 0;">Profissionais</h4>
+            <div id="lista-profissionais-config" style="display: flex; flex-direction: column; gap: 6px; margin-bottom: 10px;"></div>
+            <div style="display: flex; gap: 5px; margin-bottom: 15px;">
+                <input type="text" id="novo-profissional-nome" placeholder="Nome" style="flex: 2;">
+                <button class="btn-acao" onclick="adicionarProfissional()" style="width: auto; padding: 0 15px; font-size: 0.8rem;">Add</button>
+            </div>
+
+            <h4 style="font-size: 0.9rem; color: var(--primary-color); margin: 15px 0 10px 0;">Serviços, Preços e Tempos</h4>
+            <div id="lista-servicos-config" style="display: flex; flex-direction: column; gap: 6px; margin-bottom: 10px;"></div>
+            <div style="display: flex; gap: 5px; flex-wrap: wrap; margin-bottom: 20px;">
+                <input type="text" id="novo-servico-nome" placeholder="Serviço" style="flex: 2;">
+                <input type="number" id="novo-servico-preco" placeholder="R$" style="flex: 1;" step="0.01">
+                <input type="number" id="novo-servico-tempo" placeholder="Min" style="flex: 1;">
+                <button class="btn-acao" onclick="adicionarServico()" style="width: 100%; font-size: 0.85rem;">Adicionar Serviço</button>
+            </div>
+
+            <button class="btn-acao" onclick="salvarConfiguracoesGerais()" style="background: #25D366;">Salvar Configurações</button>
         </div>
     </div>
 
