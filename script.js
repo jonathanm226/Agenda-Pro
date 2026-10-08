@@ -18,7 +18,7 @@ document.addEventListener("DOMContentLoaded", async () => {
     await carregarTenantConfig();
     aplicarIdentidadeVisual(tenantConfig);
     
-    // Carregamento correto da logo em qualquer página
+    // Carregamento da logo
     const logoUrls = ["tenant-logo", "painel-logo", "landing-logo"];
     logoUrls.forEach(id => {
         const el = document.getElementById(id);
@@ -51,17 +51,7 @@ function aplicarIdentidadeVisual(config) {
     root.style.setProperty('--text-color', config.cor_letras || '#FFFFFF');
 }
 
-function mostrarAlerta(texto) {
-    const modal = document.getElementById("modal-alerta-custom");
-    if(modal) {
-        document.getElementById("alerta-custom-texto").textContent = texto;
-        modal.style.display = "flex";
-    } else { alert(texto); }
-}
-function fecharAlertaCustom() {
-    const modal = document.getElementById("modal-alerta-custom");
-    if(modal) modal.style.display = "none";
-}
+function mostrarAlerta(texto) { alert(texto); }
 
 // ==========================================
 // CLIENTE (AGENDAR.HTML)
@@ -104,7 +94,7 @@ function atualizarResumo() {
     checkAvailableTimes();
 }
 
-// LÓGICA DE CONSUMO DE TEMPO NA AGENDA
+// CONSUMO DE TEMPO NA AGENDA
 async function checkAvailableTimes() {
     const dateInput = document.getElementById("date").value; const timeSelect = document.getElementById("time");
     if (!dateInput || !timeSelect || !barbeiroSelecionado) return;
@@ -124,11 +114,8 @@ async function checkAvailableTimes() {
     timeSelect.innerHTML = '<option value="">Selecione um horário</option>';
     let temHorario = false;
 
-    // Gera blocos de hora em hora e valida se há sobreposição com a duração total dos serviços
     for (let h = hInicio; h < hFim; h++) {
         let timeStr = `${h.toString().padStart(2, '0')}:00`;
-        
-        // Verifica conflito de horário com base no tempo consumido
         let slotMinutos = h * 60;
         let slotFimMinutos = slotMinutos + duracaoTotalServicos;
         let conflito = false;
@@ -138,11 +125,7 @@ async function checkAvailableTimes() {
                 let [ah, am] = ag.hora_inicio.split(':').map(Number);
                 let agInicioMin = ah * 60 + am;
                 let agFimMin = agInicioMin + (ag.duracao_total || 30);
-
-                // Se houver cruzamento de intervalos
-                if (slotMinutos < agFimMin && slotFimMinutos > agInicioMin) {
-                    conflito = true;
-                }
+                if (slotMinutos < agFimMin && slotFimMinutos > agInicioMin) conflito = true;
             });
         }
 
@@ -151,7 +134,7 @@ async function checkAvailableTimes() {
             temHorario = true;
         }
     }
-    if (!temHorario) timeSelect.innerHTML = '<option value="">Nenhum horário disponível para esta duração</option>';
+    if (!temHorario) timeSelect.innerHTML = '<option value="">Nenhum horário disponível</option>';
 }
 
 function abrirModalConfirmacao() {
@@ -173,22 +156,21 @@ async function confirmarEEnviar() {
     const btn = document.getElementById("btn-confirmar-agendamento"); btn.disabled = true;
     const cliente = document.getElementById("client-name").value; const telefone = document.getElementById("client-phone").value.replace(/\D/g, "");
     const dataSQL = document.getElementById("date").value; const horaStr = document.getElementById("time").value;
-    let total = 0; let duracao = 0; Object.values(servicosSelecionados).forEach(s => { total += s.preco; duracao += s.duracao; });
+    let total = 0; let duracao = 0; Object.values(servicosSelecionados).forEach(s => { total += s.preco; tempo += s.duracao; });
     const servs = Object.keys(servicosSelecionados).join(', ');
 
     const { error } = await _supabase.from('saas_agendamentos').insert({
         slug: TENANT_ATIVO, barbeiro: barbeiroSelecionado, cliente_nome: cliente, cliente_telefone: telefone,
-        servicos: servs, data_agendamento: dataSQL, hora_inicio: horaStr, duracao_total: duracao, valor_total: total, status: 'pendente'
+        servicos: servs, data_agendamento: dataSQL, hora_inicio: horaStr, duracao_total: duracao || 30, valor_total: total, status: 'pendente'
     });
 
     if (error) { btn.disabled = false; return mostrarAlerta("Erro ao salvar."); }
 
-    // Mensagem enviada ao profissional com destaque em AGENDAMENTO CONFIRMADO
     const profObj = (tenantConfig.barbeiros || []).find(b => (typeof b === 'object' ? b.nome : b) === barbeiroSelecionado);
     let numeroProf = (profObj && profObj.whatsapp) ? profObj.whatsapp : tenantConfig.admin_contato;
     if (numeroProf) {
         const dataStr = dataSQL.split('-').reverse().join('/');
-        const msg = `*NOVO AGENDAMENTO*\n*Cliente:* ${cliente}\n*Serviços:* ${servs} (${duracao} min)\n*Data:* ${dataStr} às ${horaStr}\n*Total:* R$ ${total.toFixed(2)}\n\n✨ *AGENDAMENTO CONFIRMADO* ✨`;
+        const msg = `*NOVO AGENDAMENTO*\n*Cliente:* ${cliente}\n*Serviços:* ${servs} (${duracao || 30} min)\n*Data:* ${dataStr} às ${horaStr}\n*Total:* R$ ${total.toFixed(2)}\n\n✨ *AGENDAMENTO CONFIRMADO* ✨`;
         window.open(`https://api.whatsapp.com/send?phone=55${numeroProf.replace(/\D/g, "")}&text=${encodeURIComponent(msg)}`, '_blank');
     }
 
@@ -203,9 +185,12 @@ function fazerLogin() {
     const pass = document.getElementById("login-senha").value.trim();
     if (!user || !pass) return mostrarAlerta("Preencha os campos.");
     let senhaAdmin = (tenantConfig.senhas_usuarios && tenantConfig.senhas_usuarios['admin']) ? tenantConfig.senhas_usuarios['admin'] : 'admin123';
+    
     if (user === 'admin' && pass === senhaAdmin) {
-        usuarioLogado = "Admin"; document.getElementById("login-section").style.display = "none";
+        usuarioLogado = "Admin"; 
+        document.getElementById("login-section").style.display = "none";
         document.getElementById("dashboard-barbeiro").style.display = "block";
+        document.getElementById("admin-gear-container").innerHTML = '<div class="btn-engrenagem" onclick="abrirConfiguracoesAdmin()"><i class="fa-solid fa-gear"></i></div>';
         document.getElementById("label-resumo-financeiro").textContent = "Faturamento Geral (Admin)";
         carregarAgendaBarbeiro();
     } else {
@@ -229,7 +214,8 @@ async function carregarAgendaBarbeiro() {
     
     let barbeiroFiltro = usuarioLogado === 'Admin' ? ((tenantConfig.barbeiros[0]) ? (typeof tenantConfig.barbeiros[0] === 'object' ? tenantConfig.barbeiros[0].nome : tenantConfig.barbeiros[0]) : 'jonathan') : usuarioLogado;
     
-    let hInicio = 8; let hFim = 19;
+    let hInicio = parseInt(tenantConfig.horario_inicio.split(':')[0]) || 8;
+    let hFim = parseInt(tenantConfig.horario_fim.split(':')[0]) || 19;
     const datas = []; const hoje = new Date();
     for (let i=0; i<6; i++) {
         let d = new Date(hoje); d.setDate(hoje.getDate() + i + offsetSemana);
@@ -257,6 +243,82 @@ async function carregarAgendaBarbeiro() {
     container.innerHTML = html; atualizarFinanceiroProfissional();
 }
 
+// CONFIGURAÇÕES DO ADMIN (ENGRENAGEM)
+function abrirConfiguracoesAdmin() {
+    document.getElementById("config-nome-empresa").value = tenantConfig.nome_empresa || "";
+    document.getElementById("config-logo-url").value = tenantConfig.logo_url || "";
+    document.getElementById("config-admin-wpp").value = tenantConfig.admin_contato || "";
+    document.getElementById("config-h-inicio").value = tenantConfig.horario_inicio || "08:00";
+    document.getElementById("config-h-fim").value = tenantConfig.horario_fim || "19:00";
+    renderizarListasConfigAdmin();
+    document.getElementById("modal-config-admin").style.display = "flex";
+}
+function fecharConfiguracoesAdmin() { document.getElementById("modal-config-admin").style.display = "none"; }
+
+function renderizarListasConfigAdmin() {
+    const listP = document.getElementById("lista-profissionais-config"); listP.innerHTML = "";
+    (tenantConfig.barbeiros || []).forEach((p, i) => {
+        let nome = typeof p === 'object' ? p.nome : p;
+        let wpp = typeof p === 'object' && p.whatsapp ? p.whatsapp : '';
+        listP.innerHTML += `<div style="display:flex; justify-content:space-between; align-items:center; background:rgba(255,255,255,0.03); padding:6px 10px; border-radius:6px; margin-bottom:4px; font-size:0.8rem;">
+            <span>${nome} (${wpp})</span><button type="button" onclick="removerProfissionalConfig(${i})" style="color:#e74c3c; background:none; border:none;"><i class="fa-solid fa-trash"></i></button></div>`;
+    });
+
+    const listS = document.getElementById("lista-servicos-config"); listS.innerHTML = "";
+    Object.keys(tenantConfig.servicos || {}).forEach(nome => {
+        let s = tenantConfig.servicos[nome];
+        listS.innerHTML += `<div style="display:flex; justify-content:space-between; align-items:center; background:rgba(255,255,255,0.03); padding:6px 10px; border-radius:6px; margin-bottom:4px; font-size:0.8rem;">
+            <span>${nome} - R$ ${s.price} (${s.duration}m)</span><button type="button" onclick="removerServicoConfig('${nome}')" style="color:#e74c3c; background:none; border:none;"><i class="fa-solid fa-trash"></i></button></div>`;
+    });
+}
+
+function adicionarProfissionalConfig() {
+    let nome = document.getElementById("novo-prof-nome").value.trim();
+    let wpp = document.getElementById("novo-prof-wpp").value.replace(/\D/g, "");
+    if(nome) {
+        if(!tenantConfig.barbeiros) tenantConfig.barbeiros = [];
+        tenantConfig.barbeiros.push({ nome, whatsapp: wpp });
+        document.getElementById("novo-prof-nome").value = "";
+        document.getElementById("novo-prof-wpp").value = "";
+        renderizarListasConfigAdmin();
+    }
+}
+function removerProfissionalConfig(i) { tenantConfig.barbeiros.splice(i, 1); renderizarListasConfigAdmin(); }
+
+function adicionarServicoConfig() {
+    let nome = document.getElementById("novo-serv-nome").value.trim();
+    let preco = parseFloat(document.getElementById("novo-serv-preco").value);
+    let tempo = parseInt(document.getElementById("novo-serv-tempo").value);
+    if(nome && preco && tempo) {
+        if(!tenantConfig.servicos) tenantConfig.servicos = {};
+        tenantConfig.servicos[nome] = { price: preco, duration: tempo };
+        document.getElementById("novo-serv-nome").value = "";
+        document.getElementById("novo-serv-preco").value = "";
+        document.getElementById("novo-serv-tempo").value = "";
+        renderizarListasConfigAdmin();
+    }
+}
+function removerServicoConfig(nome) { delete tenantConfig.servicos[nome]; renderizarListasConfigAdmin(); }
+
+async function salvarConfiguracoesAdmin() {
+    tenantConfig.nome_empresa = document.getElementById("config-nome-empresa").value.trim();
+    tenantConfig.logo_url = document.getElementById("config-logo-url").value.trim();
+    tenantConfig.admin_contato = document.getElementById("config-admin-wpp").value.replace(/\D/g, "");
+    tenantConfig.horario_inicio = document.getElementById("config-h-inicio").value;
+    tenantConfig.horario_fim = document.getElementById("config-h-fim").value;
+
+    const { error } = await _supabase.from("saas_estabelecimentos").upsert({
+        slug: TENANT_ATIVO, nome_empresa: tenantConfig.nome_empresa, logo_url: tenantConfig.logo_url,
+        admin_contato: tenantConfig.admin_contato, horario_inicio: tenantConfig.horario_inicio,
+        horario_fim: tenantConfig.horario_fim, barbeiros: tenantConfig.barbeiros, servicos: tenantConfig.servicos
+    }, { onConflict: 'slug' });
+
+    if(error) return alert("Erro ao salvar configurações.");
+    fecharConfiguracoesAdmin();
+    alert("Configurações salvas com sucesso!");
+    window.location.reload();
+}
+
 // GERENCIAR ATENDIMENTO (MODAL)
 let atendimentoAtual = null;
 function abrirModalGerenciarAtendimento(ag) {
@@ -265,8 +327,8 @@ function abrirModalGerenciarAtendimento(ag) {
     const box = document.getElementById("detalhes-atendimento-box");
     box.innerHTML = `<strong>Cliente:</strong> ${ag.cliente_nome}<br>
                      <strong>Telefone:</strong> ${ag.cliente_telefone || 'Não informado'}<br>
-                     <strong>Serviço Atual:</strong> ${ag.servicos || 'Padrão'} (${ag.duracao_total || 30} min)<br>
-                     <strong>Valor Base:</strong> R$ ${(ag.valor_total || 0).toFixed(2)}<br>
+                     <strong>Serviço:</strong> ${ag.servicos || 'Padrão'} (${ag.duracao_total || 30} min)<br>
+                     <strong>Valor:</strong> R$ ${(ag.valor_total || 0).toFixed(2)}<br>
                      <strong>Data/Hora:</strong> ${dataF} às ${ag.hora_inicio}`;
     
     document.getElementById("box-forma-pagamento").style.display = "none";
@@ -294,7 +356,6 @@ async function confirmarConclusaoComPgto() {
     fecharModalGerenciar(); carregarAgendaBarbeiro();
 }
 
-// REAGENDAR HORÁRIO CORRIGIDO
 async function salvarReagendamento() {
     const novaData = document.getElementById("reagendar-data").value;
     const novaHora = document.getElementById("reagendar-hora").value;
@@ -305,7 +366,6 @@ async function salvarReagendamento() {
     fecharModalGerenciar(); carregarAgendaBarbeiro(); alert("Reagendado com sucesso!");
 }
 
-// CANCELAMENTO COM MODAL ESTILIZADO (SEM ALERT NATIVO)
 let idParaCancelar = null;
 function abrirModalCancelamentoEstilizado(id) {
     idParaCancelar = id;
@@ -329,7 +389,7 @@ function enviarLembreteWhatsApp(ag) {
     window.open(`https://api.whatsapp.com/send?phone=55${tel}&text=${encodeURIComponent(msg)}`, '_blank');
 }
 
-// NOVO AGENDAMENTO PELO PAINEL COM NOVO ESTILO DE SERVIÇOS (PRINT 3)
+// NOVO AGENDAMENTO PELO PAINEL
 function abrirModalMensalistas() { document.getElementById("modal-mensalistas").style.display = "flex"; }
 function abrirModalNovoAgendamento() {
     const container = document.getElementById("lista-servicos-checkboxes"); container.innerHTML = "";
@@ -380,7 +440,7 @@ async function salvarNovoAgendamentoBarbeiro() {
     let servicosStr = servsArray.length > 0 ? servsArray.join(', ') : "Atendimento Avulso";
     if(duracao === 0) duracao = 30;
 
-    let barbeiroAtual = usuarioLogado === 'Admin' ? 'jonathan' : usuarioLogado;
+    let barbeiroAtual = usuarioLogado === 'Admin' ? ((tenantConfig.barbeiros[0]) ? (typeof tenantConfig.barbeiros[0] === 'object' ? tenantConfig.barbeiros[0].nome : tenantConfig.barbeiros[0]) : 'jonathan') : usuarioLogado;
 
     const { error } = await _supabase.from('saas_agendamentos').insert({
         slug: TENANT_ATIVO, barbeiro: barbeiroAtual, cliente_nome: nome, cliente_telefone: tel,
@@ -392,7 +452,7 @@ async function salvarNovoAgendamentoBarbeiro() {
 }
 
 function bloquearHorario(data, hora) {
-    let barbeiroAtual = usuarioLogado === 'Admin' ? 'jonathan' : usuarioLogado;
+    let barbeiroAtual = usuarioLogado === 'Admin' ? ((tenantConfig.barbeiros[0]) ? (typeof tenantConfig.barbeiros[0] === 'object' ? tenantConfig.barbeiros[0].nome : tenantConfig.barbeiros[0]) : 'jonathan') : usuarioLogado;
     if(confirm(`Bloquear agenda no dia ${data.split('-').reverse().join('/')} às ${hora}?`)) {
         _supabase.from('saas_agendamentos').insert({ slug: TENANT_ATIVO, barbeiro: barbeiroAtual, data_agendamento: data, hora_inicio: hora, status: 'bloqueado', duracao_total: 30 }).then(() => carregarAgendaBarbeiro());
     }
@@ -403,12 +463,15 @@ function desbloquearHorario(id) {
     }
 }
 
-// FINANCEIRO COM INFORMAÇÕES INDIVIDUAIS DE PAGAMENTO
+// FINANCEIRO
 async function atualizarFinanceiroProfissional() {
-    let barbeiroFiltro = usuarioLogado === 'Admin' ? 'jonathan' : usuarioLogado;
-    if (!barbeiroFiltro) return;
+    let barbeiroFiltro = usuarioLogado === 'Admin' ? null : usuarioLogado;
     const filtro = document.getElementById('filtro-financeiro-prof').value;
-    const { data: ags } = await _supabase.from('saas_agendamentos').select('*').eq('slug', TENANT_ATIVO).eq('barbeiro', barbeiroFiltro).eq('status', 'concluido');
+    
+    let query = _supabase.from('saas_agendamentos').select('*').eq('slug', TENANT_ATIVO).eq('status', 'concluido');
+    if(barbeiroFiltro) query = query.eq('barbeiro', barbeiroFiltro);
+
+    const { data: ags } = await query;
     
     const hoje = new Date(); let total = 0; let listaPgtoHtml = "";
     (ags || []).forEach(ag => {
@@ -422,7 +485,7 @@ async function atualizarFinanceiroProfissional() {
         }
         if (contar) {
             total += Number(ag.valor_total || 0);
-            listaPgtoHtml += `• ${ag.cliente_nome}: R$ ${(ag.valor_total||0).toFixed(2)} (${ag.forma_pagamento || 'Dinheiro'})<br>`;
+            listaPgtoHtml += `• ${ag.cliente_nome} (${ag.barbeiro}): R$ ${(ag.valor_total||0).toFixed(2)} [${ag.forma_pagamento || 'Dinheiro'}]<br>`;
         }
     });
 
