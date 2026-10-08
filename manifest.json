@@ -1,0 +1,16 @@
+{
+  "name": "Agenda Pro! - JM Tech Systems",
+  "short_name": "Agenda Pro",
+  "start_url": "/index.html",
+  "display": "standalone",
+  "background_color": "#0B132B",
+  "theme_color": "#00C6FF",
+  "icons": [
+    {
+      "src": "/logo.svg",
+      "sizes": "192x192 512x512",
+      "type": "image/svg+xml",
+      "purpose": "any maskable"
+    }
+  ]
+}
