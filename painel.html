@@ -33,8 +33,8 @@
         .section { margin-bottom: 25px; }
         .input-group { display: flex; flex-direction: column; gap: 6px; margin-bottom: 12px; }
         .input-group label { font-size: 0.85rem; color: #CCC; font-weight: 500; }
-        input, select { width: 100%; padding: 12px; background: var(--bg-color); border: 1px solid rgba(255,255,255,0.2); border-radius: 8px; color: var(--text-color); outline: none; transition: 0.3s; }
-        input:focus, select:focus { border-color: var(--primary-color); background: rgba(255,255,255,0.05); }
+        input, select, textarea { width: 100%; padding: 12px; background: var(--bg-color); border: 1px solid rgba(255,255,255,0.2); border-radius: 8px; color: var(--text-color); outline: none; transition: 0.3s; }
+        input:focus, select:focus, textarea:focus { border-color: var(--primary-color); background: rgba(255,255,255,0.05); }
         
         .btn-acao { width: 100%; padding: 14px; background-color: var(--primary-color); color: #FFF; border: none; border-radius: 10px; font-weight: bold; cursor: pointer; text-transform: uppercase; transition: 0.3s; display: flex; justify-content: center; align-items: center; gap: 8px; }
         .btn-acao:hover { opacity: 0.9; transform: translateY(-1px); }
@@ -159,13 +159,21 @@
                 <button type="button" class="tab-btn" onclick="mudarTabConfig('servicos', this)" style="flex: 1; padding: 8px; font-size: 0.75rem; border-radius: 6px; border: none; background: transparent; color: #AAA; font-weight: bold; cursor: pointer; transition: 0.2s;">4. Serviços</button>
             </div>
 
-            <!-- ABA 1: PERFIL -->
+            <!-- ABA 1: PERFIL (COM CAMPOS DE SOBRE E ENDEREÇO) -->
             <div id="tab-perfil" class="config-tab-content">
                 <div class="config-card">
                     <h4><i class="fa-solid fa-shop"></i> Informações Principais</h4>
                     <div class="input-group">
                         <label>Nome da Empresa:</label>
                         <input type="text" id="config-nome-empresa" placeholder="Ex: Barbearia do João">
+                    </div>
+                    <div class="input-group">
+                        <label>Sobre o Estabelecimento:</label>
+                        <textarea id="config-sobre" placeholder="Ex: Bem-vindo ao nosso espaço dedicado..." rows="2" style="resize: vertical;"></textarea>
+                    </div>
+                    <div class="input-group">
+                        <label>Endereço / Localização:</label>
+                        <input type="text" id="config-endereco" placeholder="Ex: Rua Principal, 123 - Centro">
                     </div>
                     <div class="input-group">
                         <label>Logótipo (Opcional):</label>
@@ -178,24 +186,18 @@
                 <button type="button" class="btn-acao" onclick="mudarTabConfig('visual', document.querySelectorAll('.tab-btn')[1])">Avançar para Visual <i class="fa-solid fa-arrow-right"></i></button>
             </div>
 
-            <!-- ABA 2: VISUAL (CORES DE TEXTO AJUSTADAS PARA CADA TEMA) -->
+            <!-- ABA 2: VISUAL -->
             <div id="tab-visual" class="config-tab-content" style="display: none;">
                 <div class="config-card">
                     <h4><i class="fa-solid fa-palette"></i> Identidade Visual Pronta</h4>
                     <p style="font-size: 0.75rem; color: #AAA; margin-bottom: 10px;">Clique num tema para aplicar cores instantaneamente:</p>
                     
                     <div class="themes-grid">
-                        <!-- Escuro -->
                         <button type="button" class="theme-btn" style="background: #121212; border-color: #FF6600; color: #FFFFFF;" onclick="aplicarCores('#FF6600', '#121212', '#1A1A1A', '#FFFFFF')"><div class="color-dot" style="background:#FF6600;"></div> Barbearia Clássica</button>
-                        <!-- Claro (Texto Escuro) -->
                         <button type="button" class="theme-btn" style="background: #FFF0F5; border-color: #FF69B4; color: #1F2937;" onclick="aplicarCores('#FF69B4', '#FFF0F5', '#FFFFFF', '#1F2937')"><div class="color-dot" style="background:#FF69B4;"></div> Salão de Beleza</button>
-                        <!-- Claro (Texto Escuro) -->
                         <button type="button" class="theme-btn" style="background: #F0FDF4; border-color: #22C55E; color: #1F2937;" onclick="aplicarCores('#22C55E', '#F0FDF4', '#FFFFFF', '#1F2937')"><div class="color-dot" style="background:#22C55E;"></div> Clínica / Estética</button>
-                        <!-- Escuro -->
                         <button type="button" class="theme-btn" style="background: #000000; border-color: #E11D48; color: #FFFFFF;" onclick="aplicarCores('#E11D48', '#09090B', '#18181B', '#FAFAFA')"><div class="color-dot" style="background:#E11D48;"></div> Estúdio Tattoo</button>
-                        <!-- Claro (Texto Escuro) -->
                         <button type="button" class="theme-btn" style="background: #F8FAFC; border-color: #0EA5E9; color: #0F172A;" onclick="aplicarCores('#0EA5E9', '#F8FAFC', '#FFFFFF', '#0F172A')"><div class="color-dot" style="background:#0EA5E9;"></div> Consultório Médico</button>
-                        <!-- Claro (Texto Escuro) -->
                         <button type="button" class="theme-btn" style="background: #FEFCE8; border-color: #CA8A04; color: #422006;" onclick="aplicarCores('#CA8A04', '#FEFCE8', '#FFFFFF', '#422006')"><div class="color-dot" style="background:#CA8A04;"></div> Spa / Massagem</button>
                     </div>
                     
