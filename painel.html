@@ -56,16 +56,14 @@
         .slot-item.available { border-left-color: var(--primary-color); background: var(--box-color); }
 
         .custom-modal-overlay { position: fixed; top: 0; left: 0; width: 100%; height: 100%; background: rgba(0,0,0,0.8); backdrop-filter: blur(5px); display: none; justify-content: center; align-items: center; z-index: 9999; }
-        .custom-modal { background: var(--box-color); color: var(--text-color); padding: 25px; border-radius: 16px; width: 95%; max-width: 480px; border: 1px solid rgba(255,255,255,0.1); max-height: 90vh; overflow-y: auto; box-shadow: 0 10px 40px rgba(0,0,0,0.5); }
+        .custom-modal { background: var(--box-color); color: var(--text-color); padding: 25px; border-radius: 16px; width: 95%; max-width: 520px; border: 1px solid rgba(255,255,255,0.1); max-height: 90vh; overflow-y: auto; box-shadow: 0 10px 40px rgba(0,0,0,0.5); }
         
-        /* Grid de Temas Predefinidos */
-        .themes-grid { display: grid; grid-template-columns: repeat(2, 1fr); gap: 8px; margin-bottom: 20px; }
+        .themes-grid { display: grid; grid-template-columns: repeat(2, 1fr); gap: 8px; margin-bottom: 15px; }
         .theme-btn { padding: 10px; border-radius: 8px; border: 2px solid transparent; font-size: 0.75rem; font-weight: bold; cursor: pointer; text-align: left; display: flex; align-items: center; gap: 8px; transition: 0.2s; color: #FFF; }
         .theme-btn:hover { transform: scale(1.02); }
         .theme-btn .color-dot { width: 15px; height: 15px; border-radius: 50%; border: 1px solid rgba(255,255,255,0.5); }
         
-        /* Secções de Configuração Estilizadas */
-        .config-card { background: rgba(0,0,0,0.2); border: 1px solid rgba(255,255,255,0.05); padding: 15px; border-radius: 12px; margin-bottom: 20px; }
+        .config-card { background: rgba(0,0,0,0.2); border: 1px solid rgba(255,255,255,0.05); padding: 15px; border-radius: 12px; margin-bottom: 15px; }
         .config-card h4 { font-size: 0.95rem; color: var(--primary-color); margin-bottom: 12px; display: flex; align-items: center; gap: 8px; border-bottom: 1px solid rgba(255,255,255,0.05); padding-bottom: 8px; }
     </style>
 </head>
@@ -93,7 +91,7 @@
             <button class="btn-acao" onclick="fazerLogin()" style="margin-top: 10px;">Entrar no Painel</button>
         </section>
 
-        <!-- DASHBOARD BARBEIRO / ADMIN (Mantido igual à versão anterior) -->
+        <!-- DASHBOARD BARBEIRO -->
         <section id="dashboard-barbeiro" class="section" style="display: none;">
             <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 15px;">
                 <h2 id="titulo-agenda-barbeiro" style="font-size: 1rem; margin:0;"><i class="fa-solid fa-calendar-check"></i> Minha Agenda</h2>
@@ -123,7 +121,7 @@
             <div id="grade-semanal-container" class="week-horizontal-container"></div>
         </section>
 
-        <!-- DASHBOARD ADMIN (Ocultado resumo por brevidade de visualização, mantém-se intacto) -->
+        <!-- DASHBOARD ADMIN -->
         <section id="dashboard-admin" class="section" style="display: none;">
             <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 15px;">
                 <h2 style="font-size: 1rem; margin:0;"><i class="fa-solid fa-chart-line"></i> Painel Admin</h2>
@@ -145,80 +143,94 @@
         </section>
     </div>
 
-    <!-- NOVO MODAL DE CONFIGURAÇÕES MELHORADO -->
+    <!-- MODAL DE CONFIGURAÇÕES EM ABAS (PASSO A PASSO INTuitIVO) -->
     <div id="modal-config-admin" class="custom-modal-overlay">
         <div class="custom-modal">
-            <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 20px;">
-                <h3 style="color: var(--primary-color); font-size: 1.3rem; margin:0; display: flex; align-items: center; gap: 8px;"><i class="fa-solid fa-gear"></i> Configurações</h3>
-                <button onclick="fecharConfiguracoesAdmin()" style="background: rgba(255,255,255,0.1); border: none; color: #FFF; width: 35px; height: 35px; border-radius: 50%; cursor: pointer;"><i class="fa-solid fa-xmark"></i></button>
+            <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 15px; border-bottom: 1px solid rgba(255,255,255,0.1); padding-bottom: 10px;">
+                <h3 style="color: var(--primary-color); font-size: 1.2rem; margin:0; display: flex; align-items: center; gap: 8px;"><i class="fa-solid fa-gear"></i> Configuração do Estabelecimento</h3>
+                <button onclick="fecharConfiguracoesAdmin()" style="background: rgba(255,255,255,0.1); border: none; color: #FFF; width: 32px; height: 32px; border-radius: 50%; cursor: pointer;"><i class="fa-solid fa-xmark"></i></button>
             </div>
 
-            <!-- Dados Principais e Logo -->
-            <div class="config-card">
-                <h4><i class="fa-solid fa-shop"></i> Dados do Estabelecimento</h4>
-                <div class="input-group">
-                    <label>Nome da Empresa:</label>
-                    <input type="text" id="config-nome-empresa" placeholder="Ex: Meu Negócio">
-                </div>
-                <div class="input-group">
-                    <label>Logótipo da Empresa (Opcional):</label>
-                    <div style="display: flex; gap: 8px; align-items: center;">
-                        <input type="file" id="config-logo-file" accept="image/png, image/jpeg, image/jpg" style="padding: 8px; background: rgba(0,0,0,0.3); font-size: 0.8rem; flex: 1;">
-                        <img id="logo-preview-admin" src="" style="width: 40px; height: 40px; border-radius: 8px; display: none; object-fit: cover; border: 1px solid var(--primary-color);">
+            <!-- MENU DE ABAS -->
+            <div style="display: flex; gap: 4px; margin-bottom: 15px; background: rgba(0,0,0,0.3); padding: 4px; border-radius: 8px;">
+                <button type="button" class="tab-btn active" onclick="mudarTabConfig('perfil', this)" style="flex: 1; padding: 8px; font-size: 0.75rem; border-radius: 6px; border: none; background: var(--primary-color); color: #FFF; font-weight: bold; cursor: pointer; transition: 0.2s;">1. Perfil</button>
+                <button type="button" class="tab-btn" onclick="mudarTabConfig('visual', this)" style="flex: 1; padding: 8px; font-size: 0.75rem; border-radius: 6px; border: none; background: transparent; color: #AAA; font-weight: bold; cursor: pointer; transition: 0.2s;">2. Visual</button>
+                <button type="button" class="tab-btn" onclick="mudarTabConfig('equipa', this)" style="flex: 1; padding: 8px; font-size: 0.75rem; border-radius: 6px; border: none; background: transparent; color: #AAA; font-weight: bold; cursor: pointer; transition: 0.2s;">3. Equipa</button>
+                <button type="button" class="tab-btn" onclick="mudarTabConfig('servicos', this)" style="flex: 1; padding: 8px; font-size: 0.75rem; border-radius: 6px; border: none; background: transparent; color: #AAA; font-weight: bold; cursor: pointer; transition: 0.2s;">4. Serviços</button>
+            </div>
+
+            <!-- ABA 1: PERFIL -->
+            <div id="tab-perfil" class="config-tab-content">
+                <div class="config-card">
+                    <h4><i class="fa-solid fa-shop"></i> Informações Principais</h4>
+                    <div class="input-group">
+                        <label>Nome da Empresa:</label>
+                        <input type="text" id="config-nome-empresa" placeholder="Ex: Barbearia do João">
+                    </div>
+                    <div class="input-group">
+                        <label>Logótipo (Opcional):</label>
+                        <div style="display: flex; gap: 10px; align-items: center;">
+                            <input type="file" id="config-logo-file" accept="image/png, image/jpeg, image/jpg" style="padding: 8px; background: rgba(0,0,0,0.3); font-size: 0.8rem; flex: 1;">
+                            <img id="logo-preview-admin" src="" style="width: 45px; height: 45px; border-radius: 8px; display: none; object-fit: cover; border: 1px solid var(--primary-color);">
+                        </div>
                     </div>
                 </div>
+                <button type="button" class="btn-acao" onclick="mudarTabConfig('visual', document.querySelectorAll('.tab-btn')[1])">Avançar para Visual <i class="fa-solid fa-arrow-right"></i></button>
             </div>
 
-            <!-- Identidade Visual -->
-            <div class="config-card">
-                <h4><i class="fa-solid fa-palette"></i> Identidade Visual Pronta</h4>
-                <p style="font-size: 0.75rem; color: #AAA; margin-bottom: 10px;">Escolha um padrão ou altere a cor abaixo:</p>
-                
-                <div class="themes-grid">
-                    <button class="theme-btn" style="background: #121212; border-color: #FF6600;" onclick="aplicarCores('#FF6600', '#121212', '#1A1A1A', '#FFFFFF')"><div class="color-dot" style="background:#FF6600;"></div> Barbearia Clássica</button>
-                    <button class="theme-btn" style="background: #FFF0F5; border-color: #FF69B4; color: #333;" onclick="aplicarCores('#FF69B4', '#FFF0F5', '#FFFFFF', '#333333')"><div class="color-dot" style="background:#FF69B4;"></div> Salão de Beleza</button>
-                    <button class="theme-btn" style="background: #F0FDF4; border-color: #22C55E; color: #333;" onclick="aplicarCores('#22C55E', '#F0FDF4', '#FFFFFF', '#1F2937')"><div class="color-dot" style="background:#22C55E;"></div> Clínica / Estética</button>
-                    <button class="theme-btn" style="background: #000000; border-color: #E11D48;" onclick="aplicarCores('#E11D48', '#09090B', '#18181B', '#FAFAFA')"><div class="color-dot" style="background:#E11D48;"></div> Estúdio Tattoo</button>
-                    <button class="theme-btn" style="background: #F8FAFC; border-color: #0EA5E9; color: #333;" onclick="aplicarCores('#0EA5E9', '#F8FAFC', '#FFFFFF', '#0F172A')"><div class="color-dot" style="background:#0EA5E9;"></div> Consultório Médico</button>
-                    <button class="theme-btn" style="background: #FEFCE8; border-color: #CA8A04; color: #333;" onclick="aplicarCores('#CA8A04', '#FEFCE8', '#FFFFFF', '#422006')"><div class="color-dot" style="background:#CA8A04;"></div> Spa / Massagem</button>
-                    <button class="theme-btn" style="background: #FAF5FF; border-color: #9333EA; color: #333;" onclick="aplicarCores('#9333EA', '#FAF5FF', '#FFFFFF', '#3B0764')"><div class="color-dot" style="background:#9333EA;"></div> Esmalteria</button>
-                    <button class="theme-btn" style="background: #0F172A; border-color: #EAB308;" onclick="aplicarCores('#EAB308', '#0F172A', '#1E293B', '#F8FAFC')"><div class="color-dot" style="background:#EAB308;"></div> Lava Jato / Auto</button>
-                    <button class="theme-btn" style="background: #FFF7ED; border-color: #F97316; color: #333;" onclick="aplicarCores('#F97316', '#FFF7ED', '#FFFFFF', '#431407')"><div class="color-dot" style="background:#F97316;"></div> Pet Shop</button>
-                    <button class="theme-btn" style="background: #111827; border-color: #D4AF37;" onclick="aplicarCores('#D4AF37', '#111827', '#1F2937', '#F3F4F6')"><div class="color-dot" style="background:#D4AF37;"></div> Advocacia / Executivo</button>
+            <!-- ABA 2: VISUAL -->
+            <div id="tab-visual" class="config-tab-content" style="display: none;">
+                <div class="config-card">
+                    <h4><i class="fa-solid fa-palette"></i> Identidade Visual Pronta</h4>
+                    <p style="font-size: 0.75rem; color: #AAA; margin-bottom: 10px;">Clique num tema para aplicar cores instantaneamente:</p>
+                    
+                    <div class="themes-grid">
+                        <button type="button" class="theme-btn" style="background: #121212; border-color: #FF6600;" onclick="aplicarCores('#FF6600', '#121212', '#1A1A1A', '#FFFFFF')"><div class="color-dot" style="background:#FF6600;"></div> Barbearia Clássica</button>
+                        <button type="button" class="theme-btn" style="background: #FFF0F5; border-color: #FF69B4; color: #333;" onclick="aplicarCores('#FF69B4', '#FFF0F5', '#FFFFFF', '#333333')"><div class="color-dot" style="background:#FF69B4;"></div> Salão de Beleza</button>
+                        <button type="button" class="theme-btn" style="background: #F0FDF4; border-color: #22C55E; color: #333;" onclick="aplicarCores('#22C55E', '#F0FDF4', '#FFFFFF', '#1F2937')"><div class="color-dot" style="background:#22C55E;"></div> Clínica / Estética</button>
+                        <button type="button" class="theme-btn" style="background: #000000; border-color: #E11D48;" onclick="aplicarCores('#E11D48', '#09090B', '#18181B', '#FAFAFA')"><div class="color-dot" style="background:#E11D48;"></div> Estúdio Tattoo</button>
+                        <button type="button" class="theme-btn" style="background: #F8FAFC; border-color: #0EA5E9; color: #333;" onclick="aplicarCores('#0EA5E9', '#F8FAFC', '#FFFFFF', '#0F172A')"><div class="color-dot" style="background:#0EA5E9;"></div> Consultório Médico</button>
+                        <button type="button" class="theme-btn" style="background: #FEFCE8; border-color: #CA8A04; color: #333;" onclick="aplicarCores('#CA8A04', '#FEFCE8', '#FFFFFF', '#422006')"><div class="color-dot" style="background:#CA8A04;"></div> Spa / Massagem</button>
+                    </div>
+                    
+                    <div class="input-group" style="margin-top: 10px;">
+                        <label>Cor Principal Personalizada:</label>
+                        <input type="color" id="config-cor-primaria" style="height: 40px; cursor:pointer; padding: 2px;">
+                        <input type="hidden" id="config-cor-fundo"><input type="hidden" id="config-cor-caixas"><input type="hidden" id="config-cor-letras">
+                    </div>
                 </div>
-                
-                <div class="input-group">
-                    <label>Cor Principal Personalizada:</label>
-                    <input type="color" id="config-cor-primaria" style="height: 45px; cursor:pointer; padding: 2px;">
-                    <input type="hidden" id="config-cor-fundo"><input type="hidden" id="config-cor-caixas"><input type="hidden" id="config-cor-letras">
-                </div>
+                <button type="button" class="btn-acao" onclick="mudarTabConfig('equipa', document.querySelectorAll('.tab-btn')[2])">Avançar para Equipa <i class="fa-solid fa-arrow-right"></i></button>
             </div>
 
-            <!-- Profissionais e WhatsApp -->
-            <div class="config-card">
-                <h4><i class="fa-solid fa-users"></i> Gestão de Profissionais</h4>
-                <div id="lista-profissionais-config" style="display: flex; flex-direction: column; gap: 8px; margin-bottom: 12px;"></div>
-                <div style="display: flex; gap: 6px; align-items: stretch; margin-bottom: 5px;">
-                    <input type="text" id="novo-profissional-nome" placeholder="Nome" style="flex: 2;">
-                    <input type="text" id="novo-profissional-wpp" placeholder="WhatsApp (só num)" style="flex: 2;">
+            <!-- ABA 3: EQUIPA -->
+            <div id="tab-equipa" class="config-tab-content" style="display: none;">
+                <div class="config-card">
+                    <h4><i class="fa-solid fa-users"></i> Profissionais & Acessos</h4>
+                    <p style="font-size: 0.75rem; color: #AAA; margin-bottom: 8px;">O login de cada membro será o próprio Nome e a palavra-passe será <strong>Nome+123</strong>.</p>
+                    <div id="lista-profissionais-config" style="display: flex; flex-direction: column; gap: 8px; margin-bottom: 12px; max-height: 120px; overflow-y: auto;"></div>
+                    <div style="display: flex; gap: 6px; margin-bottom: 8px;">
+                        <input type="text" id="novo-profissional-nome" placeholder="Nome" style="flex: 2;">
+                        <input type="text" id="novo-profissional-wpp" placeholder="WhatsApp (só números)" style="flex: 2;">
+                    </div>
+                    <button type="button" class="btn-acao" onclick="adicionarProfissional()" style="font-size: 0.8rem; padding: 10px; background: rgba(255,255,255,0.1); color: var(--text-color);"><i class="fa-solid fa-plus"></i> Adicionar Profissional</button>
                 </div>
-                <button class="btn-acao" onclick="adicionarProfissional()" style="font-size: 0.8rem; padding: 10px; background: rgba(255,255,255,0.1); color: var(--text-color);">Adicionar Profissional</button>
-                <p style="font-size: 0.7rem; color: #AAA; margin-top: 8px; text-align: center;"><i class="fa-solid fa-circle-info"></i> O login será o Nome. A palavra-passe será o <strong>Nome+123</strong>.</p>
+                <button type="button" class="btn-acao" onclick="mudarTabConfig('servicos', document.querySelectorAll('.tab-btn')[3])">Avançar para Serviços <i class="fa-solid fa-arrow-right"></i></button>
             </div>
 
-            <!-- Serviços -->
-            <div class="config-card">
-                <h4><i class="fa-solid fa-scissors"></i> Serviços e Preços</h4>
-                <div id="lista-servicos-config" style="display: flex; flex-direction: column; gap: 8px; margin-bottom: 12px;"></div>
-                <div style="display: flex; gap: 6px; margin-bottom: 8px;">
-                    <input type="text" id="novo-servico-nome" placeholder="Serviço" style="flex: 2;">
-                    <input type="number" id="novo-servico-preco" placeholder="R$" style="flex: 1;" step="0.01">
-                    <input type="number" id="novo-servico-tempo" placeholder="Min" style="flex: 1;">
+            <!-- ABA 4: SERVIÇOS -->
+            <div id="tab-servicos" class="config-tab-content" style="display: none;">
+                <div class="config-card">
+                    <h4><i class="fa-solid fa-scissors"></i> Catálogo de Serviços</h4>
+                    <div id="lista-servicos-config" style="display: flex; flex-direction: column; gap: 8px; margin-bottom: 12px; max-height: 120px; overflow-y: auto;"></div>
+                    <div style="display: flex; gap: 6px; margin-bottom: 8px;">
+                        <input type="text" id="novo-servico-nome" placeholder="Nome do Serviço" style="flex: 2;">
+                        <input type="number" id="novo-servico-preco" placeholder="Preço (R$)" style="flex: 1;" step="0.01">
+                        <input type="number" id="novo-servico-tempo" placeholder="Min" style="flex: 1;">
+                    </div>
+                    <button type="button" class="btn-acao" onclick="adicionarServico()" style="font-size: 0.8rem; padding: 10px; background: rgba(255,255,255,0.1); color: var(--text-color);"><i class="fa-solid fa-plus"></i> Adicionar Serviço</button>
                 </div>
-                <button class="btn-acao" onclick="adicionarServico()" style="font-size: 0.8rem; padding: 10px; background: rgba(255,255,255,0.1); color: var(--text-color);">Adicionar Serviço</button>
+                <button type="button" class="btn-acao" id="btn-salvar-configs" onclick="salvarConfiguracoesGerais()" style="background: #25D366; font-size: 1rem; padding: 14px;"><i class="fa-solid fa-floppy-disk"></i> Guardar Todas as Configurações</button>
             </div>
-
-            <button class="btn-acao" id="btn-salvar-configs" onclick="salvarConfiguracoesGerais()" style="background: #25D366; font-size: 1.1rem; padding: 16px;"><i class="fa-solid fa-floppy-disk"></i> Salvar Configurações</button>
         </div>
     </div>
 
@@ -231,6 +243,6 @@
         </div>
     </div>
 
-    <script src="script.js"></script>
+    <script src="script_2.js"></script>
 </body>
 </html>
