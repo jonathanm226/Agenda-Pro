@@ -6,7 +6,7 @@ const _supabase = supabase.createClient(SUPABASE_URL, SUPABASE_KEY);
 const urlParams = new URLSearchParams(window.location.search);
 const TENANT_ATIVO = urlParams.get('slug') || "padrao";
 
-// Estrutura Base 100% Segura e Dinâmica
+// Estrutura Base Dinâmica
 let tenantConfig = { 
     nome_empresa: "Meu Estabelecimento", 
     admin_contato: "",
@@ -26,11 +26,19 @@ let tenantConfig = {
 };
 
 let usuarioLogado = "";
+let offsetSemana = 0;
+let servicosSelecionados = {};
+let barbeiroSelecionado = null;
 
+// ==========================================
+// INICIALIZAÇÃO GERAL (ROTEADOR)
+// ==========================================
 document.addEventListener("DOMContentLoaded", async () => {
     await carregarTenantConfig();
     aplicarIdentidadeVisual(tenantConfig);
+    atualizarIconesApp(tenantConfig.logo_url); // Atualiza o Manifest PWA dinamicamente
     
+    // Se estiver no PAINEL (painel.html)
     if (document.getElementById("painel-container")) {
         const logo = document.getElementById("painel-logo");
         if(logo && tenantConfig.logo_url) { 
@@ -39,6 +47,17 @@ document.addEventListener("DOMContentLoaded", async () => {
         }
         document.getElementById("painel-nome-negocio").textContent = tenantConfig.nome_empresa;
     }
+
+    // Se estiver na aba de AGENDAMENTO (agendar.html)
+    if (document.getElementById("agendar-container")) {
+        const logo = document.getElementById("tenant-logo");
+        if(logo && tenantConfig.logo_url) { 
+            logo.src = tenantConfig.logo_url; 
+            logo.style.display = "block"; 
+        }
+        document.getElementById("tenant-name").textContent = tenantConfig.nome_empresa;
+        carregarDadosAgendamentoCliente();
+    }
 });
 
 async function carregarTenantConfig() {
@@ -46,15 +65,11 @@ async function carregarTenantConfig() {
         const { data, error } = await _supabase.from("saas_estabelecimentos").select("*").eq("slug", TENANT_ATIVO).single();
         if (data) {
             Object.assign(tenantConfig, data);
-            
-            // TRAVA DE SEGURANÇA: Impede que arrays vazios no banco se tornem nulos e travem o app
             if (!tenantConfig.barbeiros) tenantConfig.barbeiros = [];
             if (!tenantConfig.servicos) tenantConfig.servicos = {};
             if (!tenantConfig.senhas_usuarios) tenantConfig.senhas_usuarios = { "admin": "admin123" };
         }
-    } catch (e) { 
-        console.warn("Usando configurações padrão. Erro: ", e); 
-    }
+    } catch (e) { console.warn("Usando configurações padrão."); }
 }
 
 function aplicarIdentidadeVisual(config) {
@@ -63,16 +78,35 @@ function aplicarIdentidadeVisual(config) {
     root.style.setProperty('--bg-color', config.cor_fundo || '#121212');
     root.style.setProperty('--box-color', config.cor_caixas || '#1A1A1A');
     root.style.setProperty('--text-color', config.cor_letras || '#FFFFFF');
+}
+
+// INOVAÇÃO PWA: Transforma o manifest.json em dinâmico com base na logo do banco de dados
+function atualizarIconesApp(logoUrl) {
+    if (!logoUrl) return;
     
-    const logos = document.querySelectorAll("img[alt='Logo']");
-    logos.forEach(img => { 
-        if (config.logo_url) { 
-            img.src = config.logo_url; 
-            img.style.display = "block"; 
-        } else {
-            img.style.display = "none";
-        }
-    });
+    let icon = document.querySelector("link[rel='icon']");
+    if(icon) icon.href = logoUrl;
+    
+    let appleIcon = document.querySelector("link[rel='apple-touch-icon']");
+    if(appleIcon) appleIcon.href = logoUrl;
+
+    const manifestElement = document.querySelector("link[rel='manifest']");
+    if(manifestElement) {
+        const manifestJSON = {
+            "name": tenantConfig.nome_empresa || "Agenda Pro",
+            "short_name": tenantConfig.nome_empresa || "Agenda",
+            "start_url": window.location.pathname + window.location.search,
+            "display": "standalone",
+            "background_color": tenantConfig.cor_fundo || "#121212",
+            "theme_color": tenantConfig.cor_primaria || "#FF6600",
+            "icons": [
+                { "src": logoUrl, "sizes": "192x192", "type": "image/png", "purpose": "any maskable" },
+                { "src": logoUrl, "sizes": "512x512", "type": "image/png", "purpose": "any maskable" }
+            ]
+        };
+        const blob = new Blob([JSON.stringify(manifestJSON)], {type: 'application/json'});
+        manifestElement.href = URL.createObjectURL(blob);
+    }
 }
 
 function mostrarAlerta(texto) {
@@ -80,9 +114,7 @@ function mostrarAlerta(texto) {
     if (modalCustom) { 
         document.getElementById("alerta-custom-texto").textContent = texto; 
         modalCustom.style.display = "flex"; 
-    } else { 
-        alert(texto); 
-    }
+    } else { alert(texto); }
 }
 
 function fecharAlertaCustom() {
@@ -90,10 +122,152 @@ function fecharAlertaCustom() {
     if(modalCustom) modalCustom.style.display = "none";
 }
 
+// ==========================================
+// LÓGICA DA ABA DO CLIENTE (AGENDAR.HTML)
+// ==========================================
+function carregarDadosAgendamentoCliente() {
+    renderizarBarbeiros();
+    renderizarServicos();
+}
+
+function renderizarBarbeiros() {
+    const grid = document.getElementById("barbers-grid");
+    if(!grid) return;
+    grid.innerHTML = "";
+    (tenantConfig.barbeiros || []).forEach((b) => {
+        let nome = typeof b === 'object' ? b.nome : b;
+        grid.innerHTML += `<div class="barber-card" onclick="selecionarBarbeiro('${nome}', this)">
+            <i class="fa-solid fa-user" style="font-size: 2rem; color: var(--primary-color); margin-bottom: 10px;"></i>
+            <h3 style="font-size: 0.9rem; color: var(--text-color);">${nome}</h3>
+        </div>`;
+    });
+}
+
+function selecionarBarbeiro(nome, el) {
+    barbeiroSelecionado = nome;
+    document.querySelectorAll('.barber-card').forEach(c => c.classList.remove('active'));
+    el.classList.add('active');
+    checkAvailableTimes();
+}
+
+function renderizarServicos() {
+    const grid = document.getElementById("services-grid");
+    if(!grid) return;
+    grid.innerHTML = "";
+    Object.keys(tenantConfig.servicos || {}).forEach(nome => {
+        const s = tenantConfig.servicos[nome];
+        grid.innerHTML += `<div class="service-card" onclick="toggleServico('${nome}', ${s.price}, ${s.duration}, this)">
+            <div class="service-info">
+                <h3>${nome}</h3>
+                <span><i class="fa-regular fa-clock"></i> ${s.duration} min</span>
+            </div>
+            <div class="price">R$ ${s.price.toFixed(2)}</div>
+        </div>`;
+    });
+}
+
+function toggleServico(nome, preco, duracao, el) {
+    if(servicosSelecionados[nome]) {
+        delete servicosSelecionados[nome];
+        el.classList.remove('active');
+    } else {
+        servicosSelecionados[nome] = { preco, duracao };
+        el.classList.add('active');
+    }
+    atualizarResumo();
+}
+
+function atualizarResumo() {
+    const resumoBox = document.getElementById("resumo-flutuante");
+    if(!resumoBox) return;
+    
+    let total = 0; let tempo = 0; let qtd = 0;
+    Object.values(servicosSelecionados).forEach(s => {
+        total += s.preco; tempo += s.duracao; qtd++;
+    });
+    
+    if(qtd > 0) {
+        resumoBox.style.display = "flex";
+        document.getElementById("resumo-qtd-servicos").textContent = `${qtd} serviço(s) selecionado(s)`;
+        document.getElementById("resumo-valor-total").textContent = `R$ ${total.toFixed(2)}`;
+        document.getElementById("resumo-duracao").textContent = `${tempo} min`;
+    } else {
+        resumoBox.style.display = "none";
+    }
+}
+
+function checkAvailableTimes() {
+    const date = document.getElementById("date");
+    const timeSelect = document.getElementById("time");
+    if(!date || !timeSelect) return;
+    
+    timeSelect.innerHTML = '<option value="">Selecione um horário</option>';
+    if(!date.value || !barbeiroSelecionado) return;
+
+    const profObj = (tenantConfig.barbeiros || []).find(b => (typeof b === 'object' ? b.nome : b) === barbeiroSelecionado);
+    let hInicio = (profObj && profObj.inicio) ? parseInt(profObj.inicio.split(':')[0]) : parseInt(tenantConfig.horario_inicio.split(':')[0]);
+    let hFim = (profObj && profObj.fim) ? parseInt(profObj.fim.split(':')[0]) : parseInt(tenantConfig.horario_fim.split(':')[0]);
+
+    for(let h = hInicio; h <= hFim; h++) {
+        let timeStr = `${h.toString().padStart(2, '0')}:00`;
+        timeSelect.innerHTML += `<option value="${timeStr}">${timeStr}</option>`;
+    }
+}
+
+function abrirModalConfirmacao() {
+    if(!barbeiroSelecionado) return mostrarAlerta("Selecione um profissional.");
+    if(Object.keys(servicosSelecionados).length === 0) return mostrarAlerta("Selecione pelo menos um serviço.");
+    if(!document.getElementById("date").value || !document.getElementById("time").value) return mostrarAlerta("Escolha uma data e horário.");
+    if(!document.getElementById("client-name").value || !document.getElementById("client-phone").value) return mostrarAlerta("Preencha os seus dados.");
+
+    let servicosStr = Object.keys(servicosSelecionados).join(', ');
+    let html = `<strong>Profissional:</strong> ${barbeiroSelecionado}<br>
+                <strong>Serviços:</strong> ${servicosStr}<br>
+                <strong>Data:</strong> ${document.getElementById("date").value.split('-').reverse().join('/')} às ${document.getElementById("time").value}<br>
+                <strong>Cliente:</strong> ${document.getElementById("client-name").value}`;
+    
+    document.getElementById("resumo-agendamento").innerHTML = html;
+    document.getElementById("modal-confirmacao").style.display = "flex";
+}
+
+function fecharModalConfirmacao() {
+    document.getElementById("modal-confirmacao").style.display = "none";
+}
+
+function confirmarEEnviar() {
+    const numAdmin = tenantConfig.admin_contato || "";
+    const profObj = (tenantConfig.barbeiros || []).find(b => (typeof b === 'object' ? b.nome : b) === barbeiroSelecionado);
+    const numProf = (profObj && profObj.whatsapp) ? profObj.whatsapp : "";
+    
+    // LÓGICA DO ADMIN: Verifica se o Admin quer receber tudo
+    let numeroDestino = numProf;
+    if(tenantConfig.admin_receber_todas_notificacoes && numAdmin) {
+        numeroDestino = numAdmin;
+    }
+
+    if(!numeroDestino) {
+        mostrarAlerta("O WhatsApp do profissional não está configurado e o Admin não definiu um número de recepção central.");
+        return;
+    }
+
+    const cliente = document.getElementById("client-name").value;
+    const dataStr = document.getElementById("date").value.split('-').reverse().join('/');
+    const horaStr = document.getElementById("time").value;
+    const servs = Object.keys(servicosSelecionados).join(', ');
+
+    const msg = `*Novo Agendamento!*\n\n*Cliente:* ${cliente}\n*Profissional:* ${barbeiroSelecionado}\n*Serviços:* ${servs}\n*Data:* ${dataStr} às ${horaStr}\n\nAguardando confirmação.`;
+    
+    const link = `https://api.whatsapp.com/send?phone=55${numeroDestino}&text=${encodeURIComponent(msg)}`;
+    window.open(link, '_blank');
+    fecharModalConfirmacao();
+}
+
+// ==========================================
+// LÓGICA DO PAINEL ADMIN / PROFISSIONAL
+// ==========================================
 function mudarTabConfig(tabName, btnElement) {
     document.querySelectorAll('.config-tab-content').forEach(el => el.style.display = 'none');
     document.getElementById("tab-" + tabName).style.display = 'block';
-
     document.querySelectorAll('.tab-btn').forEach(btn => {
         btn.style.background = 'transparent';
         btn.style.color = '#AAA';
@@ -105,7 +279,6 @@ function mudarTabConfig(tabName, btnElement) {
 function fazerLogin() {
     const user = document.getElementById("login-usuario").value.trim().toLowerCase();
     const pass = document.getElementById("login-senha").value.trim();
-    
     if (!user || !pass) return mostrarAlerta("Preencha os campos de acesso.");
 
     let senhaAdminCadastrada = (tenantConfig.senhas_usuarios && tenantConfig.senhas_usuarios['admin']) ? tenantConfig.senhas_usuarios['admin'] : 'admin123';
@@ -113,10 +286,7 @@ function fazerLogin() {
     if (user === 'admin' && pass === senhaAdminCadastrada) {
         usuarioLogado = "Admin";
         document.getElementById("login-section").style.display = "none";
-        
-        // FORMATO SEGURO DE STRING (Sem quebra de linha com crase)
         document.getElementById("admin-gear-container").innerHTML = '<div class="btn-engrenagem" onclick="abrirConfiguracoesAdmin()" title="Configurações"><i class="fa-solid fa-gear"></i></div>';
-        
         document.getElementById("dashboard-admin").style.display = "block";
     } else {
         const profEncontrado = (tenantConfig.barbeiros || []).find(b => {
@@ -133,31 +303,22 @@ function fazerLogin() {
                 usuarioLogado = nomeReal;
                 document.getElementById("login-section").style.display = "none";
                 document.getElementById("dashboard-barbeiro").style.display = "block";
-                
-                // FORMATO SEGURO DE STRING
                 document.getElementById("titulo-agenda-barbeiro").innerHTML = '<i class="fa-solid fa-calendar-check"></i> Agenda: ' + usuarioLogado;
-                
                 carregarAgendaBarbeiro();
                 return;
             }
         }
-
         mostrarAlerta("Senha incorreta, verifique e tente novamente.");
     }
 }
 
-function fazerLogout() { 
-    window.location.reload(); 
-}
+function fazerLogout() { window.location.reload(); }
 
 function abrirModalTrocarSenha() {
     document.getElementById("nova-senha-input").value = "";
     document.getElementById("modal-trocar-senha").style.display = "flex";
 }
-
-function fecharModalTrocarSenha() {
-    document.getElementById("modal-trocar-senha").style.display = "none";
-}
+function fecharModalTrocarSenha() { document.getElementById("modal-trocar-senha").style.display = "none"; }
 
 async function salvarNovaSenha() {
     const novaSenha = document.getElementById("nova-senha-input").value.trim();
@@ -171,29 +332,19 @@ async function salvarNovaSenha() {
 
     const { error } = await _supabase.from("saas_estabelecimentos").upsert({
         slug: TENANT_ATIVO,
-        senhas_usuarios: tenantConfig.senhas_usuarios,
-        barbeiros: tenantConfig.barbeiros,
-        servicos: tenantConfig.servicos
+        senhas_usuarios: tenantConfig.senhas_usuarios
     }, { onConflict: 'slug' });
 
     btn.textContent = "Guardar Nova Palavra-passe";
     fecharModalTrocarSenha();
-
-    if(!error) {
-        mostrarAlerta("Palavra-passe alterada com sucesso!");
-    } else {
-        mostrarAlerta("Erro ao atualizar a palavra-passe no banco de dados.");
-    }
+    if(!error) mostrarAlerta("Palavra-passe alterada com sucesso!");
 }
 
 function abrirConfiguracoesAdmin() { 
     document.getElementById("modal-config-admin").style.display = "flex";
     renderizarAdminParametros();
 }
-
-function fecharConfiguracoesAdmin() { 
-    document.getElementById("modal-config-admin").style.display = "none"; 
-}
+function fecharConfiguracoesAdmin() { document.getElementById("modal-config-admin").style.display = "none"; }
 
 function aplicarCores(primaria, fundo, caixas, letras) {
     document.getElementById("config-cor-primaria").value = primaria;
@@ -213,8 +364,6 @@ function renderizarAdminParametros() {
     document.getElementById("config-endereco").value = tenantConfig.endereco || "";
     document.getElementById("config-horario-inicio").value = tenantConfig.horario_inicio || "08:00";
     document.getElementById("config-horario-fim").value = tenantConfig.horario_fim || "19:00";
-    
-    // Novos campos
     document.getElementById("config-admin-contato").value = tenantConfig.admin_contato || "";
     document.getElementById("config-admin-notificacoes").checked = tenantConfig.admin_receber_todas_notificacoes === true;
     
@@ -239,23 +388,23 @@ function renderListasConfig() {
         let inicioP = typeof p === 'object' && p.inicio ? p.inicio : "09:00";
         let fimP = typeof p === 'object' && p.fim ? p.fim : "18:00";
 
-        listP.innerHTML += '<div style="background:rgba(255,255,255,0.05); padding:10px; border-radius:8px; display:flex; justify-content:space-between; align-items:center; margin-bottom: 6px;">' +
-            '<div style="display:flex; flex-direction:column;">' +
-                '<strong style="color:var(--text-color); font-size:0.9rem;">' + nomeP + '</strong>' +
-                '<span style="font-size:0.75rem; color:#AAA;">📞 ' + wppP + ' | ⏰ ' + inicioP + ' - ' + fimP + '</span>' +
-            '</div>' +
-            '<button type="button" style="color:#e74c3c; background:rgba(231,76,60,0.1); padding:8px; border-radius:6px; border:none; cursor:pointer;" onclick="removerProfissional(' + i + ')"><i class="fa-solid fa-trash"></i></button>' +
-        '</div>';
+        listP.innerHTML += `<div style="background:rgba(255,255,255,0.05); padding:10px; border-radius:8px; display:flex; justify-content:space-between; align-items:center; margin-bottom: 6px;">
+            <div style="display:flex; flex-direction:column;">
+                <strong style="color:var(--text-color); font-size:0.9rem;">${nomeP}</strong>
+                <span style="font-size:0.75rem; color:#AAA;">📞 ${wppP} | ⏰ ${inicioP} - ${fimP}</span>
+            </div>
+            <button type="button" style="color:#e74c3c; background:rgba(231,76,60,0.1); padding:8px; border-radius:6px; border:none; cursor:pointer;" onclick="removerProfissional(${i})"><i class="fa-solid fa-trash"></i></button>
+        </div>`;
     });
 
     const listS = document.getElementById("lista-servicos-config");
     listS.innerHTML = "";
     Object.keys(tenantConfig.servicos || {}).forEach(nome => {
         const s = tenantConfig.servicos[nome];
-        listS.innerHTML += '<div style="background:rgba(255,255,255,0.05); padding:10px; border-radius:8px; display:flex; justify-content:space-between; font-size:0.85rem; align-items:center; margin-bottom: 6px;">' +
-            '<span>' + nome + ' <strong style="color:var(--primary-color);">R$ ' + s.price + '</strong> (' + s.duration + 'm)</span>' +
-            '<button type="button" style="color:#e74c3c; background:none; border:none; cursor:pointer;" onclick="removerServico(\'' + nome + '\')"><i class="fa-solid fa-trash"></i></button>' +
-        '</div>';
+        listS.innerHTML += `<div style="background:rgba(255,255,255,0.05); padding:10px; border-radius:8px; display:flex; justify-content:space-between; font-size:0.85rem; align-items:center; margin-bottom: 6px;">
+            <span>${nome} <strong style="color:var(--primary-color);">R$ ${s.price}</strong> (${s.duration}m)</span>
+            <button type="button" style="color:#e74c3c; background:none; border:none; cursor:pointer;" onclick="removerServico('${nome}')"><i class="fa-solid fa-trash"></i></button>
+        </div>`;
     });
 }
 
@@ -274,10 +423,7 @@ function adicionarProfissional() {
     }
 }
 
-function removerProfissional(i) { 
-    tenantConfig.barbeiros.splice(i, 1); 
-    renderListasConfig(); 
-}
+function removerProfissional(i) { tenantConfig.barbeiros.splice(i, 1); renderListasConfig(); }
 
 function adicionarServico() {
     const nome = document.getElementById("novo-servico-nome").value.trim();
@@ -290,10 +436,7 @@ function adicionarServico() {
     }
 }
 
-function removerServico(nome) { 
-    delete tenantConfig.servicos[nome]; 
-    renderListasConfig(); 
-}
+function removerServico(nome) { delete tenantConfig.servicos[nome]; renderListasConfig(); }
 
 async function salvarConfiguracoesGerais() {
     const btn = document.getElementById("btn-salvar-configs");
@@ -305,11 +448,8 @@ async function salvarConfiguracoesGerais() {
     tenantConfig.endereco = document.getElementById("config-endereco").value.trim();
     tenantConfig.horario_inicio = document.getElementById("config-horario-inicio").value;
     tenantConfig.horario_fim = document.getElementById("config-horario-fim").value;
-    
-    // Captura os novos campos
     tenantConfig.admin_contato = document.getElementById("config-admin-contato").value.replace(/\D/g, "");
     tenantConfig.admin_receber_todas_notificacoes = document.getElementById("config-admin-notificacoes").checked;
-    
     tenantConfig.cor_primaria = document.getElementById("config-cor-primaria").value;
     tenantConfig.cor_fundo = document.getElementById("config-cor-fundo").value || "#121212";
     tenantConfig.cor_caixas = document.getElementById("config-cor-caixas").value || "#1A1A1A";
@@ -351,11 +491,20 @@ async function salvarConfiguracoesGerais() {
     if (!error) {
         mostrarAlerta("Configurações atualizadas e salvas no banco de dados!");
         aplicarIdentidadeVisual(tenantConfig);
+        atualizarIconesApp(tenantConfig.logo_url);
         document.getElementById("painel-nome-negocio").textContent = tenantConfig.nome_empresa;
         fecharConfiguracoesAdmin();
     } else {
         mostrarAlerta("Erro ao gravar as configurações.");
     }
+}
+
+// ==========================================
+// RENDERIZAÇÃO DA AGENDA (PAINEL.HTML)
+// ==========================================
+function mudarSemana(direcao) {
+    offsetSemana += (direcao * 7);
+    carregarAgendaBarbeiro();
 }
 
 function carregarAgendaBarbeiro() {
@@ -366,8 +515,35 @@ function carregarAgendaBarbeiro() {
     let horaInicio = (profObj && profObj.inicio) ? profObj.inicio : (tenantConfig.horario_inicio || "08:00");
     let horaFim = (profObj && profObj.fim) ? profObj.fim : (tenantConfig.horario_fim || "19:00");
 
-    container.innerHTML = '<div style="grid-column: span 6; background: var(--box-color); padding: 12px; border-radius: 8px; text-align: center;">' +
-        '<p style="font-size: 0.85rem; color: #CCC;">Horário de expediente configurado: <strong>' + horaInicio + ' às ' + horaFim + '</strong></p>' +
-        '<p style="font-size: 0.75rem; color: var(--primary-color); margin-top: 4px;">Clique num horário para gerir a disponibilidade.</p>' +
-    '</div>';
+    let startHour = parseInt(horaInicio.split(':')[0]);
+    let endHour = parseInt(horaFim.split(':')[0]);
+
+    let html = `<div style="grid-column: span 6; background: var(--box-color); padding: 12px; border-radius: 8px; text-align: center; margin-bottom: 10px;">
+        <p style="font-size: 0.85rem; color: #CCC;">Horário de expediente configurado: <strong>${horaInicio} às ${horaFim}</strong></p>
+        <p style="font-size: 0.75rem; color: var(--primary-color); margin-top: 4px;">Clique num horário para gerir a disponibilidade.</p>
+    </div>`;
+
+    const dataAtual = new Date();
+    
+    // Gera as próximas 6 colunas de dias
+    for(let i=0; i<6; i++) {
+        let d = new Date(dataAtual);
+        d.setDate(d.getDate() + i + offsetSemana);
+        let diaStr = d.toLocaleDateString('pt-BR', {weekday: 'short', day: '2-digit', month: '2-digit'});
+        
+        html += `<div class="day-column"><div class="day-header">${diaStr}</div>`;
+        
+        for(let h = startHour; h <= endHour; h++) {
+            let time = `${h.toString().padStart(2, '0')}:00`;
+            html += `<div class="slot-item available" onclick="alternarBloqueio('${d.toISOString().split('T')[0]}', '${time}')">${time} - Livre</div>`;
+        }
+        html += `</div>`;
+    }
+    
+    container.innerHTML = html;
+}
+
+function alternarBloqueio(data, hora) {
+    // Aqui no futuro vamos gravar este bloqueio no Supabase
+    mostrarAlerta(`Ação registada para o dia ${data} às ${hora}. Na próxima fase, este horário ficará vermelho/indisponível na agenda do cliente.`);
 }
