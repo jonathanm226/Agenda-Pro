@@ -34,9 +34,11 @@
         .slot-item.blocked { border-left-color: #e74c3c; background: rgba(231, 76, 60, 0.1); color: #888; text-decoration: line-through; }
         .custom-modal-overlay { position: fixed; top: 0; left: 0; width: 100%; height: 100%; background: rgba(0,0,0,0.8); display: none; justify-content: center; align-items: center; z-index: 9999; }
         .custom-modal { background: var(--box-color); color: var(--text-color); padding: 25px; border-radius: 16px; width: 95%; max-width: 420px; }
-        .themes-grid { display: grid; grid-template-columns: 1fr; gap: 8px; margin-bottom: 15px; }
-        .theme-btn { padding: 12px; border-radius: 8px; border: 2px solid transparent; font-size: 0.8rem; font-weight: bold; cursor: pointer; text-align: left; }
-        .config-card { background: rgba(0,0,0,0.2); border: 1px solid rgba(255,255,255,0.05); padding: 15px; border-radius: 12px; margin-bottom: 15px; }
+        
+        /* Estilo melhorado para seleção de serviços (Print 3) */
+        .service-check-card { background: rgba(255,255,255,0.03); border: 1px solid rgba(255,255,255,0.1); padding: 10px 12px; border-radius: 8px; display: flex; align-items: center; justify-content: space-between; cursor: pointer; transition: 0.2s; }
+        .service-check-card:hover { border-color: var(--primary-color); }
+        .service-check-card.selected { background: rgba(255, 102, 0, 0.1); border-color: var(--primary-color); }
     </style>
 </head>
 <body>
@@ -61,7 +63,6 @@
                 <button type="button" class="btn-acao" onclick="fazerLogout()" style="width: auto; padding: 8px 10px; background: rgba(231, 76, 60, 0.1); color: #e74c3c; font-size: 0.75rem;">Sair</button>
             </div>
 
-            <!-- BOTÕES SOLICITADOS NO PRINT 3 -->
             <div style="display: grid; grid-template-columns: repeat(3, 1fr); gap: 8px; margin-bottom: 15px;">
                 <button type="button" class="btn-acao" onclick="abrirModalMensalistas()" style="font-size: 0.75rem; background: #3498db;"><i class="fa-solid fa-users"></i> Mensalistas</button>
                 <button type="button" class="btn-acao" onclick="carregarAgendaBarbeiro()" style="font-size: 0.75rem; background: #2ecc71;"><i class="fa-solid fa-rotate"></i> Atualizar</button>
@@ -70,12 +71,13 @@
 
             <div class="finance-card">
                 <div class="finance-header">
-                    <span style="font-size: 0.85rem; font-weight: bold; color: #CCC;">Resumo Pessoal</span>
+                    <span style="font-size: 0.85rem; font-weight: bold; color: #CCC;" id="label-resumo-financeiro">Resumo Pessoal</span>
                     <select id="filtro-financeiro-prof" onchange="atualizarFinanceiroProfissional()" style="width: 110px; padding: 4px;">
                         <option value="dia">Hoje</option><option value="semana">Esta Semana</option><option value="mes">Este Mês</option>
                     </select>
                 </div>
                 <div class="finance-value" id="valor-financeiro-prof">R$ 0,00</div>
+                <div id="detalhes-pagamentos-individuais" style="font-size: 0.75rem; color: #AAA; border-top: 1px solid rgba(255,255,255,0.05); padding-top: 8px; margin-top: 8px;">Nenhum pagamento registrado.</div>
             </div>
 
             <div style="display: flex; gap: 8px; margin-bottom: 15px;">
@@ -84,35 +86,57 @@
             </div>
             <div id="grade-semanal-container" class="week-horizontal-container"></div>
         </section>
-
-        <section id="dashboard-admin" class="section" style="display: none;">
-            <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 15px;">
-                <h2 style="font-size: 1rem; margin:0;">Painel Admin</h2>
-                <button type="button" class="btn-acao" onclick="fazerLogout()" style="width: auto; padding: 8px 10px; background: rgba(231, 76, 60, 0.1); color: #e74c3c; font-size: 0.75rem;">Sair</button>
-            </div>
-            <div class="finance-card">
-                <div class="finance-header"><span>Faturamento Geral</span><select id="filtro-financeiro-admin" onchange="atualizarFinanceiroAdmin()"><option value="dia">Hoje</option><option value="semana">Esta Semana</option><option value="mes">Este Mês</option></select></div>
-                <div class="finance-value" id="valor-financeiro-admin">R$ 0,00</div>
-            </div>
-        </section>
     </div>
 
-    <!-- MODAL DE GERENCIAR ATENDIMENTO (PRINTS 1 E 2) -->
+    <!-- MODAL GERENCIAR ATENDIMENTO -->
     <div id="modal-gerenciar-atendimento" class="custom-modal-overlay">
         <div class="custom-modal" style="max-width: 380px;">
-            <h3 style="text-align: center; margin-bottom: 15px; font-size: 1.1rem; color: #FFF; text-transform: uppercase; letter-spacing: 1px;">Gerenciar Atendimento</h3>
-            <div id="detalhes-atendimento-box" style="background: rgba(0,0,0,0.4); border: 1px solid rgba(255,255,255,0.1); padding: 15px; border-radius: 10px; margin-bottom: 20px; font-size: 0.85rem; line-height: 1.6;"></div>
-            <div style="display: flex; flex-direction: column; gap: 10px;">
+            <h3 style="text-align: center; margin-bottom: 15px; font-size: 1.1rem; color: #FFF; text-transform: uppercase;">Gerenciar Atendimento</h3>
+            <div id="detalhes-atendimento-box" style="background: rgba(0,0,0,0.4); border: 1px solid rgba(255,255,255,0.1); padding: 15px; border-radius: 10px; margin-bottom: 15px; font-size: 0.85rem; line-height: 1.6;"></div>
+            
+            <!-- SELETOR DE FORMA DE PAGAMENTO AO CONCLUIR -->
+            <div id="box-forma-pagamento" style="display: none; margin-bottom: 15px; background: rgba(0,0,0,0.5); padding: 10px; border-radius: 8px; border: 1px solid var(--primary-color);">
+                <label style="font-size: 0.8rem; color: #CCC; display: block; margin-bottom: 6px;">Forma de Pagamento:</label>
+                <select id="select-forma-pgto" style="padding: 8px; font-size: 0.85rem;">
+                    <option value="Dinheiro">Dinheiro</option>
+                    <option value="Pix">Pix</option>
+                    <option value="Cartão de Crédito">Cartão de Crédito</option>
+                    <option value="Cartão de Débito">Cartão de Débito</option>
+                </select>
+                <button type="button" class="btn-acao" onclick="confirmarConclusaoComPgto()" style="margin-top: 8px; background: #25D366; font-size: 0.8rem; padding: 10px;">Confirmar Pagamento</button>
+            </div>
+
+            <div style="display: flex; flex-direction: column; gap: 8px;" id="botoes-gerenciar-box">
                 <button type="button" id="btn-modal-concluir" class="btn-acao" style="background: #25D366; font-size: 0.85rem;"><i class="fa-solid fa-check"></i> Concluir e Confirmar Pgto</button>
                 <button type="button" id="btn-modal-reagendar" class="btn-acao" style="background: #3498db; font-size: 0.85rem;"><i class="fa-regular fa-calendar"></i> Reagendar Horário</button>
                 <button type="button" id="btn-modal-cancelar" class="btn-acao" style="background: #c0392b; font-size: 0.85rem;"><i class="fa-solid fa-ban"></i> Cancelar Agendamento</button>
                 <button type="button" id="btn-modal-lembrete" class="btn-acao" style="background: #27ae60; font-size: 0.85rem;"><i class="fa-brands fa-whatsapp"></i> Enviar Lembrete WhatsApp</button>
                 <button type="button" onclick="fecharModalGerenciar()" class="btn-acao" style="background: rgba(255,255,255,0.1); font-size: 0.85rem;">Fechar</button>
             </div>
+
+            <!-- MODAL REAGENDAR INTERNO -->
+            <div id="box-reagendar" style="display: none; margin-top: 10px; background: rgba(0,0,0,0.5); padding: 10px; border-radius: 8px;">
+                <label style="font-size: 0.8rem; color: #CCC;">Nova Data:</label><input type="date" id="reagendar-data" style="margin-bottom:6px;">
+                <label style="font-size: 0.8rem; color: #CCC;">Novo Horário:</label><input type="time" id="reagendar-hora" value="09:00" style="margin-bottom:8px;">
+                <button type="button" class="btn-acao" onclick="salvarReagendamento()" style="background: #3498db; font-size: 0.8rem; padding: 8px;">Salvar Reagendamento</button>
+            </div>
         </div>
     </div>
 
-    <!-- MODAL NOVO AGENDAMENTO / MODO ENCAIXE (PRINT 4) -->
+    <!-- MODAL DE CONFIRMAÇÃO DE CANCELAMENTO ESTILIZADO -->
+    <div id="modal-confirmar-cancelamento" class="custom-modal-overlay" style="z-index: 10000;">
+        <div class="custom-modal" style="text-align: center; max-width: 320px;">
+            <i class="fa-solid fa-triangle-exclamation" style="font-size: 2.5rem; color: #e74c3c; margin-bottom: 15px;"></i>
+            <h3 style="margin-bottom: 10px; font-size: 1.1rem;">Cancelar Agendamento</h3>
+            <p style="font-size: 0.9rem; color: #CCC; margin-bottom: 20px;">Deseja realmente cancelar este agendamento?</p>
+            <div style="display: flex; gap: 10px;">
+                <button type="button" onclick="fecharModalCancelamentoEstilizado()" class="btn-acao" style="background: rgba(255,255,255,0.1);">Não</button>
+                <button type="button" id="btn-confirma-cancelamento-sim" class="btn-acao" style="background: #e74c3c;">Sim, Cancelar</button>
+            </div>
+        </div>
+    </div>
+
+    <!-- MODAL NOVO AGENDAMENTO -->
     <div id="modal-novo-agendamento" class="custom-modal-overlay">
         <div class="custom-modal" style="max-width: 440px; max-height: 90vh; overflow-y: auto;">
             <h3 style="text-align: center; margin-bottom: 15px; font-size: 1.1rem; color: #FFF; text-transform: uppercase;">Agendamento Avulso (Barbeiro)</h3>
@@ -121,7 +145,7 @@
             
             <div class="input-group">
                 <label>Serviços (Selecione um ou mais):</label>
-                <div id="lista-servicos-checkboxes" style="display: grid; grid-template-columns: 1fr 1fr; gap: 8px; max-height: 150px; overflow-y: auto; background: rgba(0,0,0,0.3); padding: 10px; border-radius: 8px;"></div>
+                <div id="lista-servicos-checkboxes" style="display: grid; grid-template-columns: 1fr; gap: 8px; max-height: 160px; overflow-y: auto; background: rgba(0,0,0,0.3); padding: 10px; border-radius: 8px;"></div>
             </div>
 
             <div style="background: rgba(0,0,0,0.3); padding: 10px; border-radius: 8px; margin-bottom: 12px; display: flex; justify-content: space-between; align-items: center;">
@@ -129,12 +153,11 @@
                 <strong id="novo-cli-total" style="font-size: 1.1rem; color: var(--primary-color);">R$ 0,00</strong>
             </div>
 
-            <!-- MODO ENCAIXE CONFORME PRINT 4 -->
             <div style="background: rgba(255, 102, 0, 0.05); border: 1px solid var(--primary-color); padding: 12px; border-radius: 8px; margin-bottom: 12px; display: flex; align-items: flex-start; gap: 10px; cursor: pointer;" onclick="document.getElementById('check-encaixe').click()">
                 <input type="checkbox" id="check-encaixe" style="width: 18px; height: 18px; margin-top: 2px;">
                 <div>
                     <strong style="font-size: 0.9rem; display: block; color: var(--primary-color);">Modo Encaixe</strong>
-                    <span style="font-size: 0.75rem; color: #AAA;">Permite inserir em qualquer horário sem validar conflitos na agenda.</span>
+                    <span style="font-size: 0.75rem; color: #AAA;">Insere no horário escolhido sem validar conflito de tempo na agenda.</span>
                 </div>
             </div>
 
@@ -153,7 +176,7 @@
         <div class="custom-modal" style="text-align: center; max-width: 350px;">
             <i class="fa-solid fa-users" style="font-size: 2.5rem; color: var(--primary-color); margin-bottom: 15px;"></i>
             <h3 style="margin-bottom: 10px;">Mensalistas</h3>
-            <p style="font-size: 0.9rem; color: #CCC; margin-bottom: 20px;">Módulo de gestão de clientes mensalistas em desenvolvimento.</p>
+            <p style="font-size: 0.9rem; color: #CCC; margin-bottom: 20px;">Módulo de gestão de clientes mensalistas.</p>
             <button type="button" class="btn-acao" onclick="document.getElementById('modal-mensalistas').style.display='none'">Entendido</button>
         </div>
     </div>
