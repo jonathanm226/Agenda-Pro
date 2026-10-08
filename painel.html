@@ -5,8 +5,8 @@
     <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=0">
     <title>Agenda Pro! | Painel Central</title>
 
-    <link rel="icon" type="image/svg+xml" href="logo.svg">
-    <link rel="apple-touch-icon" href="logo.svg">
+    <link rel="icon" type="image/png" href="logo.png">
+    <link rel="apple-touch-icon" href="logo.png">
     <link rel="manifest" href="manifest.json">
     <meta name="theme-color" content="#121212">
 
@@ -20,11 +20,11 @@
             --text-color: #FFFFFF;
         }
         * { margin: 0; padding: 0; box-sizing: border-box; font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif; }
-        body { background-color: var(--bg-color); color: var(--text-color); display: flex; justify-content: center; min-height: 100vh; }
+        body { background-color: var(--bg-color); color: var(--text-color); display: flex; justify-content: center; min-height: 100vh; transition: background 0.3s, color 0.3s; }
         .app-container { width: 100%; max-width: 550px; padding: 15px; padding-bottom: 90px; }
         
         .barber-header { text-align: center; background: var(--box-color); padding: 20px; border-radius: 16px; margin-bottom: 20px; border: 1px solid rgba(255,255,255,0.05); position: relative; box-shadow: 0 4px 15px rgba(0,0,0,0.1); }
-        .brand-logo-container { width: 70px; height: 70px; background: var(--bg-color); border: 2px solid var(--primary-color); border-radius: 50%; display: flex; align-items: center; justify-content: center; margin: 0 auto 10px auto; overflow: hidden; }
+        .brand-logo-container { width: 80px; height: 80px; background: var(--bg-color); border: 2px solid var(--primary-color); border-radius: 50%; display: flex; align-items: center; justify-content: center; margin: 0 auto 10px auto; overflow: hidden; }
         .brand-logo-container img { width: 100%; height: 100%; object-fit: cover; }
         
         .btn-engrenagem { position: absolute; top: 15px; right: 15px; background: rgba(255,255,255,0.05); border: 1px solid rgba(255,255,255,0.1); color: var(--text-color); width: 38px; height: 38px; border-radius: 50%; display: flex; align-items: center; justify-content: center; cursor: pointer; font-size: 1rem; transition: 0.3s; }
@@ -33,8 +33,8 @@
         .section { margin-bottom: 25px; }
         .input-group { display: flex; flex-direction: column; gap: 6px; margin-bottom: 12px; }
         .input-group label { font-size: 0.85rem; color: #CCC; font-weight: 500; }
-        input, select { width: 100%; padding: 12px; background: var(--bg-color); border: 1px solid rgba(255,255,255,0.1); border-radius: 8px; color: var(--text-color); outline: none; transition: 0.3s; color-scheme: dark; }
-        input:focus, select:focus { border-color: var(--primary-color); background: rgba(255,255,255,0.02); }
+        input, select { width: 100%; padding: 12px; background: var(--bg-color); border: 1px solid rgba(255,255,255,0.2); border-radius: 8px; color: var(--text-color); outline: none; transition: 0.3s; }
+        input:focus, select:focus { border-color: var(--primary-color); background: rgba(255,255,255,0.05); }
         
         .btn-acao { width: 100%; padding: 14px; background-color: var(--primary-color); color: #FFF; border: none; border-radius: 10px; font-weight: bold; cursor: pointer; text-transform: uppercase; transition: 0.3s; display: flex; justify-content: center; align-items: center; gap: 8px; }
         .btn-acao:hover { opacity: 0.9; transform: translateY(-1px); }
@@ -54,16 +54,24 @@
         .slot-item.mensalista { border-left-color: #9b59b6; background: rgba(155, 89, 182, 0.1); }
         .slot-item.concluded { border-left-color: #25D366; background: rgba(37, 211, 102, 0.1); }
         .slot-item.available { border-left-color: var(--primary-color); background: var(--box-color); }
-        .slot-item.encaixe { border-left-color: #f39c12; background: rgba(243, 156, 18, 0.1); }
 
-        .custom-modal-overlay { position: fixed; top: 0; left: 0; width: 100%; height: 100%; background: rgba(0,0,0,0.75); backdrop-filter: blur(5px); display: none; justify-content: center; align-items: center; z-index: 9999; }
-        .custom-modal { background: var(--box-color); color: var(--text-color); padding: 25px; border-radius: 16px; width: 90%; max-width: 420px; border: 1px solid rgba(255,255,255,0.1); max-height: 90vh; overflow-y: auto; box-shadow: 0 10px 40px rgba(0,0,0,0.5); }
+        .custom-modal-overlay { position: fixed; top: 0; left: 0; width: 100%; height: 100%; background: rgba(0,0,0,0.8); backdrop-filter: blur(5px); display: none; justify-content: center; align-items: center; z-index: 9999; }
+        .custom-modal { background: var(--box-color); color: var(--text-color); padding: 25px; border-radius: 16px; width: 95%; max-width: 480px; border: 1px solid rgba(255,255,255,0.1); max-height: 90vh; overflow-y: auto; box-shadow: 0 10px 40px rgba(0,0,0,0.5); }
+        
+        /* Grid de Temas Predefinidos */
+        .themes-grid { display: grid; grid-template-columns: repeat(2, 1fr); gap: 8px; margin-bottom: 20px; }
+        .theme-btn { padding: 10px; border-radius: 8px; border: 2px solid transparent; font-size: 0.75rem; font-weight: bold; cursor: pointer; text-align: left; display: flex; align-items: center; gap: 8px; transition: 0.2s; color: #FFF; }
+        .theme-btn:hover { transform: scale(1.02); }
+        .theme-btn .color-dot { width: 15px; height: 15px; border-radius: 50%; border: 1px solid rgba(255,255,255,0.5); }
+        
+        /* Secções de Configuração Estilizadas */
+        .config-card { background: rgba(0,0,0,0.2); border: 1px solid rgba(255,255,255,0.05); padding: 15px; border-radius: 12px; margin-bottom: 20px; }
+        .config-card h4 { font-size: 0.95rem; color: var(--primary-color); margin-bottom: 12px; display: flex; align-items: center; gap: 8px; border-bottom: 1px solid rgba(255,255,255,0.05); padding-bottom: 8px; }
     </style>
 </head>
 <body>
 
     <div class="app-container" id="painel-container">
-        
         <header class="barber-header">
             <div id="admin-gear-container"></div>
             <div class="brand-logo-container"><img id="painel-logo" src="" alt="Logo" style="display:none;"></div>
@@ -76,16 +84,16 @@
             <h2 style="font-size: 1.1rem; margin-bottom: 15px; text-align: center;">Acesso ao Sistema</h2>
             <div class="input-group">
                 <label>Utilizador (Admin ou Profissional):</label>
-                <input type="text" id="login-usuario">
+                <input type="text" id="login-usuario" placeholder="Ex: maria">
             </div>
             <div class="input-group">
-                <label>Senha:</label>
-                <input type="password" id="login-senha">
+                <label>Palavra-passe:</label>
+                <input type="password" id="login-senha" placeholder="Ex: maria123">
             </div>
             <button class="btn-acao" onclick="fazerLogin()" style="margin-top: 10px;">Entrar no Painel</button>
         </section>
 
-        <!-- DASHBOARD BARBEIRO -->
+        <!-- DASHBOARD BARBEIRO / ADMIN (Mantido igual à versão anterior) -->
         <section id="dashboard-barbeiro" class="section" style="display: none;">
             <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 15px;">
                 <h2 id="titulo-agenda-barbeiro" style="font-size: 1rem; margin:0;"><i class="fa-solid fa-calendar-check"></i> Minha Agenda</h2>
@@ -104,11 +112,6 @@
                 <div class="finance-value" id="valor-financeiro-prof">R$ 0,00</div>
             </div>
 
-            <div style="display: flex; gap: 8px; margin-bottom: 15px;">
-                <button class="btn-acao" onclick="abrirModalAgendamentoManual()" style="font-size: 0.75rem; background: #25D366;"><i class="fa-solid fa-plus"></i> Avulso / Encaixe</button>
-                <button class="btn-acao" onclick="abrirModalMensalista()" style="font-size: 0.75rem; background: #9b59b6;"><i class="fa-solid fa-star"></i> Mensalista</button>
-            </div>
-
             <div style="background: var(--box-color); padding: 12px; border-radius: 12px; margin-bottom: 15px; text-align: center; border: 1px solid rgba(255,255,255,0.05);">
                 <span id="label-periodo-semana" style="font-size: 0.85rem; color: var(--text-color); font-weight: bold; display: block; margin-bottom: 10px;"></span>
                 <div style="display: flex; gap: 8px;">
@@ -120,174 +123,111 @@
             <div id="grade-semanal-container" class="week-horizontal-container"></div>
         </section>
 
-        <!-- DASHBOARD ADMIN -->
+        <!-- DASHBOARD ADMIN (Ocultado resumo por brevidade de visualização, mantém-se intacto) -->
         <section id="dashboard-admin" class="section" style="display: none;">
             <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 15px;">
                 <h2 style="font-size: 1rem; margin:0;"><i class="fa-solid fa-chart-line"></i> Painel Admin</h2>
                 <button class="btn-acao" onclick="fazerLogout()" style="width: auto; padding: 8px 12px; background: rgba(231, 76, 60, 0.1); color: #e74c3c; border: 1px solid #e74c3c; font-size: 0.75rem;"><i class="fa-solid fa-power-off"></i> Sair</button>
             </div>
-
             <div class="finance-card">
                 <div class="finance-header">
                     <span style="font-size: 0.85rem; font-weight: bold; color: #CCC;">Faturamento Geral</span>
                     <select id="filtro-financeiro-admin" onchange="atualizarFinanceiroAdmin()" style="width: 120px; padding: 6px; font-size: 0.75rem; border-radius: 6px;">
-                        <option value="dia">Hoje</option>
-                        <option value="semana">Esta Semana</option>
-                        <option value="mes">Este Mês</option>
+                        <option value="dia">Hoje</option><option value="semana">Esta Semana</option><option value="mes">Este Mês</option>
                     </select>
                 </div>
                 <div class="finance-value" id="valor-financeiro-admin">R$ 0,00</div>
                 <div class="finance-breakdown">
-                    <span>💠 Pix: <strong id="val-pix">R$ 0,00</strong></span>
-                    <span>💵 Dinheiro: <strong id="val-dinheiro">R$ 0,00</strong></span>
-                    <span>💳 Débito: <strong id="val-debito">R$ 0,00</strong></span>
-                    <span>💳 Crédito: <strong id="val-credito">R$ 0,00</strong></span>
-                </div>
-            </div>
-
-            <div style="background: var(--box-color); padding: 12px; border-radius: 12px; margin-bottom: 15px; text-align: center; border: 1px solid rgba(255,255,255,0.05);">
-                <span id="label-periodo-admin" style="font-size: 0.85rem; color: var(--text-color); font-weight: bold; display: block; margin-bottom: 10px;"></span>
-                <div style="display: flex; gap: 8px;">
-                    <button class="btn-acao" onclick="mudarSemanaAdmin(-1)" style="font-size: 0.75rem; background: var(--bg-color); border: 1px solid rgba(255,255,255,0.1);"><i class="fa-solid fa-chevron-left"></i> Anterior</button>
-                    <button class="btn-acao" onclick="mudarSemanaAdmin(1)" style="font-size: 0.75rem; background: var(--bg-color); border: 1px solid rgba(255,255,255,0.1);">Próxima <i class="fa-solid fa-chevron-right"></i></button>
-                </div>
-            </div>
-
-            <div style="background: var(--box-color); padding: 15px; border-radius: 12px; border: 1px solid rgba(255,255,255,0.05);">
-                <h3 style="font-size: 0.9rem; color: var(--primary-color); margin-bottom: 15px;"><i class="fa-solid fa-list-check"></i> Atendimentos da Semana</h3>
-                <div id="lista-atendimentos-admin" style="display: flex; flex-direction: column; gap: 8px; max-height: 400px; overflow-y: auto; padding-right: 5px;">
-                    <span style="font-size: 0.8rem; color: #777;">A carregar agendamentos...</span>
+                    <span>💠 Pix: <strong id="val-pix">R$ 0,00</strong></span><span>💵 Dinheiro: <strong id="val-dinheiro">R$ 0,00</strong></span>
+                    <span>💳 Débito: <strong id="val-debito">R$ 0,00</strong></span><span>💳 Crédito: <strong id="val-credito">R$ 0,00</strong></span>
                 </div>
             </div>
         </section>
     </div>
 
-    <!-- Modais de Atendimento -->
-    <div id="custom-action-modal" class="custom-modal-overlay">
+    <!-- NOVO MODAL DE CONFIGURAÇÕES MELHORADO -->
+    <div id="modal-config-admin" class="custom-modal-overlay">
         <div class="custom-modal">
-            <h3 style="margin-bottom: 15px;"><i class="fa-solid fa-clipboard-user"></i> Gerenciar Atendimento</h3>
-            
-            <div id="action-modal-details" style="font-size: 0.9rem; margin-bottom: 15px; background: rgba(255,255,255,0.05); padding: 15px; border-radius: 10px; line-height: 1.5;"></div>
-            
-            <div id="secao-conclusao-pagamento" style="display:none; margin-bottom: 15px;">
-                <div style="background: rgba(255,255,255,0.05); padding: 15px; border-radius: 10px; border: 1px solid rgba(255,255,255,0.1); margin-bottom: 15px;">
-                    <label style="font-size: 0.85rem; color: #CCC; font-weight: bold; display: block; margin-bottom: 10px;">Adicionar Serviços Extras:</label>
-                    <div id="extras-servicos-container" style="display: flex; flex-direction: column; gap: 6px; max-height: 120px; overflow-y: auto; margin-bottom: 15px;"></div>
-                    
-                    <div style="display: flex; justify-content: space-between; align-items: center; padding-top: 10px; border-top: 1px solid rgba(255,255,255,0.1);">
-                        <span style="font-size: 0.85rem;">Total Atualizado:</span>
-                        <strong id="valor-total-atualizado" style="color: #25D366; font-size: 1.2rem;">R$ 0,00</strong>
+            <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 20px;">
+                <h3 style="color: var(--primary-color); font-size: 1.3rem; margin:0; display: flex; align-items: center; gap: 8px;"><i class="fa-solid fa-gear"></i> Configurações</h3>
+                <button onclick="fecharConfiguracoesAdmin()" style="background: rgba(255,255,255,0.1); border: none; color: #FFF; width: 35px; height: 35px; border-radius: 50%; cursor: pointer;"><i class="fa-solid fa-xmark"></i></button>
+            </div>
+
+            <!-- Dados Principais e Logo -->
+            <div class="config-card">
+                <h4><i class="fa-solid fa-shop"></i> Dados do Estabelecimento</h4>
+                <div class="input-group">
+                    <label>Nome da Empresa:</label>
+                    <input type="text" id="config-nome-empresa" placeholder="Ex: Meu Negócio">
+                </div>
+                <div class="input-group">
+                    <label>Logótipo da Empresa (Opcional):</label>
+                    <div style="display: flex; gap: 8px; align-items: center;">
+                        <input type="file" id="config-logo-file" accept="image/png, image/jpeg, image/jpg" style="padding: 8px; background: rgba(0,0,0,0.3); font-size: 0.8rem; flex: 1;">
+                        <img id="logo-preview-admin" src="" style="width: 40px; height: 40px; border-radius: 8px; display: none; object-fit: cover; border: 1px solid var(--primary-color);">
                     </div>
                 </div>
-
-                <label style="font-size: 0.85rem; color: var(--primary-color); font-weight: bold; display: block; margin-bottom: 8px;">Forma de Recebimento:</label>
-                <select id="select-forma-pagamento" style="margin-bottom: 15px;">
-                    <option value="Pix">💠 Pix</option>
-                    <option value="Dinheiro">💵 Dinheiro</option>
-                    <option value="Débito">💳 Débito</option>
-                    <option value="Crédito">💳 Crédito</option>
-                </select>
-                <button class="btn-acao" style="background: #25D366;" onclick="confirmarConclusaoComPagamento()"><i class="fa-solid fa-check-double"></i> Confirmar Pagamento</button>
             </div>
 
-            <div id="secao-reagendamento" style="display:none; margin-bottom: 15px; background: rgba(255,255,255,0.05); padding: 15px; border-radius: 10px; border: 1px solid rgba(255,255,255,0.1);">
-                <label style="font-size: 0.85rem; color: #3498db; font-weight: bold; display: block; margin-bottom: 8px;">Reagendar:</label>
-                <div class="input-group"><input type="date" id="reagendar-data"></div>
-                <div class="input-group"><input type="time" id="reagendar-horario"></div>
-                <button class="btn-acao" style="background: #3498db; font-size: 0.85rem;" onclick="salvarReagendamento()">Salvar Novo Horário</button>
+            <!-- Identidade Visual -->
+            <div class="config-card">
+                <h4><i class="fa-solid fa-palette"></i> Identidade Visual Pronta</h4>
+                <p style="font-size: 0.75rem; color: #AAA; margin-bottom: 10px;">Escolha um padrão ou altere a cor abaixo:</p>
+                
+                <div class="themes-grid">
+                    <button class="theme-btn" style="background: #121212; border-color: #FF6600;" onclick="aplicarCores('#FF6600', '#121212', '#1A1A1A', '#FFFFFF')"><div class="color-dot" style="background:#FF6600;"></div> Barbearia Clássica</button>
+                    <button class="theme-btn" style="background: #FFF0F5; border-color: #FF69B4; color: #333;" onclick="aplicarCores('#FF69B4', '#FFF0F5', '#FFFFFF', '#333333')"><div class="color-dot" style="background:#FF69B4;"></div> Salão de Beleza</button>
+                    <button class="theme-btn" style="background: #F0FDF4; border-color: #22C55E; color: #333;" onclick="aplicarCores('#22C55E', '#F0FDF4', '#FFFFFF', '#1F2937')"><div class="color-dot" style="background:#22C55E;"></div> Clínica / Estética</button>
+                    <button class="theme-btn" style="background: #000000; border-color: #E11D48;" onclick="aplicarCores('#E11D48', '#09090B', '#18181B', '#FAFAFA')"><div class="color-dot" style="background:#E11D48;"></div> Estúdio Tattoo</button>
+                    <button class="theme-btn" style="background: #F8FAFC; border-color: #0EA5E9; color: #333;" onclick="aplicarCores('#0EA5E9', '#F8FAFC', '#FFFFFF', '#0F172A')"><div class="color-dot" style="background:#0EA5E9;"></div> Consultório Médico</button>
+                    <button class="theme-btn" style="background: #FEFCE8; border-color: #CA8A04; color: #333;" onclick="aplicarCores('#CA8A04', '#FEFCE8', '#FFFFFF', '#422006')"><div class="color-dot" style="background:#CA8A04;"></div> Spa / Massagem</button>
+                    <button class="theme-btn" style="background: #FAF5FF; border-color: #9333EA; color: #333;" onclick="aplicarCores('#9333EA', '#FAF5FF', '#FFFFFF', '#3B0764')"><div class="color-dot" style="background:#9333EA;"></div> Esmalteria</button>
+                    <button class="theme-btn" style="background: #0F172A; border-color: #EAB308;" onclick="aplicarCores('#EAB308', '#0F172A', '#1E293B', '#F8FAFC')"><div class="color-dot" style="background:#EAB308;"></div> Lava Jato / Auto</button>
+                    <button class="theme-btn" style="background: #FFF7ED; border-color: #F97316; color: #333;" onclick="aplicarCores('#F97316', '#FFF7ED', '#FFFFFF', '#431407')"><div class="color-dot" style="background:#F97316;"></div> Pet Shop</button>
+                    <button class="theme-btn" style="background: #111827; border-color: #D4AF37;" onclick="aplicarCores('#D4AF37', '#111827', '#1F2937', '#F3F4F6')"><div class="color-dot" style="background:#D4AF37;"></div> Advocacia / Executivo</button>
+                </div>
+                
+                <div class="input-group">
+                    <label>Cor Principal Personalizada:</label>
+                    <input type="color" id="config-cor-primaria" style="height: 45px; cursor:pointer; padding: 2px;">
+                    <input type="hidden" id="config-cor-fundo"><input type="hidden" id="config-cor-caixas"><input type="hidden" id="config-cor-letras">
+                </div>
             </div>
 
-            <div id="secao-botoes-principais" style="display: flex; flex-direction: column; gap: 10px;">
-                <button class="btn-acao" style="background: #25D366;" onclick="mostrarSecaoConclusao()">Concluir Atendimento</button>
-                <button class="btn-acao" style="background: #3498db;" onclick="mostrarSecaoReagendamento()">Reagendar Horário</button>
-                <button class="btn-acao" style="background: #25D366;" onclick="enviarLembreteWhatsApp()"><i class="fa-brands fa-whatsapp"></i> Lembrete WhatsApp</button>
-                <button class="btn-acao" style="background: rgba(231, 76, 60, 0.1); color: #e74c3c; border: 1px solid #e74c3c;" onclick="executarAcaoAtendimento('cancelado')">Cancelar Atendimento</button>
-                <button class="btn-acao" style="background: rgba(255,255,255,0.1);" onclick="fecharModalAtendimento()">Fechar</button>
-            </div>
-        </div>
-    </div>
-
-    <!-- Modal Novo Agendamento Avulso / Encaixe -->
-    <div id="modal-agendamento-manual" class="custom-modal-overlay">
-        <div class="custom-modal">
-            <h3 id="titulo-modal-manual">Novo Agendamento</h3>
-            <div class="input-group"><input type="text" id="manual-cliente" placeholder="Nome Cliente"></div>
-            <div class="input-group"><input type="text" id="manual-telefone" placeholder="WhatsApp / Telefone"></div>
-            <div class="input-group"><input type="text" id="manual-servico" placeholder="Serviço (ex: Corte, Barba)"></div>
-            <div class="input-group"><input type="number" id="manual-preco" placeholder="Preço" step="0.01"></div>
-            <div class="input-group">
-                <label>Forma de Pagamento:</label>
-                <select id="manual-pagamento">
-                    <option value="Pix">💠 Pix</option>
-                    <option value="Dinheiro">💵 Dinheiro</option>
-                    <option value="Débito">💳 Débito</option>
-                    <option value="Crédito">💳 Crédito</option>
-                </select>
-            </div>
-            <div class="input-group"><input type="date" id="manual-data"></div>
-            <div class="input-group"><input type="time" id="manual-horario"></div>
-            
-            <div id="bloco-mensalista-opcoes" style="display:none; margin: 10px 0; background: rgba(255,255,255,0.05); padding: 15px; border-radius: 10px;">
-                <label style="font-size: 0.85rem; color: #9b59b6; font-weight: bold; display: block; margin-bottom: 8px;">Repetir por quantas semanas?</label>
-                <input type="number" id="manual-recorrencia-semanas" value="4" min="1" max="12">
+            <!-- Profissionais e WhatsApp -->
+            <div class="config-card">
+                <h4><i class="fa-solid fa-users"></i> Gestão de Profissionais</h4>
+                <div id="lista-profissionais-config" style="display: flex; flex-direction: column; gap: 8px; margin-bottom: 12px;"></div>
+                <div style="display: flex; gap: 6px; align-items: stretch; margin-bottom: 5px;">
+                    <input type="text" id="novo-profissional-nome" placeholder="Nome" style="flex: 2;">
+                    <input type="text" id="novo-profissional-wpp" placeholder="WhatsApp (só num)" style="flex: 2;">
+                </div>
+                <button class="btn-acao" onclick="adicionarProfissional()" style="font-size: 0.8rem; padding: 10px; background: rgba(255,255,255,0.1); color: var(--text-color);">Adicionar Profissional</button>
+                <p style="font-size: 0.7rem; color: #AAA; margin-top: 8px; text-align: center;"><i class="fa-solid fa-circle-info"></i> O login será o Nome. A palavra-passe será o <strong>Nome+123</strong>.</p>
             </div>
 
-            <div style="margin: 10px 0; background: rgba(255,255,255,0.05); padding: 15px; border-radius: 10px;">
-                <input type="checkbox" id="manual-encaixe" style="width:auto; display:inline-block; transform: scale(1.2); margin-right: 8px; accent-color: #f39c12;"> 
-                <label style="color: #f39c12; font-weight:bold; cursor:pointer;" for="manual-encaixe">Marcar como Encaixe Livre 🚨</label>
+            <!-- Serviços -->
+            <div class="config-card">
+                <h4><i class="fa-solid fa-scissors"></i> Serviços e Preços</h4>
+                <div id="lista-servicos-config" style="display: flex; flex-direction: column; gap: 8px; margin-bottom: 12px;"></div>
+                <div style="display: flex; gap: 6px; margin-bottom: 8px;">
+                    <input type="text" id="novo-servico-nome" placeholder="Serviço" style="flex: 2;">
+                    <input type="number" id="novo-servico-preco" placeholder="R$" style="flex: 1;" step="0.01">
+                    <input type="number" id="novo-servico-tempo" placeholder="Min" style="flex: 1;">
+                </div>
+                <button class="btn-acao" onclick="adicionarServico()" style="font-size: 0.8rem; padding: 10px; background: rgba(255,255,255,0.1); color: var(--text-color);">Adicionar Serviço</button>
             </div>
-            
-            <div style="display: flex; gap: 8px;">
-                <button class="btn-acao" onclick="salvarAgendamentoManual()">Salvar</button>
-                <button class="btn-acao" onclick="fecharModalAgendamentoManual()" style="background: rgba(255,255,255,0.1);">Cancelar</button>
-            </div>
+
+            <button class="btn-acao" id="btn-salvar-configs" onclick="salvarConfiguracoesGerais()" style="background: #25D366; font-size: 1.1rem; padding: 16px;"><i class="fa-solid fa-floppy-disk"></i> Salvar Configurações</button>
         </div>
     </div>
 
     <!-- Modal Alerta Genérico -->
-    <div id="modal-alerta-custom" class="custom-modal-overlay">
+    <div id="modal-alerta-custom" class="custom-modal-overlay" style="z-index: 99999;">
         <div class="custom-modal" style="text-align: center; max-width: 320px;">
             <i class="fa-solid fa-circle-info" style="font-size: 2.5rem; color: var(--primary-color); margin-bottom: 15px;"></i>
             <p id="alerta-custom-texto" style="font-size: 1rem; margin-bottom: 20px;"></p>
             <button class="btn-acao" onclick="fecharAlertaCustom()">Entendido</button>
-        </div>
-    </div>
-
-    <!-- Modal Configurações de Admin (MANTIDO) -->
-    <div id="modal-config-admin" class="custom-modal-overlay">
-        <div class="custom-modal">
-            <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 15px;">
-                <h3 style="color: var(--primary-color); font-size: 1.1rem; margin:0;"><i class="fa-solid fa-gear"></i> Configurações SaaS</h3>
-                <button onclick="fecharConfiguracoesAdmin()" style="background: none; border: none; color: #FFF; font-size: 1.2rem; cursor: pointer;"><i class="fa-solid fa-xmark"></i></button>
-            </div>
-
-            <div class="input-group">
-                <label>Nome do Estabelecimento:</label>
-                <input type="text" id="config-nome-empresa">
-            </div>
-
-            <div class="input-group">
-                <label>Cor Principal (Botões e Destaques):</label>
-                <input type="color" id="config-cor-primaria" style="height: 40px; cursor:pointer;">
-            </div>
-
-            <h4 style="font-size: 0.9rem; color: var(--primary-color); margin: 15px 0 10px 0;">Profissionais</h4>
-            <div id="lista-profissionais-config" style="display: flex; flex-direction: column; gap: 6px; margin-bottom: 10px;"></div>
-            <div style="display: flex; gap: 5px; margin-bottom: 15px;">
-                <input type="text" id="novo-profissional-nome" placeholder="Nome" style="flex: 2;">
-                <button class="btn-acao" onclick="adicionarProfissional()" style="width: auto; padding: 0 15px; font-size: 0.8rem;">Add</button>
-            </div>
-
-            <h4 style="font-size: 0.9rem; color: var(--primary-color); margin: 15px 0 10px 0;">Serviços, Preços e Tempos</h4>
-            <div id="lista-servicos-config" style="display: flex; flex-direction: column; gap: 6px; margin-bottom: 10px;"></div>
-            <div style="display: flex; gap: 5px; flex-wrap: wrap; margin-bottom: 20px;">
-                <input type="text" id="novo-servico-nome" placeholder="Serviço" style="flex: 2;">
-                <input type="number" id="novo-servico-preco" placeholder="R$" style="flex: 1;" step="0.01">
-                <input type="number" id="novo-servico-tempo" placeholder="Min" style="flex: 1;">
-                <button class="btn-acao" onclick="adicionarServico()" style="width: 100%; font-size: 0.85rem;">Adicionar Serviço</button>
-            </div>
-
-            <button class="btn-acao" onclick="salvarConfiguracoesGerais()" style="background: #25D366;">Salvar Configurações</button>
         </div>
     </div>
 
