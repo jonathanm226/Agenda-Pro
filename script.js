@@ -40,8 +40,14 @@ document.addEventListener("DOMContentLoaded", async () => {
         }
     });
 
-    const nomeEl = document.getElementById("tenant-name") || document.getElementById("painel-nome-negocio");
+    const nomeEl = document.getElementById("tenant-name") || document.getElementById("painel-nome-negocio") || document.getElementById("landing-nome");
     if (nomeEl) nomeEl.textContent = tenantConfig.nome_empresa || "Agenda Pro";
+
+    const sobreEl = document.getElementById("landing-sobre");
+    if (sobreEl) sobreEl.textContent = tenantConfig.sobre || "Bem-vindo ao nosso espaço!";
+
+    const endEl = document.getElementById("landing-endereco");
+    if (endEl) endEl.textContent = tenantConfig.endereco || "Endereço não informado.";
 
     if (document.getElementById("agendar-container")) carregarDadosAgendamentoCliente();
 });
@@ -98,6 +104,7 @@ function converterLogoBase64(input) {
 }
 
 function carregarDadosAgendamentoCliente() { renderizarBarbeiros(); renderizarServicos(); }
+
 function renderizarBarbeiros() {
     const grid = document.getElementById("barbers-grid"); if (!grid) return; grid.innerHTML = "";
     (tenantConfig.barbeiros || []).forEach((b) => {
@@ -105,11 +112,13 @@ function renderizarBarbeiros() {
         grid.innerHTML += `<div class="barber-card" onclick="selecionarBarbeiro('${nome}', this)"><i class="fa-solid fa-user" style="font-size: 2rem; color: var(--primary-color); margin-bottom: 10px;"></i><h3 style="font-size: 0.9rem;">${nome}</h3></div>`;
     });
 }
+
 function selecionarBarbeiro(nome, el) {
     barbeiroSelecionado = nome;
     document.querySelectorAll('.barber-card').forEach(c => c.classList.remove('active'));
     el.classList.add('active'); checkAvailableTimes();
 }
+
 function renderizarServicos() {
     const grid = document.getElementById("services-grid"); if (!grid) return; grid.innerHTML = "";
     Object.keys(tenantConfig.servicos || {}).forEach(nome => {
@@ -119,11 +128,13 @@ function renderizarServicos() {
             <div class="price">R$ ${s.price.toFixed(2)}</div></div>`;
     });
 }
+
 function toggleServico(nome, preco, duracao, el) {
     if (servicosSelecionados[nome]) { delete servicosSelecionados[nome]; el.classList.remove('active'); }
     else { servicosSelecionados[nome] = { preco, duracao }; el.classList.add('active'); }
     atualizarResumo();
 }
+
 function atualizarResumo() {
     const resumoBox = document.getElementById("resumo-flutuante"); if (!resumoBox) return;
     let total = 0; let tempo = 0; let qtd = 0;
@@ -191,6 +202,7 @@ function abrirModalConfirmacao() {
     document.getElementById("resumo-agendamento").innerHTML = `<strong>Profissional:</strong> ${barbeiroSelecionado}<br><strong>Serviços:</strong> ${servicosStr} (${duracao} min)<br><strong>Data:</strong> ${document.getElementById("date").value.split('-').reverse().join('/')} às ${document.getElementById("time").value}<br><strong>Valor:</strong> R$ ${total.toFixed(2)}`;
     document.getElementById("modal-confirmacao").style.display = "flex";
 }
+
 function fecharModalConfirmacao() { document.getElementById("modal-confirmacao").style.display = "none"; }
 
 async function confirmarEEnviar() {
@@ -205,10 +217,11 @@ async function confirmarEEnviar() {
         servicos: servs, data_agendamento: dataSQL, hora_inicio: horaStr, duracao_total: duracao || 30, valor_total: total, status: 'pendente'
     });
 
-    if (error) { btn.disabled = false; return alert("Erro ao salvar."); }
+    if (error) { btn.disabled = false; return alert("Erro ao salvar agendamento."); }
 
     const profObj = (tenantConfig.barbeiros || []).find(b => (typeof b === 'object' ? b.nome : b) === barbeiroSelecionado);
     let numeroProf = (profObj && profObj.whatsapp) ? profObj.whatsapp : "";
+    
     if (numeroProf) {
         const dataStr = dataSQL.split('-').reverse().join('/');
         const msg = `*NOVO AGENDAMENTO*\n*Cliente:* ${cliente}\n*Serviços:* ${servs} (${duracao || 30} min)\n*Data:* ${dataStr} às ${horaStr}\n*Total:* R$ ${total.toFixed(2)}\n\n✨ *AGENDAMENTO CONFIRMADO* ✨`;
@@ -257,6 +270,7 @@ function fazerLogin() {
         alert("Utilizador não encontrado.");
     }
 }
+
 function fazerLogout() { window.location.reload(); }
 function mudarSemana(d) { offsetSemana += (d * 7); carregarAgendaBarbeiro(); }
 function mudarProfissionalAdmin() { carregarAgendaBarbeiro(); }
@@ -355,6 +369,7 @@ function renderizarPaletasConfig() {
             <span>${p.nome}</span><div style="width:16px; height:16px; background:${p.primaria}; border-radius:50%;"></div></div>`;
     });
 }
+
 function selecionarPaleta(idx) {
     paletaSelecionadaIdx = idx;
     let p = PALETAS_CORES[idx];
@@ -366,7 +381,8 @@ function selecionarPaleta(idx) {
 }
 
 function renderizarListasConfigAdmin() {
-    const listP = document.getElementById("lista-profissionais-config"); if(listP) {
+    const listP = document.getElementById("lista-profissionais-config"); 
+    if(listP) {
         listP.innerHTML = "";
         (tenantConfig.barbeiros || []).forEach((p, i) => {
             let nome = typeof p === 'object' ? p.nome : p;
@@ -379,7 +395,8 @@ function renderizarListasConfigAdmin() {
         });
     }
 
-    const listS = document.getElementById("lista-servicos-config"); if(listS) {
+    const listS = document.getElementById("lista-servicos-config"); 
+    if(listS) {
         listS.innerHTML = "";
         Object.keys(tenantConfig.servicos || {}).forEach(nome => {
             let s = tenantConfig.servicos[nome];
@@ -407,6 +424,7 @@ function adicionarProfissionalConfig() {
         renderizarListasConfigAdmin();
     } else { alert("Preencha o nome e o telefone do profissional."); }
 }
+
 function removerProfissionalConfig(i) { 
     let nomeToRemove = typeof tenantConfig.barbeiros[i] === 'object' ? tenantConfig.barbeiros[i].nome : tenantConfig.barbeiros[i];
     tenantConfig.barbeiros.splice(i, 1); 
@@ -429,6 +447,7 @@ function adicionarServicoConfig() {
         renderizarListasConfigAdmin();
     }
 }
+
 function removerServicoConfig(nome) { delete tenantConfig.servicos[nome]; renderizarListasConfigAdmin(); }
 
 async function salvarConfiguracoesAdmin() {
@@ -439,7 +458,8 @@ async function salvarConfiguracoesAdmin() {
     tenantConfig.horario_inicio = document.getElementById("config-h-inicio").value;
     tenantConfig.horario_fim = document.getElementById("config-h-fim").value;
 
-    const { error } = await _supabase.from("saas_estabelecimentos").upsert({
+    // Enviando apenas as colunas válidas e garantindo suporte a upsert sem erro 406/401
+    const payload = {
         slug: TENANT_ATIVO, 
         nome_empresa: tenantConfig.nome_empresa, 
         sobre: tenantConfig.sobre,
@@ -452,7 +472,9 @@ async function salvarConfiguracoesAdmin() {
         cor_primaria: tenantConfig.cor_primaria, 
         cor_fundo: tenantConfig.cor_fundo, 
         cor_caixas: tenantConfig.cor_caixas
-    }, { onConflict: 'slug' });
+    };
+
+    const { error } = await _supabase.from("saas_estabelecimentos").upsert(payload, { onConflict: 'slug' });
 
     if(error) {
         console.error("ERRO SUPABASE:", error);
@@ -492,6 +514,7 @@ function abrirModalGerenciarAtendimento(ag) {
 
     document.getElementById("modal-gerenciar-atendimento").style.display = "flex";
 }
+
 function fecharModalGerenciar() { document.getElementById("modal-gerenciar-atendimento").style.display = "none"; }
 
 async function confirmarConclusaoComPgto() {
@@ -521,6 +544,7 @@ function abrirModalCancelamentoEstilizado(id) {
         carregarAgendaBarbeiro();
     };
 }
+
 function fecharModalCancelamentoEstilizado() {
     document.getElementById("modal-confirmar-cancelamento").style.display = "none";
     idParaCancelar = null;
@@ -541,6 +565,7 @@ function abrirModalMensalistas() {
     prepararFormularioNovoAgendamento();
     document.getElementById("modal-novo-agendamento").style.display = "flex"; 
 }
+
 function abrirModalNovoAgendamento() {
     modoMensalistaAtivo = false;
     document.getElementById("titulo-modal-novo-agendamento").textContent = "Novo Agendamento";
@@ -575,6 +600,7 @@ function toggleCardServico(card) {
     if(chk.checked) card.classList.add('selected'); else card.classList.remove('selected');
     calcularTotalNovoServico();
 }
+
 function fecharModalNovoAgendamento() { document.getElementById("modal-novo-agendamento").style.display = "none"; }
 
 function calcularTotalNovoServico() {
@@ -640,6 +666,7 @@ function bloquearHorario(data, hora) {
         _supabase.from('saas_agendamentos').insert({ slug: TENANT_ATIVO, barbeiro: barbeiroAtual, data_agendamento: data, hora_inicio: hora, status: 'bloqueado', duracao_total: 30 }).then(() => carregarAgendaBarbeiro());
     }
 }
+
 function desbloquearHorario(id) {
     if(confirm("Libertar este horário?")) {
         _supabase.from('saas_agendamentos').delete().eq('id', id).then(() => carregarAgendaBarbeiro());
