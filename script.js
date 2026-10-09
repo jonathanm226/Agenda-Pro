@@ -66,7 +66,6 @@ function aplicarIdentidadeVisual(config) {
     root.style.setProperty('--text-color', config.cor_letras || '#FFFFFF');
 }
 
-// NOVO: COMPRESSOR DE IMAGEM PARA EVITAR ERRO DE PAYLOAD NO SUPABASE
 function converterLogoBase64(input) {
     const file = input.files[0];
     if (!file) return;
@@ -76,7 +75,6 @@ function converterLogoBase64(input) {
         const img = new Image();
         img.onload = function() {
             const canvas = document.createElement('canvas');
-            // Reduz o tamanho da imagem para max 250px para não sobrecarregar o banco
             const MAX_WIDTH = 250;
             const scaleSize = MAX_WIDTH / img.width;
             canvas.width = MAX_WIDTH;
@@ -85,13 +83,14 @@ function converterLogoBase64(input) {
             const ctx = canvas.getContext('2d');
             ctx.drawImage(img, 0, 0, canvas.width, canvas.height);
             
-            // Qualidade reduzida para gerar um Base64 mais leve
             const dataUrl = canvas.toDataURL('image/jpeg', 0.8);
             
             document.getElementById("config-logo-url").value = dataUrl;
             const previewEl = document.getElementById("preview-logo-config");
-            previewEl.src = dataUrl;
-            previewEl.style.display = "block";
+            if(previewEl) {
+                previewEl.src = dataUrl;
+                previewEl.style.display = "block";
+            }
         }
         img.src = e.target.result;
     };
@@ -319,13 +318,12 @@ function abrirConfiguracoesAdmin() {
     document.getElementById("config-sobre").value = tenantConfig.sobre || "";
     document.getElementById("config-endereco").value = tenantConfig.endereco || "";
     
-    // Configura a pré-visualização da Logo atual
     document.getElementById("config-logo-url").value = tenantConfig.logo_url || "";
     const previewEl = document.getElementById("preview-logo-config");
-    if(tenantConfig.logo_url) {
+    if(previewEl && tenantConfig.logo_url) {
         previewEl.src = tenantConfig.logo_url;
         previewEl.style.display = "block";
-    } else {
+    } else if(previewEl) {
         previewEl.style.display = "none";
     }
 
@@ -350,7 +348,7 @@ function mudarPassoConfig(passo, btn) {
 }
 
 function renderizarPaletasConfig() {
-    const container = document.getElementById("palettes-container"); container.innerHTML = "";
+    const container = document.getElementById("palettes-container"); if(!container) return; container.innerHTML = "";
     PALETAS_CORES.forEach((p, idx) => {
         let isSel = (tenantConfig.cor_primaria === p.primaria) ? "selected" : "";
         container.innerHTML += `<div class="palette-card ${isSel}" style="background:${p.caixas}; border-left: 5px solid ${p.primaria};" onclick="selecionarPaleta(${idx})">
@@ -368,23 +366,27 @@ function selecionarPaleta(idx) {
 }
 
 function renderizarListasConfigAdmin() {
-    const listP = document.getElementById("lista-profissionais-config"); listP.innerHTML = "";
-    (tenantConfig.barbeiros || []).forEach((p, i) => {
-        let nome = typeof p === 'object' ? p.nome : p;
-        let wpp = typeof p === 'object' && p.whatsapp ? p.whatsapp : '';
-        let senhaExib = (tenantConfig.senhas_usuarios && tenantConfig.senhas_usuarios[nome]) ? tenantConfig.senhas_usuarios[nome] : '123456';
-        
-        listP.innerHTML += `<div style="display:flex; justify-content:space-between; align-items:center; background:rgba(255,255,255,0.03); padding:8px 10px; border-radius:6px; margin-bottom:4px; font-size:0.8rem;">
-            <div><strong>${nome}</strong> (${wpp})<br><span style="color:#AAA; font-size:0.7rem;">Senha: ${senhaExib}</span></div>
-            <button type="button" onclick="removerProfissionalConfig(${i})" style="color:#e74c3c; background:none; border:none; padding:10px;"><i class="fa-solid fa-trash"></i></button></div>`;
-    });
+    const listP = document.getElementById("lista-profissionais-config"); if(listP) {
+        listP.innerHTML = "";
+        (tenantConfig.barbeiros || []).forEach((p, i) => {
+            let nome = typeof p === 'object' ? p.nome : p;
+            let wpp = typeof p === 'object' && p.whatsapp ? p.whatsapp : '';
+            let senhaExib = (tenantConfig.senhas_usuarios && tenantConfig.senhas_usuarios[nome]) ? tenantConfig.senhas_usuarios[nome] : '123456';
+            
+            listP.innerHTML += `<div style="display:flex; justify-content:space-between; align-items:center; background:rgba(255,255,255,0.03); padding:8px 10px; border-radius:6px; margin-bottom:4px; font-size:0.8rem;">
+                <div><strong>${nome}</strong> (${wpp})<br><span style="color:#AAA; font-size:0.7rem;">Senha: ${senhaExib}</span></div>
+                <button type="button" onclick="removerProfissionalConfig(${i})" style="color:#e74c3c; background:none; border:none; padding:10px;"><i class="fa-solid fa-trash"></i></button></div>`;
+        });
+    }
 
-    const listS = document.getElementById("lista-servicos-config"); listS.innerHTML = "";
-    Object.keys(tenantConfig.servicos || {}).forEach(nome => {
-        let s = tenantConfig.servicos[nome];
-        listS.innerHTML += `<div style="display:flex; justify-content:space-between; align-items:center; background:rgba(255,255,255,0.03); padding:6px 10px; border-radius:6px; margin-bottom:4px; font-size:0.8rem;">
-            <span><strong>${nome}</strong> - R$ ${s.price} (${s.duration}m)</span><button type="button" onclick="removerServicoConfig('${nome}')" style="color:#e74c3c; background:none; border:none;"><i class="fa-solid fa-trash"></i></button></div>`;
-    });
+    const listS = document.getElementById("lista-servicos-config"); if(listS) {
+        listS.innerHTML = "";
+        Object.keys(tenantConfig.servicos || {}).forEach(nome => {
+            let s = tenantConfig.servicos[nome];
+            listS.innerHTML += `<div style="display:flex; justify-content:space-between; align-items:center; background:rgba(255,255,255,0.03); padding:6px 10px; border-radius:6px; margin-bottom:4px; font-size:0.8rem;">
+                <span><strong>${nome}</strong> - R$ ${s.price} (${s.duration}m)</span><button type="button" onclick="removerServicoConfig('${nome}')" style="color:#e74c3c; background:none; border:none;"><i class="fa-solid fa-trash"></i></button></div>`;
+        });
+    }
 }
 
 function adicionarProfissionalConfig() {
@@ -433,7 +435,7 @@ async function salvarConfiguracoesAdmin() {
     tenantConfig.nome_empresa = document.getElementById("config-nome-empresa").value.trim();
     tenantConfig.sobre = document.getElementById("config-sobre").value.trim();
     tenantConfig.endereco = document.getElementById("config-endereco").value.trim();
-    tenantConfig.logo_url = document.getElementById("config-logo-url").value.trim(); // Pega a Base64
+    tenantConfig.logo_url = document.getElementById("config-logo-url").value.trim();
     tenantConfig.horario_inicio = document.getElementById("config-h-inicio").value;
     tenantConfig.horario_fim = document.getElementById("config-h-fim").value;
 
@@ -447,7 +449,6 @@ async function salvarConfiguracoesAdmin() {
         horario_fim: tenantConfig.horario_fim,
         barbeiros: tenantConfig.barbeiros, 
         servicos: tenantConfig.servicos, 
-        senhas_usuarios: tenantConfig.senhas_usuarios,
         cor_primaria: tenantConfig.cor_primaria, 
         cor_fundo: tenantConfig.cor_fundo, 
         cor_caixas: tenantConfig.cor_caixas
@@ -455,7 +456,7 @@ async function salvarConfiguracoesAdmin() {
 
     if(error) {
         console.error("ERRO SUPABASE:", error);
-        return alert("Erro ao salvar. Verifique se a coluna 'senhas_usuarios' (tipo JSONB) foi criada no Supabase e se a imagem não é muito grande. Mais detalhes no F12 (Console).");
+        return alert("Erro ao salvar configurações. Verifique o console (F12).");
     }
     
     fecharConfiguracoesAdmin();
@@ -550,7 +551,7 @@ function abrirModalNovoAgendamento() {
 }
 
 function prepararFormularioNovoAgendamento() {
-    const container = document.getElementById("lista-servicos-checkboxes"); container.innerHTML = "";
+    const container = document.getElementById("lista-servicos-checkboxes"); if(!container) return; container.innerHTML = "";
     Object.keys(tenantConfig.servicos || {}).forEach(nome => {
         const s = tenantConfig.servicos[nome];
         container.innerHTML += `<div class="service-check-card" onclick="toggleCardServico(this)">
@@ -670,6 +671,8 @@ async function atualizarFinanceiroProfissional() {
         }
     });
 
-    document.getElementById('valor-financeiro-prof').textContent = `R$ ${total.toFixed(2).replace('.', ',')}`;
-    document.getElementById('detalhes-pagamentos-individuais').innerHTML = listaPgtoHtml || "Nenhum pagamento registrado no período.";
+    const valEl = document.getElementById('valor-financeiro-prof');
+    if(valEl) valEl.textContent = `R$ ${total.toFixed(2).replace('.', ',')}`;
+    const detEl = document.getElementById('detalhes-pagamentos-individuais');
+    if(detEl) detEl.innerHTML = listaPgtoHtml || "Nenhum pagamento registrado no período.";
 }
