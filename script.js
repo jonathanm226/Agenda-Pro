@@ -6,19 +6,31 @@ const urlParams = new URLSearchParams(window.location.search);
 const TENANT_ATIVO = urlParams.get('slug') || "padrao";
 
 let tenantConfig = { 
-    nome_empresa: "Meu Estabelecimento", admin_contato: "", admin_receber_todas_notificacoes: false,
-    sobre: "", endereco: "", horario_inicio: "08:00", horario_fim: "19:00", logo_url: "", 
+    nome_empresa: "Meu Estabelecimento", sobre: "", endereco: "", horario_inicio: "08:00", horario_fim: "19:00", logo_url: "", 
     cor_primaria: "#FF6600", cor_fundo: "#121212", cor_caixas: "#1A1A1A", cor_letras: "#FFFFFF",
     barbeiros: [], servicos: {}, senhas_usuarios: { "admin": "admin123" }
 };
 
-let usuarioLogado = ""; let offsetSemana = 0; let servicosSelecionados = {}; let barbeiroSelecionado = null;
+// 10 Paletas de Cores Profissionais
+const PALETAS_CORES = [
+    { nome: "Laranja Pro (Padrão)", primaria: "#FF6600", fundo: "#121212", caixas: "#1A1A1A" },
+    { nome: "Azul Neon", primaria: "#00E5FF", fundo: "#0A0F1D", caixas: "#131B2E" },
+    { nome: "Verde Esmeralda", primaria: "#00C853", fundo: "#121212", caixas: "#1A1A1A" },
+    { nome: "Dourado Luxo", primaria: "#FFD700", fundo: "#0D0D0D", caixas: "#181818" },
+    { nome: "Vermelho Carmim", primaria: "#FF1744", fundo: "#121212", caixas: "#1A1A1A" },
+    { nome: "Roxo Cyber", primaria: "#9C27B0", fundo: "#120B18", caixas: "#1A1325" },
+    { nome: "Rosa Choque", primaria: "#FF4081", fundo: "#121212", caixas: "#1A1A1A" },
+    { nome: "Azul Royal", primaria: "#2979FF", fundo: "#0A1128", caixas: "#101D3E" },
+    { nome: "Cinza Metálico", primaria: "#E0E0E0", fundo: "#121212", caixas: "#1E1E1E" },
+    { nome: "Amarelo Sol", primaria: "#FFEA00", fundo: "#141412", caixas: "#1F1F1C" }
+];
+
+let usuarioLogado = ""; let offsetSemana = 0; let servicosSelecionados = {}; let barbeiroSelecionado = null; let paletaSelecionadaIdx = 0;
 
 document.addEventListener("DOMContentLoaded", async () => {
     await carregarTenantConfig();
     aplicarIdentidadeVisual(tenantConfig);
     
-    // Carregamento da logo
     const logoUrls = ["tenant-logo", "painel-logo", "landing-logo"];
     logoUrls.forEach(id => {
         const el = document.getElementById(id);
@@ -50,8 +62,6 @@ function aplicarIdentidadeVisual(config) {
     root.style.setProperty('--box-color', config.cor_caixas || '#1A1A1A');
     root.style.setProperty('--text-color', config.cor_letras || '#FFFFFF');
 }
-
-function mostrarAlerta(texto) { alert(texto); }
 
 // ==========================================
 // CLIENTE (AGENDAR.HTML)
@@ -138,10 +148,10 @@ async function checkAvailableTimes() {
 }
 
 function abrirModalConfirmacao() {
-    if (!barbeiroSelecionado) return mostrarAlerta("Selecione o profissional.");
-    if (Object.keys(servicosSelecionados).length === 0) return mostrarAlerta("Selecione os serviços.");
-    if (!document.getElementById("date").value || !document.getElementById("time").value) return mostrarAlerta("Escolha data e horário.");
-    if (!document.getElementById("client-name").value || !document.getElementById("client-phone").value) return mostrarAlerta("Preencha os seus dados.");
+    if (!barbeiroSelecionado) return alert("Selecione o profissional.");
+    if (Object.keys(servicosSelecionados).length === 0) return alert("Selecione os serviços.");
+    if (!document.getElementById("date").value || !document.getElementById("time").value) return alert("Escolha data e horário.");
+    if (!document.getElementById("client-name").value || !document.getElementById("client-phone").value) return alert("Preencha os seus dados.");
     
     let servicosStr = Object.keys(servicosSelecionados).join(', ');
     let total = 0; let duracao = 0;
@@ -156,7 +166,7 @@ async function confirmarEEnviar() {
     const btn = document.getElementById("btn-confirmar-agendamento"); btn.disabled = true;
     const cliente = document.getElementById("client-name").value; const telefone = document.getElementById("client-phone").value.replace(/\D/g, "");
     const dataSQL = document.getElementById("date").value; const horaStr = document.getElementById("time").value;
-    let total = 0; let duracao = 0; Object.values(servicosSelecionados).forEach(s => { total += s.preco; tempo += s.duracao; });
+    let total = 0; let duracao = 0; Object.values(servicosSelecionados).forEach(s => { total += s.preco; duracao += s.duracao; });
     const servs = Object.keys(servicosSelecionados).join(', ');
 
     const { error } = await _supabase.from('saas_agendamentos').insert({
@@ -164,17 +174,18 @@ async function confirmarEEnviar() {
         servicos: servs, data_agendamento: dataSQL, hora_inicio: horaStr, duracao_total: duracao || 30, valor_total: total, status: 'pendente'
     });
 
-    if (error) { btn.disabled = false; return mostrarAlerta("Erro ao salvar."); }
+    if (error) { btn.disabled = false; return alert("Erro ao salvar."); }
 
+    // Envio do WhatsApp para o número específico cadastrado pelo admin para aquele profissional
     const profObj = (tenantConfig.barbeiros || []).find(b => (typeof b === 'object' ? b.nome : b) === barbeiroSelecionado);
-    let numeroProf = (profObj && profObj.whatsapp) ? profObj.whatsapp : tenantConfig.admin_contato;
+    let numeroProf = (profObj && profObj.whatsapp) ? profObj.whatsapp : "";
     if (numeroProf) {
         const dataStr = dataSQL.split('-').reverse().join('/');
         const msg = `*NOVO AGENDAMENTO*\n*Cliente:* ${cliente}\n*Serviços:* ${servs} (${duracao || 30} min)\n*Data:* ${dataStr} às ${horaStr}\n*Total:* R$ ${total.toFixed(2)}\n\n✨ *AGENDAMENTO CONFIRMADO* ✨`;
         window.open(`https://api.whatsapp.com/send?phone=55${numeroProf.replace(/\D/g, "")}&text=${encodeURIComponent(msg)}`, '_blank');
     }
 
-    fecharModalConfirmacao(); mostrarAlerta("Agendamento concluído!"); setTimeout(() => window.location.reload(), 2000);
+    fecharModalConfirmacao(); alert("Agendamento concluído!"); setTimeout(() => window.location.reload(), 2000);
 }
 
 // ==========================================
@@ -183,7 +194,7 @@ async function confirmarEEnviar() {
 function fazerLogin() {
     const user = document.getElementById("login-usuario").value.trim().toLowerCase();
     const pass = document.getElementById("login-senha").value.trim();
-    if (!user || !pass) return mostrarAlerta("Preencha os campos.");
+    if (!user || !pass) return alert("Preencha os campos.");
     let senhaAdmin = (tenantConfig.senhas_usuarios && tenantConfig.senhas_usuarios['admin']) ? tenantConfig.senhas_usuarios['admin'] : 'admin123';
     
     if (user === 'admin' && pass === senhaAdmin) {
@@ -192,6 +203,16 @@ function fazerLogin() {
         document.getElementById("dashboard-barbeiro").style.display = "block";
         document.getElementById("admin-gear-container").innerHTML = '<div class="btn-engrenagem" onclick="abrirConfiguracoesAdmin()"><i class="fa-solid fa-gear"></i></div>';
         document.getElementById("label-resumo-financeiro").textContent = "Faturamento Geral (Admin)";
+        
+        // Mostra o seletor para o admin alternar entre os profissionais
+        const selectAdmin = document.getElementById("select-admin-prof");
+        selectAdmin.innerHTML = "";
+        (tenantConfig.barbeiros || []).forEach(p => {
+            let nome = typeof p === 'object' ? p.nome : p;
+            selectAdmin.innerHTML += `<option value="${nome}">${nome}</option>`;
+        });
+        document.getElementById("admin-seletor-prof-container").style.display = "flex";
+        
         carregarAgendaBarbeiro();
     } else {
         const prof = (tenantConfig.barbeiros || []).find(b => (typeof b === 'object' ? b.nome : b).toLowerCase() === user);
@@ -202,17 +223,21 @@ function fazerLogin() {
             document.getElementById("titulo-agenda-barbeiro").innerHTML = '<i class="fa-solid fa-calendar-check"></i> Agenda: ' + usuarioLogado;
             carregarAgendaBarbeiro(); return;
         }
-        mostrarAlerta("Utilizador ou palavra-passe incorreta.");
+        alert("Utilizador ou palavra-passe incorreta.");
     }
 }
 function fazerLogout() { window.location.reload(); }
 function mudarSemana(d) { offsetSemana += (d * 7); carregarAgendaBarbeiro(); }
+function mudarProfissionalAdmin() { carregarAgendaBarbeiro(); }
 
 async function carregarAgendaBarbeiro() {
     const container = document.getElementById("grade-semanal-container"); if (!container) return;
     container.innerHTML = "<p style='text-align:center; padding: 20px; color: #AAA;'>A sincronizar...</p>";
     
-    let barbeiroFiltro = usuarioLogado === 'Admin' ? ((tenantConfig.barbeiros[0]) ? (typeof tenantConfig.barbeiros[0] === 'object' ? tenantConfig.barbeiros[0].nome : tenantConfig.barbeiros[0]) : 'jonathan') : usuarioLogado;
+    let barbeiroFiltro = usuarioLogado === 'Admin' ? document.getElementById("select-admin-prof").value : usuarioLogado;
+    if(!barbeiroFiltro && tenantConfig.barbeiros.length > 0) {
+        barbeiroFiltro = typeof tenantConfig.barbeiros[0] === 'object' ? tenantConfig.barbeiros[0].nome : tenantConfig.barbeiros[0];
+    }
     
     let hInicio = parseInt(tenantConfig.horario_inicio.split(':')[0]) || 8;
     let hFim = parseInt(tenantConfig.horario_fim.split(':')[0]) || 19;
@@ -243,17 +268,45 @@ async function carregarAgendaBarbeiro() {
     container.innerHTML = html; atualizarFinanceiroProfissional();
 }
 
-// CONFIGURAÇÕES DO ADMIN (ENGRENAGEM)
+// CONFIGURAÇÕES DO ADMIN (EM PASSOS)
 function abrirConfiguracoesAdmin() {
     document.getElementById("config-nome-empresa").value = tenantConfig.nome_empresa || "";
     document.getElementById("config-logo-url").value = tenantConfig.logo_url || "";
-    document.getElementById("config-admin-wpp").value = tenantConfig.admin_contato || "";
     document.getElementById("config-h-inicio").value = tenantConfig.horario_inicio || "08:00";
     document.getElementById("config-h-fim").value = tenantConfig.horario_fim || "19:00";
+    renderizarPaletasConfig();
     renderizarListasConfigAdmin();
+    mudarPassoConfig(1, document.querySelector('.tab-btn'));
     document.getElementById("modal-config-admin").style.display = "flex";
 }
 function fecharConfiguracoesAdmin() { document.getElementById("modal-config-admin").style.display = "none"; }
+
+function mudarPassoConfig(passo, btn) {
+    document.querySelectorAll('.config-step-content').forEach(el => el.classList.remove('active'));
+    document.getElementById("step-config-" + passo).classList.add('active');
+    if(btn) {
+        document.querySelectorAll('.tab-btn').forEach(b => b.classList.remove('active'));
+        btn.classList.add('active');
+    }
+}
+
+function renderizarPaletasConfig() {
+    const container = document.getElementById("palettes-container"); container.innerHTML = "";
+    PALETAS_CORES.forEach((p, idx) => {
+        let isSel = (tenantConfig.cor_primaria === p.primaria) ? "selected" : "";
+        container.innerHTML += `<div class="palette-card ${isSel}" style="background:${p.caixas}; border-left: 5px solid ${p.primaria};" onclick="selecionarPaleta(${idx})">
+            <span>${p.nome}</span><div style="width:16px; height:16px; background:${p.primaria}; border-radius:50%;"></div></div>`;
+    });
+}
+function selecionarPaleta(idx) {
+    paletaSelecionadaIdx = idx;
+    let p = PALETAS_CORES[idx];
+    tenantConfig.cor_primaria = p.primaria;
+    tenantConfig.cor_fundo = p.fundo;
+    tenantConfig.cor_caixas = p.caixas;
+    renderizarPaletasConfig();
+    aplicarIdentidadeVisual(tenantConfig);
+}
 
 function renderizarListasConfigAdmin() {
     const listP = document.getElementById("lista-profissionais-config"); listP.innerHTML = "";
@@ -261,27 +314,27 @@ function renderizarListasConfigAdmin() {
         let nome = typeof p === 'object' ? p.nome : p;
         let wpp = typeof p === 'object' && p.whatsapp ? p.whatsapp : '';
         listP.innerHTML += `<div style="display:flex; justify-content:space-between; align-items:center; background:rgba(255,255,255,0.03); padding:6px 10px; border-radius:6px; margin-bottom:4px; font-size:0.8rem;">
-            <span>${nome} (${wpp})</span><button type="button" onclick="removerProfissionalConfig(${i})" style="color:#e74c3c; background:none; border:none;"><i class="fa-solid fa-trash"></i></button></div>`;
+            <span><strong>${nome}</strong> (${wpp})</span><button type="button" onclick="removerProfissionalConfig(${i})" style="color:#e74c3c; background:none; border:none;"><i class="fa-solid fa-trash"></i></button></div>`;
     });
 
     const listS = document.getElementById("lista-servicos-config"); listS.innerHTML = "";
     Object.keys(tenantConfig.servicos || {}).forEach(nome => {
         let s = tenantConfig.servicos[nome];
         listS.innerHTML += `<div style="display:flex; justify-content:space-between; align-items:center; background:rgba(255,255,255,0.03); padding:6px 10px; border-radius:6px; margin-bottom:4px; font-size:0.8rem;">
-            <span>${nome} - R$ ${s.price} (${s.duration}m)</span><button type="button" onclick="removerServicoConfig('${nome}')" style="color:#e74c3c; background:none; border:none;"><i class="fa-solid fa-trash"></i></button></div>`;
+            <span><strong>${nome}</strong> - R$ ${s.price} (${s.duration}m)</span><button type="button" onclick="removerServicoConfig('${nome}')" style="color:#e74c3c; background:none; border:none;"><i class="fa-solid fa-trash"></i></button></div>`;
     });
 }
 
 function adicionarProfissionalConfig() {
     let nome = document.getElementById("novo-prof-nome").value.trim();
     let wpp = document.getElementById("novo-prof-wpp").value.replace(/\D/g, "");
-    if(nome) {
+    if(nome && wpp) {
         if(!tenantConfig.barbeiros) tenantConfig.barbeiros = [];
         tenantConfig.barbeiros.push({ nome, whatsapp: wpp });
         document.getElementById("novo-prof-nome").value = "";
         document.getElementById("novo-prof-wpp").value = "";
         renderizarListasConfigAdmin();
-    }
+    } else { alert("Preencha o nome e o telefone do profissional."); }
 }
 function removerProfissionalConfig(i) { tenantConfig.barbeiros.splice(i, 1); renderizarListasConfigAdmin(); }
 
@@ -303,14 +356,14 @@ function removerServicoConfig(nome) { delete tenantConfig.servicos[nome]; render
 async function salvarConfiguracoesAdmin() {
     tenantConfig.nome_empresa = document.getElementById("config-nome-empresa").value.trim();
     tenantConfig.logo_url = document.getElementById("config-logo-url").value.trim();
-    tenantConfig.admin_contato = document.getElementById("config-admin-wpp").value.replace(/\D/g, "");
     tenantConfig.horario_inicio = document.getElementById("config-h-inicio").value;
     tenantConfig.horario_fim = document.getElementById("config-h-fim").value;
 
     const { error } = await _supabase.from("saas_estabelecimentos").upsert({
         slug: TENANT_ATIVO, nome_empresa: tenantConfig.nome_empresa, logo_url: tenantConfig.logo_url,
-        admin_contato: tenantConfig.admin_contato, horario_inicio: tenantConfig.horario_inicio,
-        horario_fim: tenantConfig.horario_fim, barbeiros: tenantConfig.barbeiros, servicos: tenantConfig.servicos
+        horario_inicio: tenantConfig.horario_inicio, horario_fim: tenantConfig.horario_fim,
+        barbeiros: tenantConfig.barbeiros, servicos: tenantConfig.servicos,
+        cor_primaria: tenantConfig.cor_primaria, cor_fundo: tenantConfig.cor_fundo, cor_caixas: tenantConfig.cor_caixas
     }, { onConflict: 'slug' });
 
     if(error) return alert("Erro ao salvar configurações.");
@@ -440,7 +493,7 @@ async function salvarNovoAgendamentoBarbeiro() {
     let servicosStr = servsArray.length > 0 ? servsArray.join(', ') : "Atendimento Avulso";
     if(duracao === 0) duracao = 30;
 
-    let barbeiroAtual = usuarioLogado === 'Admin' ? ((tenantConfig.barbeiros[0]) ? (typeof tenantConfig.barbeiros[0] === 'object' ? tenantConfig.barbeiros[0].nome : tenantConfig.barbeiros[0]) : 'jonathan') : usuarioLogado;
+    let barbeiroAtual = usuarioLogado === 'Admin' ? document.getElementById("select-admin-prof").value : usuarioLogado;
 
     const { error } = await _supabase.from('saas_agendamentos').insert({
         slug: TENANT_ATIVO, barbeiro: barbeiroAtual, cliente_nome: nome, cliente_telefone: tel,
@@ -452,7 +505,7 @@ async function salvarNovoAgendamentoBarbeiro() {
 }
 
 function bloquearHorario(data, hora) {
-    let barbeiroAtual = usuarioLogado === 'Admin' ? ((tenantConfig.barbeiros[0]) ? (typeof tenantConfig.barbeiros[0] === 'object' ? tenantConfig.barbeiros[0].nome : tenantConfig.barbeiros[0]) : 'jonathan') : usuarioLogado;
+    let barbeiroAtual = usuarioLogado === 'Admin' ? document.getElementById("select-admin-prof").value : usuarioLogado;
     if(confirm(`Bloquear agenda no dia ${data.split('-').reverse().join('/')} às ${hora}?`)) {
         _supabase.from('saas_agendamentos').insert({ slug: TENANT_ATIVO, barbeiro: barbeiroAtual, data_agendamento: data, hora_inicio: hora, status: 'bloqueado', duracao_total: 30 }).then(() => carregarAgendaBarbeiro());
     }
@@ -465,7 +518,7 @@ function desbloquearHorario(id) {
 
 // FINANCEIRO
 async function atualizarFinanceiroProfissional() {
-    let barbeiroFiltro = usuarioLogado === 'Admin' ? null : usuarioLogado;
+    let barbeiroFiltro = usuarioLogado === 'Admin' ? document.getElementById("select-admin-prof").value : usuarioLogado;
     const filtro = document.getElementById('filtro-financeiro-prof').value;
     
     let query = _supabase.from('saas_agendamentos').select('*').eq('slug', TENANT_ATIVO).eq('status', 'concluido');
