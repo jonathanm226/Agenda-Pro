@@ -36,7 +36,6 @@
         .slot-item.available { border-left-color: var(--primary-color); background: var(--box-color); color: var(--text-color); }
         .slot-item.blocked { border-left-color: #e74c3c; background: rgba(231, 76, 60, 0.1); color: #888; text-decoration: line-through; }
         
-        /* Modais e Abas de Configuração */
         .custom-modal-overlay { position: fixed; top: 0; left: 0; width: 100%; height: 100%; background: rgba(0,0,0,0.8); display: none; justify-content: center; align-items: center; z-index: 9999; }
         .custom-modal { background: var(--box-color); color: var(--text-color); padding: 20px; border-radius: 16px; width: 95%; max-width: 450px; max-height: 90vh; overflow-y: auto; }
         .config-tabs { display: grid; grid-template-columns: repeat(4, 1fr); gap: 4px; margin-bottom: 15px; background: rgba(0,0,0,0.3); padding: 4px; border-radius: 10px; }
@@ -45,7 +44,6 @@
         .config-step-content { display: none; }
         .config-step-content.active { display: block; }
         
-        /* Seleção de Paletas de Cores */
         .palette-grid { display: grid; grid-template-columns: repeat(2, 1fr); gap: 8px; margin-top: 8px; }
         .palette-card { padding: 10px; border-radius: 8px; border: 2px solid rgba(255,255,255,0.1); cursor: pointer; display: flex; align-items: center; justify-content: space-between; font-size: 0.8rem; font-weight: bold; transition: 0.2s; }
         .palette-card.selected { border-color: #FFF; }
@@ -79,12 +77,11 @@
             </div>
 
             <div style="display: grid; grid-template-columns: repeat(3, 1fr); gap: 8px; margin-bottom: 15px;">
-                <button type="button" class="btn-acao" onclick="abrirModalMensalistas()" style="font-size: 0.75rem; background: #3498db;"><i class="fa-solid fa-users"></i> Mensalistas</button>
+                <button type="button" class="btn-acao" onclick="abrirModalMensalistas()" style="font-size: 0.75rem; background: #9b59b6;"><i class="fa-solid fa-users"></i> Mensalistas</button>
                 <button type="button" class="btn-acao" onclick="carregarAgendaBarbeiro()" style="font-size: 0.75rem; background: #2ecc71;"><i class="fa-solid fa-rotate"></i> Atualizar</button>
                 <button type="button" class="btn-acao" onclick="abrirModalNovoAgendamento()" style="font-size: 0.75rem; background: var(--primary-color);"><i class="fa-solid fa-plus"></i> Novo</button>
             </div>
 
-            <!-- SELETOR DE PROFISSIONAL PARA O ADMIN VISUALIZAR -->
             <div id="admin-seletor-prof-container" class="input-group" style="display:none; margin-bottom: 12px;">
                 <label>Visualizar Agenda do Profissional:</label>
                 <select id="select-admin-prof" onchange="mudarProfissionalAdmin()"></select>
@@ -117,7 +114,6 @@
                 <button type="button" onclick="fecharConfiguracoesAdmin()" style="background: rgba(255,255,255,0.1); border: none; color: #FFF; width: 28px; height: 28px; border-radius: 50%; cursor: pointer;"><i class="fa-solid fa-xmark"></i></button>
             </div>
 
-            <!-- ABAS EM PASSOS -->
             <div class="config-tabs">
                 <button type="button" class="tab-btn active" onclick="mudarPassoConfig(1, this)">1. Perfil</button>
                 <button type="button" class="tab-btn" onclick="mudarPassoConfig(2, this)">2. Visual</button>
@@ -125,24 +121,11 @@
                 <button type="button" class="tab-btn" onclick="mudarPassoConfig(4, this)">4. Serviços</button>
             </div>
 
-            <!-- PASSO 1: PERFIL (CORRIGIDO: INCLUSÃO DE SOBRE E ENDEREÇO) -->
             <div id="step-config-1" class="config-step-content active">
-                <div class="input-group">
-                    <label>Nome do Estabelecimento:</label>
-                    <input type="text" id="config-nome-empresa" placeholder="Ex: Barbearia Central">
-                </div>
-                <div class="input-group">
-                    <label>Sobre o Negócio (Para a Landing Page):</label>
-                    <textarea id="config-sobre" rows="3" placeholder="Breve apresentação do espaço, serviços ou história..."></textarea>
-                </div>
-                <div class="input-group">
-                    <label>Endereço Completo:</label>
-                    <input type="text" id="config-endereco" placeholder="Ex: Rua Direita, nº 123 - Centro">
-                </div>
-                <div class="input-group">
-                    <label>URL da Logo (Link da Imagem):</label>
-                    <input type="text" id="config-logo-url" placeholder="https://...">
-                </div>
+                <div class="input-group"><label>Nome do Estabelecimento:</label><input type="text" id="config-nome-empresa" placeholder="Ex: Barbearia Central"></div>
+                <div class="input-group"><label>Sobre o Negócio (Para a Landing Page):</label><textarea id="config-sobre" rows="3" placeholder="Apresentação do espaço..."></textarea></div>
+                <div class="input-group"><label>Endereço Completo:</label><input type="text" id="config-endereco" placeholder="Ex: Rua Direita, nº 123"></div>
+                <div class="input-group"><label>URL da Logo (Link da Imagem):</label><input type="text" id="config-logo-url" placeholder="https://..."></div>
                 <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 8px;">
                     <div class="input-group"><label>Início Expediente:</label><input type="time" id="config-h-inicio" value="08:00"></div>
                     <div class="input-group"><label>Fim Expediente:</label><input type="time" id="config-h-fim" value="19:00"></div>
@@ -150,26 +133,25 @@
                 <button type="button" class="btn-acao" onclick="mudarPassoConfig(2, null)" style="margin-top: 10px;">Avançar</button>
             </div>
 
-            <!-- PASSO 2: VISUAL (PALETAS) -->
             <div id="step-config-2" class="config-step-content">
                 <label style="font-size: 0.85rem; color: #CCC; display: block; margin-bottom: 8px;">Selecione a Paleta de Cores:</label>
                 <div class="palette-grid" id="palettes-container"></div>
                 <button type="button" class="btn-acao" onclick="mudarPassoConfig(3, null)" style="margin-top: 15px;">Avançar</button>
             </div>
 
-            <!-- PASSO 3: EQUIPA (NOME E TELEFONE) -->
+            <!-- PASSO 3 - EQUIPA AGORA COM CAMPO DE SENHA -->
             <div id="step-config-3" class="config-step-content">
                 <label style="font-size: 0.85rem; color: #CCC; display: block; margin-bottom: 6px;">Membros da Equipa:</label>
                 <div id="lista-profissionais-config" style="margin-bottom: 8px; max-height: 120px; overflow-y: auto;"></div>
                 <div style="display:flex; flex-direction:column; gap:6px; margin-bottom:12px; background: rgba(0,0,0,0.3); padding:8px; border-radius:8px;">
                     <input type="text" id="novo-prof-nome" placeholder="Nome do Profissional">
-                    <input type="text" id="novo-prof-wpp" placeholder="Telefone / WhatsApp (Ex: 31994951564)">
+                    <input type="text" id="novo-prof-wpp" placeholder="Telefone / WhatsApp">
+                    <input type="text" id="novo-prof-senha" placeholder="Senha de Acesso (Padrão: 123456)">
                     <button type="button" class="btn-acao" onclick="adicionarProfissionalConfig()" style="background: #27ae60; padding: 10px; font-size: 0.8rem;">Adicionar Membro</button>
                 </div>
                 <button type="button" class="btn-acao" onclick="mudarPassoConfig(4, null)">Avançar</button>
             </div>
 
-            <!-- PASSO 4: SERVIÇOS -->
             <div id="step-config-4" class="config-step-content">
                 <label style="font-size: 0.85rem; color: #CCC; display: block; margin-bottom: 6px;">Serviços Oferecidos:</label>
                 <div id="lista-servicos-config" style="margin-bottom: 8px; max-height: 120px; overflow-y: auto;"></div>
@@ -181,7 +163,7 @@
                     </div>
                     <button type="button" class="btn-acao" onclick="adicionarServicoConfig()" style="background: #27ae60; padding: 10px; font-size: 0.8rem;">Adicionar Serviço</button>
                 </div>
-                <button type="button" class="btn-acao" onclick="salvarConfiguracoesAdmin()" style="background: #25D366;">Salvar Todas as Configurações</button>
+                <button type="button" class="btn-acao" onclick="salvarConfiguracoesAdmin()" style="background: #25D366;">Salvar Configurações</button>
             </div>
         </div>
     </div>
@@ -230,10 +212,11 @@
         </div>
     </div>
 
-    <!-- MODAL NOVO AGENDAMENTO -->
+    <!-- MODAL NOVO AGENDAMENTO E MENSALISTAS UNIFICADO -->
     <div id="modal-novo-agendamento" class="custom-modal-overlay">
         <div class="custom-modal" style="max-width: 440px; max-height: 90vh; overflow-y: auto;">
-            <h3 style="text-align: center; margin-bottom: 15px; font-size: 1.1rem; color: #FFF; text-transform: uppercase;">Novo Agendamento</h3>
+            <h3 id="titulo-modal-novo-agendamento" style="text-align: center; margin-bottom: 15px; font-size: 1.1rem; color: #FFF; text-transform: uppercase;">Novo Agendamento</h3>
+            
             <div class="input-group"><label>Nome do Cliente:</label><input type="text" id="novo-cli-nome" placeholder="Nome do Cliente"></div>
             <div class="input-group"><label>Telefone / WhatsApp:</label><input type="text" id="novo-cli-tel" placeholder="00000000000"></div>
             
@@ -247,31 +230,28 @@
                 <strong id="novo-cli-total" style="font-size: 1.1rem; color: var(--primary-color);">R$ 0,00</strong>
             </div>
 
-            <div style="background: rgba(255, 102, 0, 0.05); border: 1px solid var(--primary-color); padding: 12px; border-radius: 8px; margin-bottom: 12px; display: flex; align-items: flex-start; gap: 10px; cursor: pointer;" onclick="document.getElementById('check-encaixe').click()">
+            <!-- OPÇÃO EXCLUSIVA DE ENCAIXE (AVULSO) -->
+            <div id="bloco-check-encaixe" style="background: rgba(255, 255, 255, 0.05); border: 1px solid var(--primary-color); padding: 12px; border-radius: 8px; margin-bottom: 12px; display: flex; align-items: flex-start; gap: 10px; cursor: pointer;" onclick="document.getElementById('check-encaixe').click()">
                 <input type="checkbox" id="check-encaixe" style="width: 18px; height: 18px; margin-top: 2px;">
                 <div>
                     <strong style="font-size: 0.9rem; display: block; color: var(--primary-color);">Modo Encaixe</strong>
-                    <span style="font-size: 0.75rem; color: #AAA;">Insere no horário sem validar conflito de tempo na agenda.</span>
+                    <span style="font-size: 0.75rem; color: #AAA;">Insere no horário sem validar conflitos de tempo.</span>
                 </div>
             </div>
 
-            <div class="input-group"><label>Data:</label><input type="date" id="novo-cli-data"></div>
-            <div class="input-group"><label>Horário:</label><input type="time" id="novo-cli-hora" value="09:00"></div>
+            <!-- OPÇÃO EXCLUSIVA DE RECORRÊNCIA (MENSALISTA) -->
+            <div id="bloco-recorrencia-mensalista" style="display: none; background: rgba(155, 89, 182, 0.1); border: 1px solid #9b59b6; padding: 12px; border-radius: 8px; margin-bottom: 12px;">
+                <label style="font-size: 0.85rem; color: #9b59b6; font-weight: bold; display: block; margin-bottom: 6px;">Repetir por quantas semanas?</label>
+                <input type="number" id="novo-cli-semanas" value="4" min="1" max="12" style="background: var(--bg-color);">
+            </div>
+
+            <div class="input-group"><label>Data Base:</label><input type="date" id="novo-cli-data"></div>
+            <div class="input-group"><label>Horário Fixo:</label><input type="time" id="novo-cli-hora" value="09:00"></div>
 
             <div style="display: flex; gap: 10px; margin-top: 15px;">
                 <button type="button" onclick="fecharModalNovoAgendamento()" class="btn-acao" style="background: rgba(255,255,255,0.1);">Cancelar</button>
-                <button type="button" onclick="salvarNovoAgendamentoBarbeiro()" class="btn-acao" style="background: #25D366;">Salvar</button>
+                <button type="button" id="btn-salvar-agendamento" onclick="salvarNovoAgendamentoBarbeiro()" class="btn-acao" style="background: #25D366;">Salvar</button>
             </div>
-        </div>
-    </div>
-
-    <!-- MODAL MENSALISTAS -->
-    <div id="modal-mensalistas" class="custom-modal-overlay">
-        <div class="custom-modal" style="text-align: center; max-width: 350px;">
-            <i class="fa-solid fa-users" style="font-size: 2.5rem; color: var(--primary-color); margin-bottom: 15px;"></i>
-            <h3 style="margin-bottom: 10px;">Mensalistas</h3>
-            <p style="font-size: 0.9rem; color: #CCC; margin-bottom: 20px;">Módulo de gestão de clientes mensalistas.</p>
-            <button type="button" class="btn-acao" onclick="document.getElementById('modal-mensalistas').style.display='none'">Entendido</button>
         </div>
     </div>
 
