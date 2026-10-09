@@ -27,7 +27,6 @@ const PALETAS_CORES = [
 let usuarioLogado = ""; let offsetSemana = 0; let servicosSelecionados = {}; let barbeiroSelecionado = null; let paletaSelecionadaIdx = 0;
 let modoMensalistaAtivo = false;
 
-// Substitui o alert() nativo por um modal bonito estilizado
 function mostrarAlertaCustomizado(mensagem, recarregar = false) {
     const modal = document.getElementById("modal-alerta-custom");
     const texto = document.getElementById("alerta-custom-texto");
@@ -380,7 +379,12 @@ function fecharConfiguracoesAdmin() { document.getElementById("modal-config-admi
 function mudarPassoConfig(passo, btn) {
     document.querySelectorAll('.config-step-content').forEach(el => el.classList.remove('active'));
     document.getElementById("step-config-" + passo).classList.add('active');
-    if(btn) {
+    
+    if (!btn) {
+        btn = document.querySelectorAll('.tab-btn')[passo - 1];
+    }
+    
+    if (btn) {
         document.querySelectorAll('.tab-btn').forEach(b => b.classList.remove('active'));
         btn.classList.add('active');
     }
@@ -507,6 +511,17 @@ async function salvarConfiguracoesAdmin() {
         return mostrarAlertaCustomizado("Erro ao salvar configurações. Verifique o console (F12).");
     }
     
+    // Atualiza imediatamente o nome e o logotipo no painel aberto antes do reload
+    const nomeEl = document.getElementById("painel-nome-negocio");
+    if(nomeEl) nomeEl.textContent = tenantConfig.nome_empresa;
+    
+    const logoEl = document.getElementById("painel-logo");
+    if(logoEl && tenantConfig.logo_url) {
+        logoEl.src = tenantConfig.logo_url;
+        logoEl.style.display = "block";
+    }
+
+    aplicarIdentidadeVisual(tenantConfig);
     fecharConfiguracoesAdmin();
     mostrarAlertaCustomizado("Configurações salvas com sucesso!", true);
 }
