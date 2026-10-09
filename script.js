@@ -25,6 +25,7 @@ const PALETAS_CORES = [
 ];
 
 let usuarioLogado = ""; let offsetSemana = 0; let servicosSelecionados = {}; let barbeiroSelecionado = null; let paletaSelecionadaIdx = 0;
+let modoMensalistaAtivo = false;
 
 document.addEventListener("DOMContentLoaded", async () => {
     await carregarTenantConfig();
@@ -65,19 +66,7 @@ function aplicarIdentidadeVisual(config) {
     root.style.setProperty('--text-color', config.cor_letras || '#FFFFFF');
 }
 
-// UPLOAD DE LOGO (BASE64)
-function converterLogoBase64(input) {
-    const file = input.files[0];
-    if (file) {
-        const reader = new FileReader();
-        reader.onload = function(e) {
-            document.getElementById("config-logo-url").value = e.target.result;
-        };
-        reader.readAsDataURL(file);
-    }
-}
-
-// CLIENTE (AGENDAR.HTML)
+// CLIENTE (AGENDAR)
 function carregarDadosAgendamentoCliente() { renderizarBarbeiros(); renderizarServicos(); }
 function renderizarBarbeiros() {
     const grid = document.getElementById("barbers-grid"); if (!grid) return; grid.innerHTML = "";
@@ -134,24 +123,27 @@ async function checkAvailableTimes() {
     timeSelect.innerHTML = '<option value="">Selecione um horário</option>';
     let temHorario = false;
 
+    // BLOCOS DE 30 MINUTOS
     for (let h = hInicio; h < hFim; h++) {
-        let timeStr = `${h.toString().padStart(2, '0')}:00`;
-        let slotMinutos = h * 60;
-        let slotFimMinutos = slotMinutos + duracaoTotalServicos;
-        let conflito = false;
+        for (let m of ['00', '30']) {
+            let timeStr = `${h.toString().padStart(2, '0')}:${m}`;
+            let slotMinutos = h * 60 + parseInt(m);
+            let slotFimMinutos = slotMinutos + duracaoTotalServicos;
+            let conflito = false;
 
-        if(ocupados) {
-            ocupados.forEach(ag => {
-                let [ah, am] = ag.hora_inicio.split(':').map(Number);
-                let agInicioMin = ah * 60 + am;
-                let agFimMin = agInicioMin + (ag.duracao_total || 30);
-                if (slotMinutos < agFimMin && slotFimMinutos > agInicioMin) conflito = true;
-            });
-        }
+            if(ocupados) {
+                ocupados.forEach(ag => {
+                    let [ah, am] = ag.hora_inicio.split(':').map(Number);
+                    let agInicioMin = ah * 60 + am;
+                    let agFimMin = agInicioMin + (ag.duracao_total || 30);
+                    if (slotMinutos < agFimMin && slotFimMinutos > agInicioMin) conflito = true;
+                });
+            }
 
-        if (!conflito) {
-            timeSelect.innerHTML += `<option value="${timeStr}">${timeStr} (${duracaoTotalServicos} min)</option>`;
-            temHorario = true;
+            if (!conflito) {
+                timeSelect.innerHTML += `<option value="${timeStr}">${timeStr} (${duracaoTotalServicos} min)</option>`;
+                temHorario = true;
+            }
         }
     }
     if (!temHorario) timeSelect.innerHTML = '<option value="">Nenhum horário disponível</option>';
@@ -197,11 +189,12 @@ async function confirmarEEnviar() {
     fecharModalConfirmacao(); alert("Agendamento concluído!"); setTimeout(() => window.location.reload(), 2000);
 }
 
-// PAINEL (PAINEL.HTML)
+// PAINEL (PAINEL.HTML) - LOGIN COM SEGURANÇA
 function fazerLogin() {
     const user = document.getElementById("login-usuario").value.trim().toLowerCase();
     const pass = document.getElementById("login-senha").value.trim();
-    if (!user || !pass) return alert("Preencha os campos.");
+    if (!user || !pass) return alert("Preencha os campos de utilizador e palavra-passe.");
+    
     let senhaAdmin = (tenantConfig.senhas_usuarios && tenantConfig.senhas_usuarios['admin']) ? tenantConfig.senhas_usuarios['admin'] : 'admin123';
     
     if (user === 'admin' && pass === senhaAdmin) {
@@ -224,12 +217,18 @@ function fazerLogin() {
         const prof = (tenantConfig.barbeiros || []).find(b => (typeof b === 'object' ? b.nome : b).toLowerCase() === user);
         if (prof) {
             let nomeReal = typeof prof === 'object' ? prof.nome : prof;
+            let senhaProf = (tenantConfig.senhas_usuarios && tenantConfig.senhas_usuarios[nomeReal]) ? tenantConfig.senhas_usuarios[nomeReal] : "123456";
+            
+            if (pass !== senhaProf) {
+                return alert("Palavra-passe incorreta para este profissional.");
+            }
+
             usuarioLogado = nomeReal; document.getElementById("login-section").style.display = "none";
             document.getElementById("dashboard-barbeiro").style.display = "block";
             document.getElementById("titulo-agenda-barbeiro").innerHTML = '<i class="fa-solid fa-calendar-check"></i> Agenda: ' + usuarioLogado;
             carregarAgendaBarbeiro(); return;
         }
-        alert("Utilizador ou palavra-passe incorreta.");
+        alert("Utilizador não encontrado.");
     }
 }
 function fazerLogout() { window.location.reload(); }
@@ -254,20 +253,36 @@ async function carregarAgendaBarbeiro() {
     }
     const { data: agendamentos } = await _supabase.from('saas_agendamentos').select('*').eq('slug', TENANT_ATIVO).eq('barbeiro', barbeiroFiltro).in('data_agendamento', datas);
     let html = "";
+    
+    // RENDERIZANDO GRELHA DE 30 EM 30 MINUTOS
     for (let i=0; i<6; i++) {
         let dataSQL = datas[i]; let dObj = new Date(dataSQL + 'T12:00:00');
         let diaStr = dObj.toLocaleDateString('pt-BR', {weekday: 'short', day: '2-digit', month: '2-digit'});
         html += `<div class="day-column"><div class="day-header">${diaStr}</div>`;
         for (let h = hInicio; h <= hFim; h++) {
-            let time = `${h.toString().padStart(2, '0')}:00`;
-            let agList = agendamentos ? agendamentos.filter(a => a.data_agendamento === dataSQL && a.hora_inicio === time) : [];
-            if (agList.length > 0) {
-                agList.forEach(ag => {
-                    if (ag.status === 'bloqueado') html += `<div class="slot-item blocked" onclick="desbloquearHorario('${ag.id}')">${time} - Bloq</div>`;
-                    else if (ag.status === 'concluido') html += `<div class="slot-item concluded">${time} - Fim</div>`;
-                    else html += `<div class="slot-item booked" onclick='abrirModalGerenciarAtendimento(${JSON.stringify(ag)})'>${time} - ${ag.cliente_nome.split(' ')[0]}</div>`;
-                });
-            } else { html += `<div class="slot-item available" onclick="bloquearHorario('${dataSQL}', '${time}')">${time} - Livre</div>`; }
+            for (let m of ['00', '30']) {
+                if (h === hFim && m === '30') continue; // Termina exatamente na hora de fecho
+                let time = `${h.toString().padStart(2, '0')}:${m}`;
+                let agList = agendamentos ? agendamentos.filter(a => a.data_agendamento === dataSQL && String(a.hora_inicio).substring(0,5) === time) : [];
+                
+                if (agList.length > 0) {
+                    agList.forEach(ag => {
+                        const isMensalista = ag.servicos && ag.servicos.includes("[MENSALISTA]");
+                        if (ag.status === 'bloqueado') {
+                            html += `<div class="slot-item blocked" onclick="desbloquearHorario('${ag.id}')">${time} - Bloq</div>`;
+                        } else if (ag.status === 'concluido') {
+                            html += `<div class="slot-item concluded">${time} - Fim</div>`;
+                        } else {
+                            // COR ROXA PARA MENSALISTAS
+                            let classExtras = isMensalista ? "booked" : "booked";
+                            let colorStyle = isMensalista ? "style='border-left-color:#9b59b6; background:rgba(155, 89, 182, 0.1); color:#FFF;'" : "";
+                            html += `<div class="slot-item ${classExtras}" ${colorStyle} onclick='abrirModalGerenciarAtendimento(${JSON.stringify(ag)})'>${time} - ${ag.cliente_nome.split(' ')[0]}</div>`;
+                        }
+                    });
+                } else { 
+                    html += `<div class="slot-item available" onclick="bloquearHorario('${dataSQL}', '${time}')">${time} - Livre</div>`; 
+                }
+            }
         }
         html += `</div>`;
     }
@@ -320,8 +335,11 @@ function renderizarListasConfigAdmin() {
     (tenantConfig.barbeiros || []).forEach((p, i) => {
         let nome = typeof p === 'object' ? p.nome : p;
         let wpp = typeof p === 'object' && p.whatsapp ? p.whatsapp : '';
-        listP.innerHTML += `<div style="display:flex; justify-content:space-between; align-items:center; background:rgba(255,255,255,0.03); padding:6px 10px; border-radius:6px; margin-bottom:4px; font-size:0.8rem;">
-            <span><strong>${nome}</strong> (${wpp})</span><button type="button" onclick="removerProfissionalConfig(${i})" style="color:#e74c3c; background:none; border:none;"><i class="fa-solid fa-trash"></i></button></div>`;
+        let senhaExib = (tenantConfig.senhas_usuarios && tenantConfig.senhas_usuarios[nome]) ? tenantConfig.senhas_usuarios[nome] : '123456';
+        
+        listP.innerHTML += `<div style="display:flex; justify-content:space-between; align-items:center; background:rgba(255,255,255,0.03); padding:8px 10px; border-radius:6px; margin-bottom:4px; font-size:0.8rem;">
+            <div><strong>${nome}</strong> (${wpp})<br><span style="color:#AAA; font-size:0.7rem;">Senha: ${senhaExib}</span></div>
+            <button type="button" onclick="removerProfissionalConfig(${i})" style="color:#e74c3c; background:none; border:none; padding:10px;"><i class="fa-solid fa-trash"></i></button></div>`;
     });
 
     const listS = document.getElementById("lista-servicos-config"); listS.innerHTML = "";
@@ -335,15 +353,29 @@ function renderizarListasConfigAdmin() {
 function adicionarProfissionalConfig() {
     let nome = document.getElementById("novo-prof-nome").value.trim();
     let wpp = document.getElementById("novo-prof-wpp").value.replace(/\D/g, "");
+    let senha = document.getElementById("novo-prof-senha").value.trim() || "123456";
+    
     if(nome && wpp) {
         if(!tenantConfig.barbeiros) tenantConfig.barbeiros = [];
         tenantConfig.barbeiros.push({ nome, whatsapp: wpp });
+        
+        if(!tenantConfig.senhas_usuarios) tenantConfig.senhas_usuarios = {};
+        tenantConfig.senhas_usuarios[nome] = senha;
+        
         document.getElementById("novo-prof-nome").value = "";
         document.getElementById("novo-prof-wpp").value = "";
+        document.getElementById("novo-prof-senha").value = "";
         renderizarListasConfigAdmin();
     } else { alert("Preencha o nome e o telefone do profissional."); }
 }
-function removerProfissionalConfig(i) { tenantConfig.barbeiros.splice(i, 1); renderizarListasConfigAdmin(); }
+function removerProfissionalConfig(i) { 
+    let nomeToRemove = typeof tenantConfig.barbeiros[i] === 'object' ? tenantConfig.barbeiros[i].nome : tenantConfig.barbeiros[i];
+    tenantConfig.barbeiros.splice(i, 1); 
+    if(tenantConfig.senhas_usuarios && tenantConfig.senhas_usuarios[nomeToRemove]) {
+        delete tenantConfig.senhas_usuarios[nomeToRemove];
+    }
+    renderizarListasConfigAdmin(); 
+}
 
 function adicionarServicoConfig() {
     let nome = document.getElementById("novo-serv-nome").value.trim();
@@ -372,7 +404,7 @@ async function salvarConfiguracoesAdmin() {
         slug: TENANT_ATIVO, nome_empresa: tenantConfig.nome_empresa, sobre: tenantConfig.sobre,
         endereco: tenantConfig.endereco, logo_url: tenantConfig.logo_url,
         horario_inicio: tenantConfig.horario_inicio, horario_fim: tenantConfig.horario_fim,
-        barbeiros: tenantConfig.barbeiros, servicos: tenantConfig.servicos,
+        barbeiros: tenantConfig.barbeiros, servicos: tenantConfig.servicos, senhas_usuarios: tenantConfig.senhas_usuarios,
         cor_primaria: tenantConfig.cor_primaria, cor_fundo: tenantConfig.cor_fundo, cor_caixas: tenantConfig.cor_caixas
     }, { onConflict: 'slug' });
 
@@ -391,7 +423,7 @@ function abrirModalGerenciarAtendimento(ag) {
                      <strong>Telefone:</strong> ${ag.cliente_telefone || 'Não informado'}<br>
                      <strong>Serviço:</strong> ${ag.servicos || 'Padrão'} (${ag.duracao_total || 30} min)<br>
                      <strong>Valor:</strong> R$ ${(ag.valor_total || 0).toFixed(2)}<br>
-                     <strong>Data/Hora:</strong> ${dataF} às ${ag.hora_inicio}`;
+                     <strong>Data/Hora:</strong> ${dataF} às ${String(ag.hora_inicio).substring(0,5)}`;
     
     document.getElementById("box-forma-pagamento").style.display = "none";
     document.getElementById("box-reagendar").style.display = "none";
@@ -446,13 +478,30 @@ function fecharModalCancelamentoEstilizado() {
 
 function enviarLembreteWhatsApp(ag) {
     const dataF = ag.data_agendamento.split('-').reverse().join('/');
-    const msg = `*Olá ${ag.cliente_nome}!* Lembramos do seu agendamento hoje (${dataF} às ${ag.hora_inicio}).`;
+    const msg = `*Olá ${ag.cliente_nome}!* Lembramos do seu agendamento hoje (${dataF} às ${String(ag.hora_inicio).substring(0,5)}).`;
     let tel = ag.cliente_telefone ? ag.cliente_telefone.replace(/\D/g, "") : "31994951564";
     window.open(`https://api.whatsapp.com/send?phone=55${tel}&text=${encodeURIComponent(msg)}`, '_blank');
 }
 
-function abrirModalMensalistas() { document.getElementById("modal-mensalistas").style.display = "flex"; }
+// RESTAURAÇÃO DO MÓDULO MENSALISTAS INTEGRADO AO MODAL DE NOVO AGENDAMENTO
+function abrirModalMensalistas() { 
+    modoMensalistaAtivo = true;
+    document.getElementById("titulo-modal-novo-agendamento").textContent = "Cadastrar Mensalista";
+    document.getElementById("bloco-recorrencia-mensalista").style.display = "block";
+    document.getElementById("bloco-check-encaixe").style.display = "none";
+    prepararFormularioNovoAgendamento();
+    document.getElementById("modal-novo-agendamento").style.display = "flex"; 
+}
 function abrirModalNovoAgendamento() {
+    modoMensalistaAtivo = false;
+    document.getElementById("titulo-modal-novo-agendamento").textContent = "Novo Agendamento";
+    document.getElementById("bloco-recorrencia-mensalista").style.display = "none";
+    document.getElementById("bloco-check-encaixe").style.display = "flex";
+    prepararFormularioNovoAgendamento();
+    document.getElementById("modal-novo-agendamento").style.display = "flex";
+}
+
+function prepararFormularioNovoAgendamento() {
     const container = document.getElementById("lista-servicos-checkboxes"); container.innerHTML = "";
     Object.keys(tenantConfig.servicos || {}).forEach(nome => {
         const s = tenantConfig.servicos[nome];
@@ -467,8 +516,10 @@ function abrirModalNovoAgendamento() {
     document.getElementById("novo-cli-nome").value = "";
     document.getElementById("novo-cli-tel").value = "";
     document.getElementById("check-encaixe").checked = false;
-    document.getElementById("modal-novo-agendamento").style.display = "flex";
+    const hoje = new Date();
+    document.getElementById("novo-cli-data").value = `${hoje.getFullYear()}-${String(hoje.getMonth() + 1).padStart(2, '0')}-${String(hoje.getDate()).padStart(2, '0')}`;
 }
+
 function toggleCardServico(card) {
     const chk = card.querySelector('input[type="checkbox"]');
     chk.checked = !chk.checked;
@@ -486,11 +537,11 @@ function calcularTotalNovoServico() {
 async function salvarNovoAgendamentoBarbeiro() {
     const nome = document.getElementById("novo-cli-nome").value.trim();
     const tel = document.getElementById("novo-cli-tel").value.replace(/\D/g, "");
-    const data = document.getElementById("novo-cli-data").value;
+    const dataBase = document.getElementById("novo-cli-data").value;
     const hora = document.getElementById("novo-cli-hora").value;
     const isEncaixe = document.getElementById("check-encaixe").checked;
 
-    if(!nome || !data || !hora) return alert("Preencha os campos obrigatórios.");
+    if(!nome || !dataBase || !hora) return alert("Preencha Nome, Data e Horário.");
 
     let servsArray = []; let total = 0; let duracao = 0;
     document.querySelectorAll(".chk-servico-novo:checked").forEach(chk => {
@@ -498,18 +549,40 @@ async function salvarNovoAgendamentoBarbeiro() {
         total += parseFloat(chk.dataset.preco);
         duracao += parseInt(chk.dataset.tempo);
     });
-    let servicosStr = servsArray.length > 0 ? servsArray.join(', ') : "Atendimento Avulso";
+    let servicosStr = servsArray.length > 0 ? servsArray.join(', ') : "Atendimento Padrão";
     if(duracao === 0) duracao = 30;
 
     let barbeiroAtual = usuarioLogado === 'Admin' ? document.getElementById("select-admin-prof").value : usuarioLogado;
+    let iteracoes = modoMensalistaAtivo ? (parseInt(document.getElementById("novo-cli-semanas").value) || 4) : 1;
 
-    const { error } = await _supabase.from('saas_agendamentos').insert({
-        slug: TENANT_ATIVO, barbeiro: barbeiroAtual, cliente_nome: nome, cliente_telefone: tel,
-        servicos: servicosStr, data_agendamento: data, hora_inicio: hora, duracao_total: duracao, valor_total: total, status: 'pendente'
-    });
+    document.getElementById("btn-salvar-agendamento").textContent = "A Guardar...";
+    document.getElementById("btn-salvar-agendamento").disabled = true;
 
-    if(error) return alert("Erro ao salvar agendamento.");
-    fecharModalNovoAgendamento(); carregarAgendaBarbeiro(); alert("Agendamento criado com sucesso!");
+    try {
+        for (let i = 0; i < iteracoes; i++) {
+            let d = new Date(dataBase + "T12:00:00");
+            d.setDate(d.getDate() + (i * 7));
+            let dataIso = d.toISOString().split('T')[0];
+
+            let servicoFinal = servicosStr;
+            if (modoMensalistaAtivo) servicoFinal = `[MENSALISTA] ${servicoFinal}`;
+            else if (isEncaixe) servicoFinal = `[ENCAIXE] ${servicoFinal}`;
+
+            const { error } = await _supabase.from('saas_agendamentos').insert({
+                slug: TENANT_ATIVO, barbeiro: barbeiroAtual, cliente_nome: nome, cliente_telefone: tel,
+                servicos: servicoFinal, data_agendamento: dataIso, hora_inicio: hora, duracao_total: duracao, valor_total: total, status: 'pendente'
+            });
+            if (error) throw error;
+        }
+        fecharModalNovoAgendamento(); 
+        carregarAgendaBarbeiro(); 
+        alert(modoMensalistaAtivo ? "Mensalista guardado para as próximas semanas!" : "Agendamento criado com sucesso!");
+    } catch (e) {
+        alert("Erro ao salvar.");
+    } finally {
+        document.getElementById("btn-salvar-agendamento").textContent = "Salvar";
+        document.getElementById("btn-salvar-agendamento").disabled = false;
+    }
 }
 
 function bloquearHorario(data, hora) {
