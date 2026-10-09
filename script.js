@@ -66,7 +66,38 @@ function aplicarIdentidadeVisual(config) {
     root.style.setProperty('--text-color', config.cor_letras || '#FFFFFF');
 }
 
-// CLIENTE (AGENDAR)
+// NOVO: COMPRESSOR DE IMAGEM PARA EVITAR ERRO DE PAYLOAD NO SUPABASE
+function converterLogoBase64(input) {
+    const file = input.files[0];
+    if (!file) return;
+
+    const reader = new FileReader();
+    reader.onload = function(e) {
+        const img = new Image();
+        img.onload = function() {
+            const canvas = document.createElement('canvas');
+            // Reduz o tamanho da imagem para max 250px para não sobrecarregar o banco
+            const MAX_WIDTH = 250;
+            const scaleSize = MAX_WIDTH / img.width;
+            canvas.width = MAX_WIDTH;
+            canvas.height = img.height * scaleSize;
+            
+            const ctx = canvas.getContext('2d');
+            ctx.drawImage(img, 0, 0, canvas.width, canvas.height);
+            
+            // Qualidade reduzida para gerar um Base64 mais leve
+            const dataUrl = canvas.toDataURL('image/jpeg', 0.8);
+            
+            document.getElementById("config-logo-url").value = dataUrl;
+            const previewEl = document.getElementById("preview-logo-config");
+            previewEl.src = dataUrl;
+            previewEl.style.display = "block";
+        }
+        img.src = e.target.result;
+    };
+    reader.readAsDataURL(file);
+}
+
 function carregarDadosAgendamentoCliente() { renderizarBarbeiros(); renderizarServicos(); }
 function renderizarBarbeiros() {
     const grid = document.getElementById("barbers-grid"); if (!grid) return; grid.innerHTML = "";
@@ -123,7 +154,6 @@ async function checkAvailableTimes() {
     timeSelect.innerHTML = '<option value="">Selecione um horário</option>';
     let temHorario = false;
 
-    // BLOCOS DE 30 MINUTOS
     for (let h = hInicio; h < hFim; h++) {
         for (let m of ['00', '30']) {
             let timeStr = `${h.toString().padStart(2, '0')}:${m}`;
@@ -189,7 +219,6 @@ async function confirmarEEnviar() {
     fecharModalConfirmacao(); alert("Agendamento concluído!"); setTimeout(() => window.location.reload(), 2000);
 }
 
-// PAINEL (PAINEL.HTML) - LOGIN COM SEGURANÇA
 function fazerLogin() {
     const user = document.getElementById("login-usuario").value.trim().toLowerCase();
     const pass = document.getElementById("login-senha").value.trim();
@@ -219,9 +248,7 @@ function fazerLogin() {
             let nomeReal = typeof prof === 'object' ? prof.nome : prof;
             let senhaProf = (tenantConfig.senhas_usuarios && tenantConfig.senhas_usuarios[nomeReal]) ? tenantConfig.senhas_usuarios[nomeReal] : "123456";
             
-            if (pass !== senhaProf) {
-                return alert("Palavra-passe incorreta para este profissional.");
-            }
+            if (pass !== senhaProf) return alert("Palavra-passe incorreta para este profissional.");
 
             usuarioLogado = nomeReal; document.getElementById("login-section").style.display = "none";
             document.getElementById("dashboard-barbeiro").style.display = "block";
@@ -254,14 +281,13 @@ async function carregarAgendaBarbeiro() {
     const { data: agendamentos } = await _supabase.from('saas_agendamentos').select('*').eq('slug', TENANT_ATIVO).eq('barbeiro', barbeiroFiltro).in('data_agendamento', datas);
     let html = "";
     
-    // RENDERIZANDO GRELHA DE 30 EM 30 MINUTOS
     for (let i=0; i<6; i++) {
         let dataSQL = datas[i]; let dObj = new Date(dataSQL + 'T12:00:00');
         let diaStr = dObj.toLocaleDateString('pt-BR', {weekday: 'short', day: '2-digit', month: '2-digit'});
         html += `<div class="day-column"><div class="day-header">${diaStr}</div>`;
         for (let h = hInicio; h <= hFim; h++) {
             for (let m of ['00', '30']) {
-                if (h === hFim && m === '30') continue; // Termina exatamente na hora de fecho
+                if (h === hFim && m === '30') continue; 
                 let time = `${h.toString().padStart(2, '0')}:${m}`;
                 let agList = agendamentos ? agendamentos.filter(a => a.data_agendamento === dataSQL && String(a.hora_inicio).substring(0,5) === time) : [];
                 
@@ -273,7 +299,6 @@ async function carregarAgendaBarbeiro() {
                         } else if (ag.status === 'concluido') {
                             html += `<div class="slot-item concluded">${time} - Fim</div>`;
                         } else {
-                            // COR ROXA PARA MENSALISTAS
                             let classExtras = isMensalista ? "booked" : "booked";
                             let colorStyle = isMensalista ? "style='border-left-color:#9b59b6; background:rgba(155, 89, 182, 0.1); color:#FFF;'" : "";
                             html += `<div class="slot-item ${classExtras}" ${colorStyle} onclick='abrirModalGerenciarAtendimento(${JSON.stringify(ag)})'>${time} - ${ag.cliente_nome.split(' ')[0]}</div>`;
@@ -293,14 +318,26 @@ function abrirConfiguracoesAdmin() {
     document.getElementById("config-nome-empresa").value = tenantConfig.nome_empresa || "";
     document.getElementById("config-sobre").value = tenantConfig.sobre || "";
     document.getElementById("config-endereco").value = tenantConfig.endereco || "";
+    
+    // Configura a pré-visualização da Logo atual
     document.getElementById("config-logo-url").value = tenantConfig.logo_url || "";
+    const previewEl = document.getElementById("preview-logo-config");
+    if(tenantConfig.logo_url) {
+        previewEl.src = tenantConfig.logo_url;
+        previewEl.style.display = "block";
+    } else {
+        previewEl.style.display = "none";
+    }
+
     document.getElementById("config-h-inicio").value = tenantConfig.horario_inicio || "08:00";
     document.getElementById("config-h-fim").value = tenantConfig.horario_fim || "19:00";
+    
     renderizarPaletasConfig();
     renderizarListasConfigAdmin();
     mudarPassoConfig(1, document.querySelector('.tab-btn'));
     document.getElementById("modal-config-admin").style.display = "flex";
 }
+
 function fecharConfiguracoesAdmin() { document.getElementById("modal-config-admin").style.display = "none"; }
 
 function mudarPassoConfig(passo, btn) {
@@ -396,19 +433,31 @@ async function salvarConfiguracoesAdmin() {
     tenantConfig.nome_empresa = document.getElementById("config-nome-empresa").value.trim();
     tenantConfig.sobre = document.getElementById("config-sobre").value.trim();
     tenantConfig.endereco = document.getElementById("config-endereco").value.trim();
-    tenantConfig.logo_url = document.getElementById("config-logo-url").value.trim();
+    tenantConfig.logo_url = document.getElementById("config-logo-url").value.trim(); // Pega a Base64
     tenantConfig.horario_inicio = document.getElementById("config-h-inicio").value;
     tenantConfig.horario_fim = document.getElementById("config-h-fim").value;
 
     const { error } = await _supabase.from("saas_estabelecimentos").upsert({
-        slug: TENANT_ATIVO, nome_empresa: tenantConfig.nome_empresa, sobre: tenantConfig.sobre,
-        endereco: tenantConfig.endereco, logo_url: tenantConfig.logo_url,
-        horario_inicio: tenantConfig.horario_inicio, horario_fim: tenantConfig.horario_fim,
-        barbeiros: tenantConfig.barbeiros, servicos: tenantConfig.servicos, senhas_usuarios: tenantConfig.senhas_usuarios,
-        cor_primaria: tenantConfig.cor_primaria, cor_fundo: tenantConfig.cor_fundo, cor_caixas: tenantConfig.cor_caixas
+        slug: TENANT_ATIVO, 
+        nome_empresa: tenantConfig.nome_empresa, 
+        sobre: tenantConfig.sobre,
+        endereco: tenantConfig.endereco, 
+        logo_url: tenantConfig.logo_url,
+        horario_inicio: tenantConfig.horario_inicio, 
+        horario_fim: tenantConfig.horario_fim,
+        barbeiros: tenantConfig.barbeiros, 
+        servicos: tenantConfig.servicos, 
+        senhas_usuarios: tenantConfig.senhas_usuarios,
+        cor_primaria: tenantConfig.cor_primaria, 
+        cor_fundo: tenantConfig.cor_fundo, 
+        cor_caixas: tenantConfig.cor_caixas
     }, { onConflict: 'slug' });
 
-    if(error) return alert("Erro ao salvar configurações.");
+    if(error) {
+        console.error("ERRO SUPABASE:", error);
+        return alert("Erro ao salvar. Verifique se a coluna 'senhas_usuarios' (tipo JSONB) foi criada no Supabase e se a imagem não é muito grande. Mais detalhes no F12 (Console).");
+    }
+    
     fecharConfiguracoesAdmin();
     alert("Configurações salvas com sucesso!");
     window.location.reload();
@@ -483,7 +532,6 @@ function enviarLembreteWhatsApp(ag) {
     window.open(`https://api.whatsapp.com/send?phone=55${tel}&text=${encodeURIComponent(msg)}`, '_blank');
 }
 
-// RESTAURAÇÃO DO MÓDULO MENSALISTAS INTEGRADO AO MODAL DE NOVO AGENDAMENTO
 function abrirModalMensalistas() { 
     modoMensalistaAtivo = true;
     document.getElementById("titulo-modal-novo-agendamento").textContent = "Cadastrar Mensalista";
