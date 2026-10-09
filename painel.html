@@ -21,6 +21,11 @@
         .input-group { display: flex; flex-direction: column; gap: 6px; margin-bottom: 12px; }
         .input-group label { font-size: 0.85rem; color: #CCC; }
         input, select, textarea { width: 100%; padding: 12px; background: var(--bg-color); border: 1px solid rgba(255,255,255,0.2); border-radius: 8px; color: var(--text-color); outline: none; color-scheme: dark; font-size: 0.95rem; }
+        
+        /* Estilo para o input de arquivo */
+        input[type="file"] { padding: 8px; background: transparent; border: 1px dashed rgba(255,255,255,0.3); color: #AAA; font-size: 0.8rem; cursor: pointer; }
+        input[type="file"]::file-selector-button { background: var(--primary-color); border: none; color: white; padding: 6px 12px; border-radius: 6px; cursor: pointer; margin-right: 10px; font-weight: bold; }
+        
         .btn-acao { width: 100%; padding: 14px; background-color: var(--primary-color); color: #FFF; border: none; border-radius: 10px; font-weight: bold; cursor: pointer; text-transform: uppercase; transition: 0.2s; }
         .btn-acao:hover { opacity: 0.9; }
         .finance-card { background: var(--box-color); border-radius: 12px; padding: 15px; margin-bottom: 15px; }
@@ -69,7 +74,7 @@
             <button type="button" class="btn-acao" onclick="fazerLogin()">Entrar no Painel</button>
         </section>
 
-        <!-- DASHBOARD (BARBEIRO / ADMIN) -->
+        <!-- DASHBOARD -->
         <section id="dashboard-barbeiro" class="section" style="display: none;">
             <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 15px;">
                 <h2 id="titulo-agenda-barbeiro" style="font-size: 1rem; margin:0;"><i class="fa-solid fa-calendar-check"></i> Minha Agenda</h2>
@@ -106,7 +111,7 @@
         </section>
     </div>
 
-    <!-- MODAL DE CONFIGURAÇÕES EM PASSOS DO ADMIN -->
+    <!-- MODAL DE CONFIGURAÇÕES -->
     <div id="modal-config-admin" class="custom-modal-overlay">
         <div class="custom-modal" style="max-width: 480px;">
             <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 12px; border-bottom: 1px solid rgba(255,255,255,0.1); padding-bottom: 8px;">
@@ -121,11 +126,22 @@
                 <button type="button" class="tab-btn" onclick="mudarPassoConfig(4, this)">4. Serviços</button>
             </div>
 
+            <!-- PASSO 1: COM UPLOAD DE IMAGEM -->
             <div id="step-config-1" class="config-step-content active">
                 <div class="input-group"><label>Nome do Estabelecimento:</label><input type="text" id="config-nome-empresa" placeholder="Ex: Barbearia Central"></div>
-                <div class="input-group"><label>Sobre o Negócio (Para a Landing Page):</label><textarea id="config-sobre" rows="3" placeholder="Apresentação do espaço..."></textarea></div>
+                <div class="input-group"><label>Sobre o Negócio:</label><textarea id="config-sobre" rows="3" placeholder="Apresentação do espaço..."></textarea></div>
                 <div class="input-group"><label>Endereço Completo:</label><input type="text" id="config-endereco" placeholder="Ex: Rua Direita, nº 123"></div>
-                <div class="input-group"><label>URL da Logo (Link da Imagem):</label><input type="text" id="config-logo-url" placeholder="https://..."></div>
+                
+                <div class="input-group">
+                    <label>Logo do Estabelecimento (Faça Upload):</label>
+                    <div style="display: flex; align-items: center; gap: 10px;">
+                        <img id="preview-logo-config" src="" style="width: 50px; height: 50px; border-radius: 8px; object-fit: cover; display: none; border: 1px solid rgba(255,255,255,0.2);">
+                        <input type="file" id="config-logo-file" accept="image/*" onchange="converterLogoBase64(this)">
+                    </div>
+                    <!-- Campo escondido que guardará a string Base64 -->
+                    <input type="hidden" id="config-logo-url">
+                </div>
+
                 <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 8px;">
                     <div class="input-group"><label>Início Expediente:</label><input type="time" id="config-h-inicio" value="08:00"></div>
                     <div class="input-group"><label>Fim Expediente:</label><input type="time" id="config-h-fim" value="19:00"></div>
@@ -133,13 +149,13 @@
                 <button type="button" class="btn-acao" onclick="mudarPassoConfig(2, null)" style="margin-top: 10px;">Avançar</button>
             </div>
 
+            <!-- Demais Passos (Inalterados) -->
             <div id="step-config-2" class="config-step-content">
                 <label style="font-size: 0.85rem; color: #CCC; display: block; margin-bottom: 8px;">Selecione a Paleta de Cores:</label>
                 <div class="palette-grid" id="palettes-container"></div>
                 <button type="button" class="btn-acao" onclick="mudarPassoConfig(3, null)" style="margin-top: 15px;">Avançar</button>
             </div>
 
-            <!-- PASSO 3 - EQUIPA AGORA COM CAMPO DE SENHA -->
             <div id="step-config-3" class="config-step-content">
                 <label style="font-size: 0.85rem; color: #CCC; display: block; margin-bottom: 6px;">Membros da Equipa:</label>
                 <div id="lista-profissionais-config" style="margin-bottom: 8px; max-height: 120px; overflow-y: auto;"></div>
@@ -168,7 +184,7 @@
         </div>
     </div>
 
-    <!-- MODAL GERENCIAR ATENDIMENTO -->
+    <!-- Modais de Atendimento e Novo Agendamento mantidos -->
     <div id="modal-gerenciar-atendimento" class="custom-modal-overlay">
         <div class="custom-modal" style="max-width: 380px;">
             <h3 style="text-align: center; margin-bottom: 15px; font-size: 1.1rem; color: #FFF; text-transform: uppercase;">Gerenciar Atendimento</h3>
@@ -199,7 +215,6 @@
         </div>
     </div>
 
-    <!-- MODAL CONFIRMAR CANCELAMENTO -->
     <div id="modal-confirmar-cancelamento" class="custom-modal-overlay" style="z-index: 10000;">
         <div class="custom-modal" style="text-align: center; max-width: 320px;">
             <i class="fa-solid fa-triangle-exclamation" style="font-size: 2.5rem; color: #e74c3c; margin-bottom: 15px;"></i>
@@ -212,7 +227,6 @@
         </div>
     </div>
 
-    <!-- MODAL NOVO AGENDAMENTO E MENSALISTAS UNIFICADO -->
     <div id="modal-novo-agendamento" class="custom-modal-overlay">
         <div class="custom-modal" style="max-width: 440px; max-height: 90vh; overflow-y: auto;">
             <h3 id="titulo-modal-novo-agendamento" style="text-align: center; margin-bottom: 15px; font-size: 1.1rem; color: #FFF; text-transform: uppercase;">Novo Agendamento</h3>
@@ -230,7 +244,6 @@
                 <strong id="novo-cli-total" style="font-size: 1.1rem; color: var(--primary-color);">R$ 0,00</strong>
             </div>
 
-            <!-- OPÇÃO EXCLUSIVA DE ENCAIXE (AVULSO) -->
             <div id="bloco-check-encaixe" style="background: rgba(255, 255, 255, 0.05); border: 1px solid var(--primary-color); padding: 12px; border-radius: 8px; margin-bottom: 12px; display: flex; align-items: flex-start; gap: 10px; cursor: pointer;" onclick="document.getElementById('check-encaixe').click()">
                 <input type="checkbox" id="check-encaixe" style="width: 18px; height: 18px; margin-top: 2px;">
                 <div>
@@ -239,7 +252,6 @@
                 </div>
             </div>
 
-            <!-- OPÇÃO EXCLUSIVA DE RECORRÊNCIA (MENSALISTA) -->
             <div id="bloco-recorrencia-mensalista" style="display: none; background: rgba(155, 89, 182, 0.1); border: 1px solid #9b59b6; padding: 12px; border-radius: 8px; margin-bottom: 12px;">
                 <label style="font-size: 0.85rem; color: #9b59b6; font-weight: bold; display: block; margin-bottom: 6px;">Repetir por quantas semanas?</label>
                 <input type="number" id="novo-cli-semanas" value="4" min="1" max="12" style="background: var(--bg-color);">
