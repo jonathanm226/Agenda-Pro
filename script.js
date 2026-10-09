@@ -458,9 +458,8 @@ async function salvarConfiguracoesAdmin() {
     tenantConfig.horario_inicio = document.getElementById("config-h-inicio").value;
     tenantConfig.horario_fim = document.getElementById("config-h-fim").value;
 
-    // Enviando apenas as colunas válidas e garantindo suporte a upsert sem erro 406/401
-    const payload = {
-        slug: TENANT_ATIVO, 
+    // Utilizando o comando .update() para garantir a gravação direta e evitar erros 401/406 do Supabase
+    const dadosParaSalvar = {
         nome_empresa: tenantConfig.nome_empresa, 
         sobre: tenantConfig.sobre,
         endereco: tenantConfig.endereco, 
@@ -468,13 +467,13 @@ async function salvarConfiguracoesAdmin() {
         horario_inicio: tenantConfig.horario_inicio, 
         horario_fim: tenantConfig.horario_fim,
         barbeiros: tenantConfig.barbeiros, 
-        servicos: tenantConfig.servicos, 
-        cor_primaria: tenantConfig.cor_primaria, 
-        cor_fundo: tenantConfig.cor_fundo, 
-        cor_caixas: tenantConfig.cor_caixas
+        servicos: tenantConfig.servicos
     };
 
-    const { error } = await _supabase.from("saas_estabelecimentos").upsert(payload, { onConflict: 'slug' });
+    const { error } = await _supabase
+        .from("saas_estabelecimentos")
+        .update(dadosParaSalvar)
+        .eq("slug", TENANT_ATIVO);
 
     if(error) {
         console.error("ERRO SUPABASE:", error);
