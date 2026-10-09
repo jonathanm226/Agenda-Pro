@@ -27,6 +27,30 @@ const PALETAS_CORES = [
 let usuarioLogado = ""; let offsetSemana = 0; let servicosSelecionados = {}; let barbeiroSelecionado = null; let paletaSelecionadaIdx = 0;
 let modoMensalistaAtivo = false;
 
+// Substitui o alert() nativo por um modal bonito estilizado
+function mostrarAlertaCustomizado(mensagem, recarregar = false) {
+    const modal = document.getElementById("modal-alerta-custom");
+    const texto = document.getElementById("alerta-custom-texto");
+    if (modal && texto) {
+        texto.textContent = mensagem;
+        modal.style.display = "flex";
+        modal.dataset.recarregar = recarregar ? "true" : "false";
+    } else {
+        alert(mensagem);
+        if (recarregar) window.location.reload();
+    }
+}
+
+function fecharAlertaCustom() {
+    const modal = document.getElementById("modal-alerta-custom");
+    if (modal) {
+        modal.style.display = "none";
+        if (modal.dataset.recarregar === "true") {
+            window.location.reload();
+        }
+    }
+}
+
 document.addEventListener("DOMContentLoaded", async () => {
     await carregarTenantConfig();
     aplicarIdentidadeVisual(tenantConfig);
@@ -190,10 +214,10 @@ async function checkAvailableTimes() {
 }
 
 function abrirModalConfirmacao() {
-    if (!barbeiroSelecionado) return alert("Selecione o profissional.");
-    if (Object.keys(servicosSelecionados).length === 0) return alert("Selecione os serviços.");
-    if (!document.getElementById("date").value || !document.getElementById("time").value) return alert("Escolha data e horário.");
-    if (!document.getElementById("client-name").value || !document.getElementById("client-phone").value) return alert("Preencha os seus dados.");
+    if (!barbeiroSelecionado) return mostrarAlertaCustomizado("Selecione o profissional.");
+    if (Object.keys(servicosSelecionados).length === 0) return mostrarAlertaCustomizado("Selecione os serviços.");
+    if (!document.getElementById("date").value || !document.getElementById("time").value) return mostrarAlertaCustomizado("Escolha data e horário.");
+    if (!document.getElementById("client-name").value || !document.getElementById("client-phone").value) return mostrarAlertaCustomizado("Preencha os seus dados.");
     
     let servicosStr = Object.keys(servicosSelecionados).join(', ');
     let total = 0; let duracao = 0;
@@ -217,7 +241,7 @@ async function confirmarEEnviar() {
         servicos: servs, data_agendamento: dataSQL, hora_inicio: horaStr, duracao_total: duracao || 30, valor_total: total, status: 'pendente'
     });
 
-    if (error) { btn.disabled = false; return alert("Erro ao salvar agendamento."); }
+    if (error) { btn.disabled = false; return mostrarAlertaCustomizado("Erro ao salvar agendamento."); }
 
     const profObj = (tenantConfig.barbeiros || []).find(b => (typeof b === 'object' ? b.nome : b) === barbeiroSelecionado);
     let numeroProf = (profObj && profObj.whatsapp) ? profObj.whatsapp : "";
@@ -228,13 +252,14 @@ async function confirmarEEnviar() {
         window.open(`https://api.whatsapp.com/send?phone=55${numeroProf.replace(/\D/g, "")}&text=${encodeURIComponent(msg)}`, '_blank');
     }
 
-    fecharModalConfirmacao(); alert("Agendamento concluído!"); setTimeout(() => window.location.reload(), 2000);
+    fecharModalConfirmacao(); 
+    mostrarAlertaCustomizado("Agendamento concluído!", true);
 }
 
 function fazerLogin() {
     const user = document.getElementById("login-usuario").value.trim().toLowerCase();
     const pass = document.getElementById("login-senha").value.trim();
-    if (!user || !pass) return alert("Preencha os campos de utilizador e palavra-passe.");
+    if (!user || !pass) return mostrarAlertaCustomizado("Preencha os campos de utilizador e palavra-passe.");
     
     let senhaAdmin = (tenantConfig.senhas_usuarios && tenantConfig.senhas_usuarios['admin']) ? tenantConfig.senhas_usuarios['admin'] : 'admin123';
     
@@ -260,14 +285,14 @@ function fazerLogin() {
             let nomeReal = typeof prof === 'object' ? prof.nome : prof;
             let senhaProf = (tenantConfig.senhas_usuarios && tenantConfig.senhas_usuarios[nomeReal]) ? tenantConfig.senhas_usuarios[nomeReal] : "123456";
             
-            if (pass !== senhaProf) return alert("Palavra-passe incorreta para este profissional.");
+            if (pass !== senhaProf) return mostrarAlertaCustomizado("Palavra-passe incorreta para este profissional.");
 
             usuarioLogado = nomeReal; document.getElementById("login-section").style.display = "none";
             document.getElementById("dashboard-barbeiro").style.display = "block";
             document.getElementById("titulo-agenda-barbeiro").innerHTML = '<i class="fa-solid fa-calendar-check"></i> Agenda: ' + usuarioLogado;
             carregarAgendaBarbeiro(); return;
         }
-        alert("Utilizador não encontrado.");
+        mostrarAlertaCustomizado("Utilizador não encontrado.");
     }
 }
 
@@ -422,7 +447,7 @@ function adicionarProfissionalConfig() {
         document.getElementById("novo-prof-wpp").value = "";
         document.getElementById("novo-prof-senha").value = "";
         renderizarListasConfigAdmin();
-    } else { alert("Preencha o nome e o telefone do profissional."); }
+    } else { mostrarAlertaCustomizado("Preencha o nome e o telefone do profissional."); }
 }
 
 function removerProfissionalConfig(i) { 
@@ -458,7 +483,6 @@ async function salvarConfiguracoesAdmin() {
     tenantConfig.horario_inicio = document.getElementById("config-h-inicio").value;
     tenantConfig.horario_fim = document.getElementById("config-h-fim").value;
 
-    // Utilizando o comando .update() para garantir a gravação direta e evitar erros 401/406 do Supabase
     const dadosParaSalvar = {
         nome_empresa: tenantConfig.nome_empresa, 
         sobre: tenantConfig.sobre,
@@ -467,7 +491,10 @@ async function salvarConfiguracoesAdmin() {
         horario_inicio: tenantConfig.horario_inicio, 
         horario_fim: tenantConfig.horario_fim,
         barbeiros: tenantConfig.barbeiros, 
-        servicos: tenantConfig.servicos
+        servicos: tenantConfig.servicos,
+        cor_primaria: tenantConfig.cor_primaria,
+        cor_fundo: tenantConfig.cor_fundo,
+        cor_caixas: tenantConfig.cor_caixas
     };
 
     const { error } = await _supabase
@@ -477,12 +504,11 @@ async function salvarConfiguracoesAdmin() {
 
     if(error) {
         console.error("ERRO SUPABASE:", error);
-        return alert("Erro ao salvar configurações. Verifique o console (F12).");
+        return mostrarAlertaCustomizado("Erro ao salvar configurações. Verifique o console (F12).");
     }
     
     fecharConfiguracoesAdmin();
-    alert("Configurações salvas com sucesso!");
-    window.location.reload();
+    mostrarAlertaCustomizado("Configurações salvas com sucesso!", true);
 }
 
 let atendimentoAtual = null;
@@ -525,11 +551,11 @@ async function confirmarConclusaoComPgto() {
 async function salvarReagendamento() {
     const novaData = document.getElementById("reagendar-data").value;
     const novaHora = document.getElementById("reagendar-hora").value;
-    if(!novaData || !novaHora) return alert("Selecione data e hora.");
+    if(!novaData || !novaHora) return mostrarAlertaCustomizado("Selecione data e hora.");
 
     const { error } = await _supabase.from('saas_agendamentos').update({ data_agendamento: novaData, hora_inicio: novaHora }).eq('id', atendimentoAtual.id);
-    if(error) return alert("Erro ao reagendar.");
-    fecharModalGerenciar(); carregarAgendaBarbeiro(); alert("Reagendado com sucesso!");
+    if(error) return mostrarAlertaCustomizado("Erro ao reagendar.");
+    fecharModalGerenciar(); carregarAgendaBarbeiro(); mostrarAlertaCustomizado("Reagendado com sucesso!");
 }
 
 let idParaCancelar = null;
@@ -615,7 +641,7 @@ async function salvarNovoAgendamentoBarbeiro() {
     const hora = document.getElementById("novo-cli-hora").value;
     const isEncaixe = document.getElementById("check-encaixe").checked;
 
-    if(!nome || !dataBase || !hora) return alert("Preencha Nome, Data e Horário.");
+    if(!nome || !dataBase || !hora) return mostrarAlertaCustomizado("Preencha Nome, Data e Horário.");
 
     let servsArray = []; let total = 0; let duracao = 0;
     document.querySelectorAll(".chk-servico-novo:checked").forEach(chk => {
@@ -650,9 +676,9 @@ async function salvarNovoAgendamentoBarbeiro() {
         }
         fecharModalNovoAgendamento(); 
         carregarAgendaBarbeiro(); 
-        alert(modoMensalistaAtivo ? "Mensalista guardado para as próximas semanas!" : "Agendamento criado com sucesso!");
+        mostrarAlertaCustomizado(modoMensalistaAtivo ? "Mensalista guardado para as próximas semanas!" : "Agendamento criado com sucesso!");
     } catch (e) {
-        alert("Erro ao salvar.");
+        mostrarAlertaCustomizado("Erro ao salvar.");
     } finally {
         document.getElementById("btn-salvar-agendamento").textContent = "Salvar";
         document.getElementById("btn-salvar-agendamento").disabled = false;
