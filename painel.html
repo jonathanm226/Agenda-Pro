@@ -19,7 +19,7 @@
         .section { margin-bottom: 25px; }
         .input-group { display: flex; flex-direction: column; gap: 6px; margin-bottom: 12px; }
         .input-group label { font-size: 0.85rem; color: #CCC; }
-        input, select, textarea { width: 100%; padding: 12px; background: var(--bg-color); border: 1px solid rgba(255,255,255,0.2); border-radius: 8px; color: var(--text-color); outline: none; }
+        input, select, textarea { width: 100%; padding: 12px; background: var(--bg-color); border: 1px solid rgba(255,255,255,0.2); border-radius: 8px; color: var(--text-color); outline: none; color-scheme: dark; }
         .btn-acao { width: 100%; padding: 14px; background-color: var(--primary-color); color: #FFF; border: none; border-radius: 10px; font-weight: bold; cursor: pointer; text-transform: uppercase; }
         .finance-card { background: var(--box-color); border-radius: 12px; padding: 15px; margin-bottom: 15px; }
         .finance-header { display: flex; justify-content: space-between; align-items: center; margin-bottom: 10px; }
@@ -32,8 +32,21 @@
         .slot-item.concluded { border-left-color: #25D366; background: rgba(37, 211, 102, 0.1); color: #25D366; }
         .slot-item.available { border-left-color: var(--primary-color); background: var(--box-color); color: var(--text-color); }
         .slot-item.blocked { border-left-color: #e74c3c; background: rgba(231, 76, 60, 0.1); color: #888; text-decoration: line-through; }
+        
+        /* Modais e Abas de Configuração */
         .custom-modal-overlay { position: fixed; top: 0; left: 0; width: 100%; height: 100%; background: rgba(0,0,0,0.8); display: none; justify-content: center; align-items: center; z-index: 9999; }
-        .custom-modal { background: var(--box-color); color: var(--text-color); padding: 25px; border-radius: 16px; width: 95%; max-width: 450px; }
+        .custom-modal { background: var(--box-color); color: var(--text-color); padding: 20px; border-radius: 16px; width: 95%; max-width: 450px; }
+        .config-tabs { display: grid; grid-template-columns: repeat(4, 1fr); gap: 4px; margin-bottom: 15px; background: rgba(0,0,0,0.3); padding: 4px; border-radius: 10px; }
+        .tab-btn { padding: 8px 4px; background: transparent; border: none; color: #AAA; font-size: 0.75rem; font-weight: bold; border-radius: 8px; cursor: pointer; text-align: center; }
+        .tab-btn.active { background: var(--primary-color); color: #FFF; }
+        .config-step-content { display: none; }
+        .config-step-content.active { display: block; }
+        
+        /* Seleção de Paletas de Cores */
+        .palette-grid { display: grid; grid-template-columns: repeat(2, 1fr); gap: 8px; margin-top: 8px; }
+        .palette-card { padding: 10px; border-radius: 8px; border: 2px solid rgba(255,255,255,0.1); cursor: pointer; display: flex; align-items: center; justify-content: space-between; font-size: 0.8rem; font-weight: bold; }
+        .palette-card.selected { border-color: #FFF; }
+        
         .service-check-card { background: rgba(255,255,255,0.03); border: 1px solid rgba(255,255,255,0.1); padding: 10px 12px; border-radius: 8px; display: flex; align-items: center; justify-content: space-between; cursor: pointer; }
         .service-check-card.selected { background: rgba(255, 102, 0, 0.1); border-color: var(--primary-color); }
     </style>
@@ -50,7 +63,7 @@
         <!-- LOGIN -->
         <section id="login-section" class="section">
             <h2 style="font-size: 1.1rem; margin-bottom: 15px; text-align: center;">Acesso ao Sistema</h2>
-            <div class="input-group"><label>Utilizador:</label><input type="text" id="login-usuario" placeholder="Utilizador"></div>
+            <div class="input-group"><label>Utilizador:</label><input type="text" id="login-usuario" placeholder="Utilizador (ex: admin ou nome do barbeiro)"></div>
             <div class="input-group"><label>Palavra-passe:</label><input type="password" id="login-senha" placeholder="Palavra-passe"></div>
             <button type="button" class="btn-acao" onclick="fazerLogin()">Entrar no Painel</button>
         </section>
@@ -66,6 +79,12 @@
                 <button type="button" class="btn-acao" onclick="abrirModalMensalistas()" style="font-size: 0.75rem; background: #3498db;"><i class="fa-solid fa-users"></i> Mensalistas</button>
                 <button type="button" class="btn-acao" onclick="carregarAgendaBarbeiro()" style="font-size: 0.75rem; background: #2ecc71;"><i class="fa-solid fa-rotate"></i> Atualizar</button>
                 <button type="button" class="btn-acao" onclick="abrirModalNovoAgendamento()" style="font-size: 0.75rem; background: var(--primary-color);"><i class="fa-solid fa-plus"></i> Novo</button>
+            </div>
+
+            <!-- SELETOR DE PROFISSIONAL PARA O ADMIN VISUALIZAR -->
+            <div id="admin-seletor-prof-container" class="input-group" style="display:none; margin-bottom: 12px;">
+                <label>Visualizar Agenda do Profissional:</label>
+                <select id="select-admin-prof" onchange="mudarProfissionalAdmin()"></select>
             </div>
 
             <div class="finance-card">
@@ -87,41 +106,66 @@
         </section>
     </div>
 
-    <!-- MODAL DE CONFIGURAÇÕES DO ADMIN (ENGRENAGEM) -->
+    <!-- MODAL DE CONFIGURAÇÕES EM PASSOS DO ADMIN -->
     <div id="modal-config-admin" class="custom-modal-overlay">
-        <div class="custom-modal" style="max-width: 500px; max-height: 90vh; overflow-y: auto;">
-            <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 15px; border-bottom: 1px solid rgba(255,255,255,0.1); padding-bottom: 10px;">
-                <h3 style="color: var(--primary-color); font-size: 1.1rem;"><i class="fa-solid fa-gear"></i> Configurações do Negócio</h3>
-                <button type="button" onclick="fecharConfiguracoesAdmin()" style="background: rgba(255,255,255,0.1); border: none; color: #FFF; width: 30px; height: 30px; border-radius: 50%; cursor: pointer;"><i class="fa-solid fa-xmark"></i></button>
+        <div class="custom-modal" style="max-width: 480px;">
+            <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 12px; border-bottom: 1px solid rgba(255,255,255,0.1); padding-bottom: 8px;">
+                <h3 style="color: var(--primary-color); font-size: 1.05rem;"><i class="fa-solid fa-gear"></i> Configurações</h3>
+                <button type="button" onclick="fecharConfiguracoesAdmin()" style="background: rgba(255,255,255,0.1); border: none; color: #FFF; width: 28px; height: 28px; border-radius: 50%; cursor: pointer;"><i class="fa-solid fa-xmark"></i></button>
             </div>
 
-            <div class="input-group"><label>Nome da Empresa:</label><input type="text" id="config-nome-empresa"></div>
-            <div class="input-group"><label>URL da Logo:</label><input type="text" id="config-logo-url" placeholder="https://..."></div>
-            <div class="input-group"><label>WhatsApp Admin / Notificações:</label><input type="text" id="config-admin-wpp"></div>
-            
-            <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 10px;">
-                <div class="input-group"><label>Início Expediente:</label><input type="time" id="config-h-inicio" value="08:00"></div>
-                <div class="input-group"><label>Fim Expediente:</label><input type="time" id="config-h-fim" value="19:00"></div>
+            <!-- ABAS EM PASSOS -->
+            <div class="config-tabs">
+                <button type="button" class="tab-btn active" onclick="mudarPassoConfig(1, this)">1. Perfil</button>
+                <button type="button" class="tab-btn" onclick="mudarPassoConfig(2, this)">2. Visual</button>
+                <button type="button" class="tab-btn" onclick="mudarPassoConfig(3, this)">3. Equipa</button>
+                <button type="button" class="tab-btn" onclick="mudarPassoConfig(4, this)">4. Serviços</button>
             </div>
 
-            <h4 style="font-size: 0.9rem; color: var(--primary-color); margin: 15px 0 8px 0;">Gestão de Profissionais</h4>
-            <div id="lista-profissionais-config" style="margin-bottom: 8px;"></div>
-            <div style="display:flex; gap:6px; margin-bottom:12px;">
-                <input type="text" id="novo-prof-nome" placeholder="Nome" style="flex:2;">
-                <input type="text" id="novo-prof-wpp" placeholder="WhatsApp" style="flex:1;">
-                <button type="button" class="btn-acao" onclick="adicionarProfissionalConfig()" style="width: auto; padding: 0 15px; background: #27ae60;">+</button>
+            <!-- PASSO 1: PERFIL -->
+            <div id="step-config-1" class="config-step-content active">
+                <div class="input-group"><label>Nome da Empresa:</label><input type="text" id="config-nome-empresa"></div>
+                <div class="input-group"><label>URL da Logo:</label><input type="text" id="config-logo-url" placeholder="https://..."></div>
+                <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 8px;">
+                    <div class="input-group"><label>Início Expediente:</label><input type="time" id="config-h-inicio" value="08:00"></div>
+                    <div class="input-group"><label>Fim Expediente:</label><input type="time" id="config-h-fim" value="19:00"></div>
+                </div>
+                <button type="button" class="btn-acao" onclick="mudarPassoConfig(2, null)" style="margin-top: 10px;">Avançar</button>
             </div>
 
-            <h4 style="font-size: 0.9rem; color: var(--primary-color); margin: 15px 0 8px 0;">Gestão de Serviços</h4>
-            <div id="lista-servicos-config" style="margin-bottom: 8px;"></div>
-            <div style="display:flex; gap:6px; margin-bottom:15px;">
-                <input type="text" id="novo-serv-nome" placeholder="Serviço" style="flex:2;">
-                <input type="number" id="novo-serv-preco" placeholder="R$" style="flex:1;">
-                <input type="number" id="novo-serv-tempo" placeholder="Min" style="flex:1;">
-                <button type="button" class="btn-acao" onclick="adicionarServicoConfig()" style="width: auto; padding: 0 15px; background: #27ae60;">+</button>
+            <!-- PASSO 2: VISUAL (10 OPÇÕES DE PALETAS) -->
+            <div id="step-config-2" class="config-step-content">
+                <label style="font-size: 0.85rem; color: #CCC; display: block; margin-bottom: 8px;">Selecione a Paleta de Cores:</label>
+                <div class="palette-grid" id="palettes-container"></div>
+                <button type="button" class="btn-acao" onclick="mudarPassoConfig(3, null)" style="margin-top: 15px;">Avançar</button>
             </div>
 
-            <button type="button" class="btn-acao" onclick="salvarConfiguracoesAdmin()" style="background: #25D366;">Salvar Configurações</button>
+            <!-- PASSO 3: EQUIPA (NOME E TELEFONE) -->
+            <div id="step-config-3" class="config-step-content">
+                <label style="font-size: 0.85rem; color: #CCC; display: block; margin-bottom: 6px;">Membros da Equipa:</label>
+                <div id="lista-profissionais-config" style="margin-bottom: 8px; max-height: 120px; overflow-y: auto;"></div>
+                <div style="display:flex; flex-direction:column; gap:6px; margin-bottom:12px; background: rgba(0,0,0,0.3); padding:8px; border-radius:8px;">
+                    <input type="text" id="novo-prof-nome" placeholder="Nome do Profissional">
+                    <input type="text" id="novo-prof-wpp" placeholder="Telefone / WhatsApp (Ex: 31994951564)">
+                    <button type="button" class="btn-acao" onclick="adicionarProfissionalConfig()" style="background: #27ae60; padding: 10px; font-size: 0.8rem;">Adicionar Membro</button>
+                </div>
+                <button type="button" class="btn-acao" onclick="mudarPassoConfig(4, null)">Avançar</button>
+            </div>
+
+            <!-- PASSO 4: SERVIÇOS -->
+            <div id="step-config-4" class="config-step-content">
+                <label style="font-size: 0.85rem; color: #CCC; display: block; margin-bottom: 6px;">Serviços Oferecidos:</label>
+                <div id="lista-servicos-config" style="margin-bottom: 8px; max-height: 120px; overflow-y: auto;"></div>
+                <div style="display:flex; flex-direction:column; gap:6px; margin-bottom:15px; background: rgba(0,0,0,0.3); padding:8px; border-radius:8px;">
+                    <input type="text" id="novo-serv-nome" placeholder="Nome do Serviço">
+                    <div style="display: grid; grid-template-columns: 1fr 1fr; gap:6px;">
+                        <input type="number" id="novo-serv-preco" placeholder="Preço (R$)">
+                        <input type="number" id="novo-serv-tempo" placeholder="Duração (Min)">
+                    </div>
+                    <button type="button" class="btn-acao" onclick="adicionarServicoConfig()" style="background: #27ae60; padding: 10px; font-size: 0.8rem;">Adicionar Serviço</button>
+                </div>
+                <button type="button" class="btn-acao" onclick="salvarConfiguracoesAdmin()" style="background: #25D366;">Salvar Todas as Configurações</button>
+            </div>
         </div>
     </div>
 
@@ -156,7 +200,7 @@
         </div>
     </div>
 
-    <!-- MODAL DE CONFIRMAÇÃO DE CANCELAMENTO -->
+    <!-- MODAL CONFIRMAR CANCELAMENTO -->
     <div id="modal-confirmar-cancelamento" class="custom-modal-overlay" style="z-index: 10000;">
         <div class="custom-modal" style="text-align: center; max-width: 320px;">
             <i class="fa-solid fa-triangle-exclamation" style="font-size: 2.5rem; color: #e74c3c; margin-bottom: 15px;"></i>
