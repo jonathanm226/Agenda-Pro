@@ -11,7 +11,6 @@ let tenantConfig = {
     barbeiros: [], servicos: {}, senhas_usuarios: { "admin": "admin123" }
 };
 
-// 10 Paletas de Cores Profissionais
 const PALETAS_CORES = [
     { nome: "Laranja Pro (Padrão)", primaria: "#FF6600", fundo: "#121212", caixas: "#1A1A1A" },
     { nome: "Azul Neon", primaria: "#00E5FF", fundo: "#0A0F1D", caixas: "#131B2E" },
@@ -40,6 +39,9 @@ document.addEventListener("DOMContentLoaded", async () => {
         }
     });
 
+    const nomeEl = document.getElementById("tenant-name") || document.getElementById("painel-nome-negocio");
+    if (nomeEl) nomeEl.textContent = tenantConfig.nome_empresa || "Agenda Pro";
+
     if (document.getElementById("agendar-container")) carregarDadosAgendamentoCliente();
 });
 
@@ -63,9 +65,19 @@ function aplicarIdentidadeVisual(config) {
     root.style.setProperty('--text-color', config.cor_letras || '#FFFFFF');
 }
 
-// ==========================================
+// UPLOAD DE LOGO (BASE64)
+function converterLogoBase64(input) {
+    const file = input.files[0];
+    if (file) {
+        const reader = new FileReader();
+        reader.onload = function(e) {
+            document.getElementById("config-logo-url").value = e.target.result;
+        };
+        reader.readAsDataURL(file);
+    }
+}
+
 // CLIENTE (AGENDAR.HTML)
-// ==========================================
 function carregarDadosAgendamentoCliente() { renderizarBarbeiros(); renderizarServicos(); }
 function renderizarBarbeiros() {
     const grid = document.getElementById("barbers-grid"); if (!grid) return; grid.innerHTML = "";
@@ -104,7 +116,6 @@ function atualizarResumo() {
     checkAvailableTimes();
 }
 
-// CONSUMO DE TEMPO NA AGENDA
 async function checkAvailableTimes() {
     const dateInput = document.getElementById("date").value; const timeSelect = document.getElementById("time");
     if (!dateInput || !timeSelect || !barbeiroSelecionado) return;
@@ -117,9 +128,8 @@ async function checkAvailableTimes() {
     timeSelect.innerHTML = '<option value="">A calcular horários...</option>';
     const { data: ocupados } = await _supabase.from('saas_agendamentos').select('hora_inicio, duracao_total').eq('slug', TENANT_ATIVO).eq('barbeiro', barbeiroSelecionado).eq('data_agendamento', dateInput).neq('status', 'cancelado');
     
-    const profObj = (tenantConfig.barbeiros || []).find(b => (typeof b === 'object' ? b.nome : b) === barbeiroSelecionado);
-    let hInicio = (profObj && profObj.inicio) ? parseInt(profObj.inicio.split(':')[0]) : parseInt(tenantConfig.horario_inicio.split(':')[0]);
-    let hFim = (profObj && profObj.fim) ? parseInt(profObj.fim.split(':')[0]) : parseInt(tenantConfig.horario_fim.split(':')[0]);
+    let hInicio = parseInt(tenantConfig.horario_inicio.split(':')[0]) || 8;
+    let hFim = parseInt(tenantConfig.horario_fim.split(':')[0]) || 19;
 
     timeSelect.innerHTML = '<option value="">Selecione um horário</option>';
     let temHorario = false;
@@ -176,7 +186,6 @@ async function confirmarEEnviar() {
 
     if (error) { btn.disabled = false; return alert("Erro ao salvar."); }
 
-    // Envio do WhatsApp para o número específico cadastrado pelo admin para aquele profissional
     const profObj = (tenantConfig.barbeiros || []).find(b => (typeof b === 'object' ? b.nome : b) === barbeiroSelecionado);
     let numeroProf = (profObj && profObj.whatsapp) ? profObj.whatsapp : "";
     if (numeroProf) {
@@ -188,9 +197,7 @@ async function confirmarEEnviar() {
     fecharModalConfirmacao(); alert("Agendamento concluído!"); setTimeout(() => window.location.reload(), 2000);
 }
 
-// ==========================================
 // PAINEL (PAINEL.HTML)
-// ==========================================
 function fazerLogin() {
     const user = document.getElementById("login-usuario").value.trim().toLowerCase();
     const pass = document.getElementById("login-senha").value.trim();
@@ -204,7 +211,6 @@ function fazerLogin() {
         document.getElementById("admin-gear-container").innerHTML = '<div class="btn-engrenagem" onclick="abrirConfiguracoesAdmin()"><i class="fa-solid fa-gear"></i></div>';
         document.getElementById("label-resumo-financeiro").textContent = "Faturamento Geral (Admin)";
         
-        // Mostra o seletor para o admin alternar entre os profissionais
         const selectAdmin = document.getElementById("select-admin-prof");
         selectAdmin.innerHTML = "";
         (tenantConfig.barbeiros || []).forEach(p => {
@@ -268,9 +274,10 @@ async function carregarAgendaBarbeiro() {
     container.innerHTML = html; atualizarFinanceiroProfissional();
 }
 
-// CONFIGURAÇÕES DO ADMIN (EM PASSOS)
 function abrirConfiguracoesAdmin() {
     document.getElementById("config-nome-empresa").value = tenantConfig.nome_empresa || "";
+    document.getElementById("config-sobre").value = tenantConfig.sobre || "";
+    document.getElementById("config-endereco").value = tenantConfig.endereco || "";
     document.getElementById("config-logo-url").value = tenantConfig.logo_url || "";
     document.getElementById("config-h-inicio").value = tenantConfig.horario_inicio || "08:00";
     document.getElementById("config-h-fim").value = tenantConfig.horario_fim || "19:00";
@@ -355,12 +362,15 @@ function removerServicoConfig(nome) { delete tenantConfig.servicos[nome]; render
 
 async function salvarConfiguracoesAdmin() {
     tenantConfig.nome_empresa = document.getElementById("config-nome-empresa").value.trim();
+    tenantConfig.sobre = document.getElementById("config-sobre").value.trim();
+    tenantConfig.endereco = document.getElementById("config-endereco").value.trim();
     tenantConfig.logo_url = document.getElementById("config-logo-url").value.trim();
     tenantConfig.horario_inicio = document.getElementById("config-h-inicio").value;
     tenantConfig.horario_fim = document.getElementById("config-h-fim").value;
 
     const { error } = await _supabase.from("saas_estabelecimentos").upsert({
-        slug: TENANT_ATIVO, nome_empresa: tenantConfig.nome_empresa, logo_url: tenantConfig.logo_url,
+        slug: TENANT_ATIVO, nome_empresa: tenantConfig.nome_empresa, sobre: tenantConfig.sobre,
+        endereco: tenantConfig.endereco, logo_url: tenantConfig.logo_url,
         horario_inicio: tenantConfig.horario_inicio, horario_fim: tenantConfig.horario_fim,
         barbeiros: tenantConfig.barbeiros, servicos: tenantConfig.servicos,
         cor_primaria: tenantConfig.cor_primaria, cor_fundo: tenantConfig.cor_fundo, cor_caixas: tenantConfig.cor_caixas
@@ -372,7 +382,6 @@ async function salvarConfiguracoesAdmin() {
     window.location.reload();
 }
 
-// GERENCIAR ATENDIMENTO (MODAL)
 let atendimentoAtual = null;
 function abrirModalGerenciarAtendimento(ag) {
     atendimentoAtual = ag;
@@ -442,7 +451,6 @@ function enviarLembreteWhatsApp(ag) {
     window.open(`https://api.whatsapp.com/send?phone=55${tel}&text=${encodeURIComponent(msg)}`, '_blank');
 }
 
-// NOVO AGENDAMENTO PELO PAINEL
 function abrirModalMensalistas() { document.getElementById("modal-mensalistas").style.display = "flex"; }
 function abrirModalNovoAgendamento() {
     const container = document.getElementById("lista-servicos-checkboxes"); container.innerHTML = "";
@@ -516,7 +524,6 @@ function desbloquearHorario(id) {
     }
 }
 
-// FINANCEIRO
 async function atualizarFinanceiroProfissional() {
     let barbeiroFiltro = usuarioLogado === 'Admin' ? document.getElementById("select-admin-prof").value : usuarioLogado;
     const filtro = document.getElementById('filtro-financeiro-prof').value;
