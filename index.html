@@ -9,7 +9,8 @@
     <style>
         :root { --primary-color: #FF6600; --bg-color: #121212; --box-color: #1A1A1A; --text-color: #FFFFFF; }
         * { margin: 0; padding: 0; box-sizing: border-box; font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif; }
-        body { background-color: var(--bg-color); color: var(--text-color); display: flex; justify-content: center; min-height: 100vh; }
+        body { background-color: var(--bg-color); color: var(--text-color); display: flex; justify-content: center; min-height: 100vh; opacity: 0; transition: opacity 0.4s ease; }
+        body.carregado { opacity: 1; }
         .app-container { width: 100%; max-width: 500px; padding: 20px 15px; display: flex; flex-direction: column; gap: 20px; }
         .landing-header { text-align: center; background: var(--box-color); padding: 25px 15px; border-radius: 12px; border: 1px solid #333; }
         .brand-logo-container { width: 85px; height: 85px; background: var(--bg-color); border: 2px solid var(--primary-color); border-radius: 50%; display: flex; align-items: center; justify-content: center; margin: 0 auto 12px auto; overflow: hidden; }
@@ -21,6 +22,20 @@
         .section p { font-size: 0.85rem; color: #DDD; line-height: 1.4; }
         .btn-primary-action { display: block; width: 100%; padding: 14px; background-color: var(--primary-color); color: #FFF; border-radius: 8px; font-weight: bold; text-align: center; text-decoration: none; text-transform: uppercase; }
     </style>
+    <script>
+        (function() {
+            const slug = new URLSearchParams(window.location.search).get('slug') || "padrao";
+            const cached = localStorage.getItem('tema_agenda_pro_' + slug);
+            if (cached) {
+                const c = JSON.parse(cached);
+                const r = document.documentElement;
+                if(c.cor_primaria) r.style.setProperty('--primary-color', c.cor_primaria);
+                if(c.cor_fundo) r.style.setProperty('--bg-color', c.cor_fundo);
+                if(c.cor_caixas) r.style.setProperty('--box-color', c.cor_caixas);
+                if(c.cor_letras) r.style.setProperty('--text-color', c.cor_letras);
+            }
+        })();
+    </script>
 </head>
 <body>
     <div class="app-container">
@@ -61,9 +76,20 @@
                     if (data.cor_fundo) document.documentElement.style.setProperty('--bg-color', data.cor_fundo);
                     if (data.cor_caixas) document.documentElement.style.setProperty('--box-color', data.cor_caixas);
                     if (data.cor_letras) document.documentElement.style.setProperty('--text-color', data.cor_letras);
+
+                    // Grava o tema no dispositivo
+                    localStorage.setItem('tema_agenda_pro_' + TENANT_ATIVO, JSON.stringify({
+                        cor_primaria: data.cor_primaria,
+                        cor_fundo: data.cor_fundo,
+                        cor_caixas: data.cor_caixas,
+                        cor_letras: data.cor_letras
+                    }));
                 }
             } catch (e) {}
             document.getElementById("btn-ir-agendar").href = `agendar.html${window.location.search}`;
+            
+            // Revela a tela com transição suave
+            document.body.classList.add('carregado');
         });
     </script>
 </body>
