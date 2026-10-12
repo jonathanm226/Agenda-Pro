@@ -73,6 +73,9 @@ document.addEventListener("DOMContentLoaded", async () => {
     if (endEl) endEl.textContent = tenantConfig.endereco || "Endereço não informado.";
 
     if (document.getElementById("agendar-container")) carregarDadosAgendamentoCliente();
+    
+    // Revela a tela com transição suave após as cores estarem configuradas
+    document.body.classList.add('carregado');
 });
 
 async function carregarTenantConfig() {
@@ -83,6 +86,14 @@ async function carregarTenantConfig() {
             if (!tenantConfig.barbeiros) tenantConfig.barbeiros = [];
             if (!tenantConfig.servicos) tenantConfig.servicos = {};
             if (!tenantConfig.senhas_usuarios) tenantConfig.senhas_usuarios = { "admin": "admin123" };
+            
+            // Grava o tema no dispositivo para carregamento instantâneo
+            localStorage.setItem('tema_agenda_pro_' + TENANT_ATIVO, JSON.stringify({
+                cor_primaria: data.cor_primaria,
+                cor_fundo: data.cor_fundo,
+                cor_caixas: data.cor_caixas,
+                cor_letras: data.cor_letras
+            }));
         }
     } catch (e) {}
 }
@@ -533,6 +544,14 @@ async function salvarConfiguracoesAdmin() {
         if (!result.data || result.data.length === 0) {
             throw new Error("O RLS (Segurança) do Supabase bloqueou a gravação! Vá ao painel do Supabase e desative o RLS da tabela.");
         }
+
+        // Atualiza a cache no momento do salvamento!
+        localStorage.setItem('tema_agenda_pro_' + TENANT_ATIVO, JSON.stringify({
+            cor_primaria: tenantConfig.cor_primaria,
+            cor_fundo: tenantConfig.cor_fundo,
+            cor_caixas: tenantConfig.cor_caixas,
+            cor_letras: tenantConfig.cor_letras
+        }));
 
         const nomeEl = document.getElementById("painel-nome-negocio");
         if(nomeEl) nomeEl.textContent = tenantConfig.nome_empresa;
