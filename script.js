@@ -488,6 +488,7 @@ async function salvarConfiguracoesAdmin() {
     tenantConfig.horario_fim = document.getElementById("config-h-fim").value;
 
     const dadosParaSalvar = {
+        slug: TENANT_ATIVO,
         nome_empresa: tenantConfig.nome_empresa, 
         sobre: tenantConfig.sobre,
         endereco: tenantConfig.endereco, 
@@ -496,22 +497,22 @@ async function salvarConfiguracoesAdmin() {
         horario_fim: tenantConfig.horario_fim,
         barbeiros: tenantConfig.barbeiros, 
         servicos: tenantConfig.servicos,
+        senhas_usuarios: tenantConfig.senhas_usuarios,
         cor_primaria: tenantConfig.cor_primaria,
         cor_fundo: tenantConfig.cor_fundo,
         cor_caixas: tenantConfig.cor_caixas
     };
 
+    // Usando upsert para garantir inserção ou atualização correta no banco associada ao slug
     const { error } = await _supabase
         .from("saas_estabelecimentos")
-        .update(dadosParaSalvar)
-        .eq("slug", TENANT_ATIVO);
+        .upsert(dadosParaSalvar, { onConflict: 'slug' });
 
     if(error) {
         console.error("ERRO SUPABASE:", error);
         return mostrarAlertaCustomizado("Erro ao salvar configurações. Verifique o console (F12).");
     }
     
-    // Atualiza imediatamente o nome e o logotipo no painel aberto antes do reload
     const nomeEl = document.getElementById("painel-nome-negocio");
     if(nomeEl) nomeEl.textContent = tenantConfig.nome_empresa;
     
