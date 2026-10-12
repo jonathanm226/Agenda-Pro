@@ -10,7 +10,8 @@
     <style>
         :root { --primary-color: #FF6600; --bg-color: #121212; --box-color: #1A1A1A; --text-color: #FFFFFF; }
         * { margin: 0; padding: 0; box-sizing: border-box; font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif; }
-        body { background-color: var(--bg-color); color: var(--text-color); display: flex; justify-content: center; }
+        body { background-color: var(--bg-color); color: var(--text-color); display: flex; justify-content: center; opacity: 0; transition: opacity 0.4s ease; }
+        body.carregado { opacity: 1; }
         .app-container { width: 100%; max-width: 500px; padding: 20px 15px 90px 15px; display: flex; flex-direction: column; gap: 20px; }
         .barber-header { text-align: center; background: var(--box-color); padding: 20px 15px; border-radius: 16px; border: 1px solid rgba(255,255,255,0.05); }
         .brand-logo-container { width: 80px; height: 80px; margin: 0 auto 12px auto; border: 2px solid var(--primary-color); border-radius: 50%; overflow: hidden; background: var(--bg-color); display: flex; align-items: center; justify-content: center; }
@@ -38,6 +39,20 @@
         .custom-modal { background: var(--box-color); border: 1px solid rgba(255,255,255,0.1); padding: 24px; border-radius: 16px; width: 90%; max-width: 400px; }
         .custom-modal h3 { margin-bottom: 15px; font-size: 1.2rem; text-align: center; color: var(--text-color); }
     </style>
+    <script>
+        (function() {
+            const slug = new URLSearchParams(window.location.search).get('slug') || "padrao";
+            const cached = localStorage.getItem('tema_agenda_pro_' + slug);
+            if (cached) {
+                const c = JSON.parse(cached);
+                const r = document.documentElement;
+                if(c.cor_primaria) r.style.setProperty('--primary-color', c.cor_primaria);
+                if(c.cor_fundo) r.style.setProperty('--bg-color', c.cor_fundo);
+                if(c.cor_caixas) r.style.setProperty('--box-color', c.cor_caixas);
+                if(c.cor_letras) r.style.setProperty('--text-color', c.cor_letras);
+            }
+        })();
+    </script>
 </head>
 <body>
     <div class="app-container" id="agendar-container">
