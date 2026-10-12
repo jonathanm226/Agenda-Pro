@@ -181,8 +181,18 @@ function atualizarResumo() {
 }
 
 async function checkAvailableTimes() {
-    const dateInput = document.getElementById("date").value; const timeSelect = document.getElementById("time");
-    if (!dateInput || !timeSelect || !barbeiroSelecionado) return;
+    const dateInput = document.getElementById("date").value; 
+    const timeSelect = document.getElementById("time");
+    
+    if (!timeSelect) return;
+
+    // Aviso visual caso o cliente não tenha selecionado o profissional
+    if (!barbeiroSelecionado) {
+        timeSelect.innerHTML = '<option value="">Selecione o profissional acima primeiro</option>';
+        return;
+    }
+
+    if (!dateInput) return;
     
     let duracaoTotalServicos = 30;
     let tempTempo = 0;
