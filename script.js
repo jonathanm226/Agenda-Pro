@@ -503,28 +503,54 @@ async function salvarConfiguracoesAdmin() {
         cor_caixas: tenantConfig.cor_caixas
     };
 
-    // Usando upsert para garantir inserção ou atualização correta no banco associada ao slug
-    const { error } = await _supabase
-        .from("saas_estabelecimentos")
-        .upsert(dadosParaSalvar, { onConflict: 'slug' });
+    try {
+        // 1. Verifica se já existe um registro com este slug
+        const { data: existe } = await _supabase
+            .from("saas_estabelecimentos")
+            .select("id")
+            .eq("slug", TENANT_ATIVO)
+            .maybeSingle();
 
-    if(error) {
-        console.error("ERRO SUPABASE:", error);
-        return mostrarAlertaCustomizado("Erro ao salvar configurações. Verifique o console (F12).");
-    }
-    
-    const nomeEl = document.getElementById("painel-nome-negocio");
-    if(nomeEl) nomeEl.textContent = tenantConfig.nome_empresa;
-    
-    const logoEl = document.getElementById("painel-logo");
-    if(logoEl && tenantConfig.logo_url) {
-        logoEl.src = tenantConfig.logo_url;
-        logoEl.style.display = "block";
-    }
+        let result;
+        if (existe) {
+            // 2. Se existe, faz UPDATE exigindo o retorno (.select()) dos dados processados
+            result = await _supabase
+                .from("saas_estabelecimentos")
+                .update(dadosParaSalvar)
+                .eq("slug", TENANT_ATIVO)
+                .select();
+        } else {
+            // 3. Se não existe, faz INSERT exigindo o retorno (.select())
+            result = await _supabase
+                .from("saas_estabelecimentos")
+                .insert([dadosParaSalvar])
+                .select();
+        }
 
-    aplicarIdentidadeVisual(tenantConfig);
-    fecharConfiguracoesAdmin();
-    mostrarAlertaCustomizado("Configurações salvas com sucesso!", true);
+        if (result.error) throw result.error;
+        
+        // A PROVA REAL: Se o Supabase bloqueou (por causa do RLS), o "result.data" virá vazio, mesmo sem acusar erro direto!
+        if (!result.data || result.data.length === 0) {
+            throw new Error("O RLS (Segurança) do Supabase bloqueou a gravação! Vá ao painel do Supabase e desative o RLS da tabela.");
+        }
+
+        const nomeEl = document.getElementById("painel-nome-negocio");
+        if(nomeEl) nomeEl.textContent = tenantConfig.nome_empresa;
+        
+        const logoEl = document.getElementById("painel-logo");
+        if(logoEl && tenantConfig.logo_url) {
+            logoEl.src = tenantConfig.logo_url;
+            logoEl.style.display = "block";
+        }
+
+        aplicarIdentidadeVisual(tenantConfig);
+        fecharConfiguracoesAdmin();
+        mostrarAlertaCustomizado("Configurações salvas com sucesso!", true);
+
+    } catch (err) {
+        console.error("ERRO SUPABASE:", err);
+        mostrarAlertaCustomizado("Falha ao salvar! " + (err.message || "Erro de banco de dados."));
+    }
 }
 
 let atendimentoAtual = null;
