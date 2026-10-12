@@ -74,7 +74,6 @@ document.addEventListener("DOMContentLoaded", async () => {
 
     if (document.getElementById("agendar-container")) carregarDadosAgendamentoCliente();
     
-    // Revela a tela com transição suave após as cores estarem configuradas
     document.body.classList.add('carregado');
 });
 
@@ -87,7 +86,6 @@ async function carregarTenantConfig() {
             if (!tenantConfig.servicos) tenantConfig.servicos = {};
             if (!tenantConfig.senhas_usuarios) tenantConfig.senhas_usuarios = { "admin": "admin123" };
             
-            // Grava o tema no dispositivo para carregamento instantâneo
             localStorage.setItem('tema_agenda_pro_' + TENANT_ATIVO, JSON.stringify({
                 cor_primaria: data.cor_primaria,
                 cor_fundo: data.cor_fundo,
@@ -127,14 +125,33 @@ function converterLogoBase64(input) {
             
             document.getElementById("config-logo-url").value = dataUrl;
             const previewEl = document.getElementById("preview-logo-config");
+            const btnRemover = document.getElementById("btn-remover-logo");
             if(previewEl) {
                 previewEl.src = dataUrl;
                 previewEl.style.display = "block";
+            }
+            if(btnRemover) {
+                btnRemover.style.display = "flex";
             }
         }
         img.src = e.target.result;
     };
     reader.readAsDataURL(file);
+}
+
+function removerLogoAtual() {
+    document.getElementById("config-logo-url").value = "";
+    const previewEl = document.getElementById("preview-logo-config");
+    const btnRemover = document.getElementById("btn-remover-logo");
+    if(previewEl) {
+        previewEl.src = "";
+        previewEl.style.display = "none";
+    }
+    if(btnRemover) {
+        btnRemover.style.display = "none";
+    }
+    const fileInput = document.getElementById("config-logo-file");
+    if(fileInput) fileInput.value = "";
 }
 
 function carregarDadosAgendamentoCliente() { renderizarBarbeiros(); renderizarServicos(); }
@@ -186,7 +203,6 @@ async function checkAvailableTimes() {
     
     if (!timeSelect) return;
 
-    // Aviso visual caso o cliente não tenha selecionado o profissional
     if (!barbeiroSelecionado) {
         timeSelect.innerHTML = '<option value="">Selecione o profissional acima primeiro</option>';
         return;
@@ -379,11 +395,15 @@ function abrirConfiguracoesAdmin() {
     
     document.getElementById("config-logo-url").value = tenantConfig.logo_url || "";
     const previewEl = document.getElementById("preview-logo-config");
+    const btnRemover = document.getElementById("btn-remover-logo");
+    
     if(previewEl && tenantConfig.logo_url) {
         previewEl.src = tenantConfig.logo_url;
         previewEl.style.display = "block";
-    } else if(previewEl) {
-        previewEl.style.display = "none";
+        if(btnRemover) btnRemover.style.display = "flex";
+    } else {
+        if(previewEl) previewEl.style.display = "none";
+        if(btnRemover) btnRemover.style.display = "none";
     }
 
     document.getElementById("config-h-inicio").value = tenantConfig.horario_inicio || "08:00";
@@ -525,7 +545,6 @@ async function salvarConfiguracoesAdmin() {
     };
 
     try {
-        // 1. Verifica se já existe um registro com este slug
         const { data: existe } = await _supabase
             .from("saas_estabelecimentos")
             .select("id")
@@ -534,14 +553,12 @@ async function salvarConfiguracoesAdmin() {
 
         let result;
         if (existe) {
-            // 2. Se existe, faz UPDATE exigindo o retorno (.select()) dos dados processados
             result = await _supabase
                 .from("saas_estabelecimentos")
                 .update(dadosParaSalvar)
                 .eq("slug", TENANT_ATIVO)
                 .select();
         } else {
-            // 3. Se não existe, faz INSERT exigindo o retorno (.select())
             result = await _supabase
                 .from("saas_estabelecimentos")
                 .insert([dadosParaSalvar])
@@ -550,12 +567,10 @@ async function salvarConfiguracoesAdmin() {
 
         if (result.error) throw result.error;
         
-        // A PROVA REAL: Se o Supabase bloqueou (por causa do RLS), o "result.data" virá vazio, mesmo sem acusar erro direto!
         if (!result.data || result.data.length === 0) {
             throw new Error("O RLS (Segurança) do Supabase bloqueou a gravação! Vá ao painel do Supabase e desative o RLS da tabela.");
         }
 
-        // Atualiza a cache no momento do salvamento!
         localStorage.setItem('tema_agenda_pro_' + TENANT_ATIVO, JSON.stringify({
             cor_primaria: tenantConfig.cor_primaria,
             cor_fundo: tenantConfig.cor_fundo,
@@ -567,9 +582,14 @@ async function salvarConfiguracoesAdmin() {
         if(nomeEl) nomeEl.textContent = tenantConfig.nome_empresa;
         
         const logoEl = document.getElementById("painel-logo");
-        if(logoEl && tenantConfig.logo_url) {
-            logoEl.src = tenantConfig.logo_url;
-            logoEl.style.display = "block";
+        if(logoEl) {
+            if(tenantConfig.logo_url) {
+                logoEl.src = tenantConfig.logo_url;
+                logoEl.style.display = "block";
+            } else {
+                logoEl.src = "";
+                logoEl.style.display = "none";
+            }
         }
 
         aplicarIdentidadeVisual(tenantConfig);
