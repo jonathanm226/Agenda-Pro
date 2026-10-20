@@ -23,7 +23,6 @@
         .input-group label { font-size: 0.85rem; color: #CCC; }
         input, select, textarea { width: 100%; padding: 12px; background: var(--bg-color); border: 1px solid rgba(255,255,255,0.2); border-radius: 8px; color: var(--text-color); outline: none; color-scheme: dark; font-size: 0.95rem; }
         
-        /* Estilo para o input de arquivo */
         input[type="file"] { padding: 8px; background: transparent; border: 1px dashed rgba(255,255,255,0.3); color: #AAA; font-size: 0.8rem; cursor: pointer; }
         input[type="file"]::file-selector-button { background: var(--primary-color); border: none; color: white; padding: 6px 12px; border-radius: 6px; cursor: pointer; margin-right: 10px; font-weight: bold; }
         
@@ -147,6 +146,8 @@
                 <div class="input-group"><label>Sobre o Negócio:</label><textarea id="config-sobre" rows="3" placeholder="Apresentação do espaço..."></textarea></div>
                 <div class="input-group"><label>Endereço Completo:</label><input type="text" id="config-endereco" placeholder="Ex: Rua Direita, nº 123"></div>
                 
+                <div class="input-group"><label>Chave PIX (Para receber os 50%):</label><input type="text" id="config-chave-pix" placeholder="Celular, CPF, E-mail ou Aleatória"></div>
+
                 <div class="input-group">
                     <label>Logo do Estabelecimento:</label>
                     <div style="display: flex; align-items: center; gap: 10px;">
