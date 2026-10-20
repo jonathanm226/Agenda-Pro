@@ -64,7 +64,7 @@ document.addEventListener("DOMContentLoaded", async () => {
     });
 
     const nomeEl = document.getElementById("tenant-name") || document.getElementById("painel-nome-negocio") || document.getElementById("landing-nome");
-    if (nomeEl) nomeEl.textContent = tenantConfig.nome_empresa || "Agenda Pro";
+    if (nomeEl) nomeEl.textContent = tenantConfig.nome_empresa || "NeoBooking";
 
     const sobreEl = document.getElementById("landing-sobre");
     if (sobreEl) sobreEl.textContent = tenantConfig.sobre || "Bem-vindo ao nosso espaço!";
@@ -87,7 +87,7 @@ async function carregarTenantConfig() {
             if (!tenantConfig.senhas_usuarios) tenantConfig.senhas_usuarios = { "admin": "admin123" };
             if (!tenantConfig.chave_pix) tenantConfig.chave_pix = "";
             
-            localStorage.setItem('tema_agenda_pro_' + TENANT_ATIVO, JSON.stringify({
+            localStorage.setItem('tema_neobooking_' + TENANT_ATIVO, JSON.stringify({
                 cor_primaria: data.cor_primaria,
                 cor_fundo: data.cor_fundo,
                 cor_caixas: data.cor_caixas,
@@ -587,7 +587,7 @@ async function salvarConfiguracoesAdmin() {
             throw new Error("O RLS (Segurança) do Supabase bloqueou a gravação! Vá ao painel do Supabase e desative o RLS da tabela.");
         }
 
-        localStorage.setItem('tema_agenda_pro_' + TENANT_ATIVO, JSON.stringify({
+        localStorage.setItem('tema_neobooking_' + TENANT_ATIVO, JSON.stringify({
             cor_primaria: tenantConfig.cor_primaria,
             cor_fundo: tenantConfig.cor_fundo,
             cor_caixas: tenantConfig.cor_caixas,
