@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=0">
-    <title>Agenda Pro! | Painel Central</title>
+    <title>NeoBooking | Painel Central</title>
     <link rel="icon" type="image/png" href="logo.png">
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.1/css/all.min.css">
     <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
@@ -59,7 +59,7 @@
     <script>
         (function() {
             const slug = new URLSearchParams(window.location.search).get('slug') || "padrao";
-            const cached = localStorage.getItem('tema_agenda_pro_' + slug);
+            const cached = localStorage.getItem('tema_neobooking_' + slug);
             if (cached) {
                 const c = JSON.parse(cached);
                 const r = document.documentElement;
@@ -77,7 +77,7 @@
             <div id="admin-gear-container"></div>
             <div class="brand-logo-container"><img id="painel-logo" src="" alt="Logo" style="display:none;"></div>
             <h1 style="font-size: 1.3rem;" id="painel-nome-negocio">Carregando...</h1>
-            <p style="font-size: 0.8rem; color: var(--primary-color); font-weight: 600;">Painel de Gestão</p>
+            <p style="font-size: 0.8rem; color: var(--primary-color); font-weight: 600;">Painel de Gestão | NeoBooking</p>
         </header>
 
         <!-- LOGIN -->
