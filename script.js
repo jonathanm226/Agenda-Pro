@@ -6,7 +6,7 @@ const urlParams = new URLSearchParams(window.location.search);
 const TENANT_ATIVO = urlParams.get('slug') || "padrao";
 
 let tenantConfig = { 
-    nome_empresa: "Meu Estabelecimento", sobre: "", endereco: "", horario_inicio: "08:00", horario_fim: "19:00", logo_url: "", 
+    nome_empresa: "Meu Estabelecimento", sobre: "", endereco: "", horario_inicio: "08:00", horario_fim: "19:00", logo_url: "", chave_pix: "", 
     cor_primaria: "#FF6600", cor_fundo: "#121212", cor_caixas: "#1A1A1A", cor_letras: "#FFFFFF",
     barbeiros: [], servicos: {}, senhas_usuarios: { "admin": "admin123" }
 };
@@ -85,6 +85,7 @@ async function carregarTenantConfig() {
             if (!tenantConfig.barbeiros) tenantConfig.barbeiros = [];
             if (!tenantConfig.servicos) tenantConfig.servicos = {};
             if (!tenantConfig.senhas_usuarios) tenantConfig.senhas_usuarios = { "admin": "admin123" };
+            if (!tenantConfig.chave_pix) tenantConfig.chave_pix = "";
             
             localStorage.setItem('tema_agenda_pro_' + TENANT_ATIVO, JSON.stringify({
                 cor_primaria: data.cor_primaria,
@@ -259,7 +260,17 @@ function abrirModalConfirmacao() {
     let total = 0; let duracao = 0;
     Object.values(servicosSelecionados).forEach(s => { total += s.preco; duracao += s.duracao; });
 
-    document.getElementById("resumo-agendamento").innerHTML = `<strong>Profissional:</strong> ${barbeiroSelecionado}<br><strong>Serviços:</strong> ${servicosStr} (${duracao} min)<br><strong>Data:</strong> ${document.getElementById("date").value.split('-').reverse().join('/')} às ${document.getElementById("time").value}<br><strong>Valor:</strong> R$ ${total.toFixed(2)}`;
+    let sinalPix = total / 2;
+
+    document.getElementById("resumo-agendamento").innerHTML = `<strong>Profissional:</strong> ${barbeiroSelecionado}<br><strong>Serviços:</strong> ${servicosStr} (${duracao} min)<br><strong>Data:</strong> ${document.getElementById("date").value.split('-').reverse().join('/')} às ${document.getElementById("time").value}<br><strong>Valor Total:</strong> R$ ${total.toFixed(2)}`;
+    
+    document.getElementById("valor-sinal-pix").textContent = `R$ ${sinalPix.toFixed(2)}`;
+    
+    const pixKeyDisplay = document.getElementById("pix-key-display");
+    if (pixKeyDisplay) {
+        pixKeyDisplay.textContent = tenantConfig.chave_pix || "Chave não configurada no painel";
+    }
+    
     document.getElementById("modal-confirmacao").style.display = "flex";
 }
 
@@ -271,10 +282,12 @@ async function confirmarEEnviar() {
     const dataSQL = document.getElementById("date").value; const horaStr = document.getElementById("time").value;
     let total = 0; let duracao = 0; Object.values(servicosSelecionados).forEach(s => { total += s.preco; duracao += s.duracao; });
     const servs = Object.keys(servicosSelecionados).join(', ');
+    
+    let sinalPix = total / 2; 
 
     const { error } = await _supabase.from('saas_agendamentos').insert({
         slug: TENANT_ATIVO, barbeiro: barbeiroSelecionado, cliente_nome: cliente, cliente_telefone: telefone,
-        servicos: servs, data_agendamento: dataSQL, hora_inicio: horaStr, duracao_total: duracao || 30, valor_total: total, status: 'pendente'
+        servicos: servs, data_agendamento: dataSQL, hora_inicio: horaStr, duracao_total: duracao || 30, valor_total: total, status: 'aguardando_pix'
     });
 
     if (error) { btn.disabled = false; return mostrarAlertaCustomizado("Erro ao salvar agendamento."); }
@@ -284,12 +297,12 @@ async function confirmarEEnviar() {
     
     if (numeroProf) {
         const dataStr = dataSQL.split('-').reverse().join('/');
-        const msg = `*NOVO AGENDAMENTO*\n*Cliente:* ${cliente}\n*Serviços:* ${servs} (${duracao || 30} min)\n*Data:* ${dataStr} às ${horaStr}\n*Total:* R$ ${total.toFixed(2)}\n\n✨ *AGENDAMENTO CONFIRMADO* ✨`;
+        const msg = `*NOVO AGENDAMENTO*\n*Cliente:* ${cliente}\n*Serviços:* ${servs} (${duracao || 30} min)\n*Data:* ${dataStr} às ${horaStr}\n*Total:* R$ ${total.toFixed(2)}\n*Sinal a pagar (50%):* R$ ${sinalPix.toFixed(2)}\n\n*Segue o meu comprovante do PIX em anexo para confirmar o horário!* ✅`;
         window.open(`https://api.whatsapp.com/send?phone=55${numeroProf.replace(/\D/g, "")}&text=${encodeURIComponent(msg)}`, '_blank');
     }
 
     fecharModalConfirmacao(); 
-    mostrarAlertaCustomizado("Agendamento concluído!", true);
+    mostrarAlertaCustomizado("Agendamento concluído! Não se esqueça de enviar o comprovante de pagamento.", true);
 }
 
 function fazerLogin() {
@@ -392,6 +405,7 @@ function abrirConfiguracoesAdmin() {
     document.getElementById("config-nome-empresa").value = tenantConfig.nome_empresa || "";
     document.getElementById("config-sobre").value = tenantConfig.sobre || "";
     document.getElementById("config-endereco").value = tenantConfig.endereco || "";
+    document.getElementById("config-chave-pix").value = tenantConfig.chave_pix || "";
     
     document.getElementById("config-logo-url").value = tenantConfig.logo_url || "";
     const previewEl = document.getElementById("preview-logo-config");
@@ -524,6 +538,7 @@ async function salvarConfiguracoesAdmin() {
     tenantConfig.nome_empresa = document.getElementById("config-nome-empresa").value.trim();
     tenantConfig.sobre = document.getElementById("config-sobre").value.trim();
     tenantConfig.endereco = document.getElementById("config-endereco").value.trim();
+    tenantConfig.chave_pix = document.getElementById("config-chave-pix").value.trim();
     tenantConfig.logo_url = document.getElementById("config-logo-url").value.trim();
     tenantConfig.horario_inicio = document.getElementById("config-h-inicio").value;
     tenantConfig.horario_fim = document.getElementById("config-h-fim").value;
@@ -533,6 +548,7 @@ async function salvarConfiguracoesAdmin() {
         nome_empresa: tenantConfig.nome_empresa, 
         sobre: tenantConfig.sobre,
         endereco: tenantConfig.endereco, 
+        chave_pix: tenantConfig.chave_pix,
         logo_url: tenantConfig.logo_url,
         horario_inicio: tenantConfig.horario_inicio, 
         horario_fim: tenantConfig.horario_fim,
