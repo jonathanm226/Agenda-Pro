@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=0">
-    <title>Agendamento | Agenda Pro</title>
+    <title>Agendamento | NeoBooking</title>
     <link rel="icon" type="image/svg+xml" href="logo.svg">
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.1/css/all.min.css">
     <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
@@ -42,7 +42,7 @@
     <script>
         (function() {
             const slug = new URLSearchParams(window.location.search).get('slug') || "padrao";
-            const cached = localStorage.getItem('tema_agenda_pro_' + slug);
+            const cached = localStorage.getItem('tema_neobooking_' + slug);
             if (cached) {
                 const c = JSON.parse(cached);
                 const r = document.documentElement;
@@ -59,7 +59,7 @@
         <header class="barber-header">
             <div class="brand-logo-container"><img id="tenant-logo" src="" alt="Logo" style="display:none;"></div>
             <h1 id="tenant-name">Carregando...</h1>
-            <p id="tenant-slogan">Sistema de Agendamento</p>
+            <p id="tenant-slogan" style="font-size: 0.75rem;">NeoBooking &nbsp;|&nbsp; Agendamento & Visibilidade</p>
         </header>
         <section class="section">
             <h2><i class="fa-solid fa-user-tie"></i> Escolha o Profissional</h2>
