@@ -88,16 +88,31 @@
         </section>
         <button class="btn-whatsapp" onclick="abrirModalConfirmacao()">Continuar Agendamento <i class="fa-solid fa-arrow-right"></i></button>
     </div>
+    
     <div id="modal-confirmacao" class="custom-modal-overlay">
         <div class="custom-modal">
-            <h3>Resumo do Agendamento</h3>
-            <div id="resumo-agendamento" style="background: rgba(0,0,0,0.3); padding: 15px; border-radius: 12px; margin-bottom: 20px; font-size: 0.9rem; line-height: 1.6;"></div>
+            <h3>Resumo e Pagamento</h3>
+            <div id="resumo-agendamento" style="background: rgba(0,0,0,0.3); padding: 15px; border-radius: 12px; margin-bottom: 15px; font-size: 0.9rem; line-height: 1.6;"></div>
+            
+            <div style="background: rgba(255, 102, 0, 0.1); border: 1px dashed var(--primary-color); padding: 15px; border-radius: 12px; margin-bottom: 20px; text-align: center;">
+                <p style="font-size: 0.85rem; color: #CCC; margin-bottom: 8px;">Para confirmar o agendamento, faça o PIX do sinal (50%):</p>
+                <strong id="valor-sinal-pix" style="font-size: 1.4rem; color: var(--primary-color); display: block; margin-bottom: 8px;">R$ 0,00</strong>
+                <p style="font-size: 0.8rem; margin-bottom: 5px;">Chave PIX:</p>
+                
+                <div id="pix-key-display" style="background: var(--bg-color); padding: 8px; border-radius: 6px; font-weight: bold; font-family: monospace; user-select: all; cursor: pointer;">
+                    Carregando chave...
+                </div>
+                
+                <p style="font-size: 0.75rem; color: #AAA; margin-top: 10px;">* Ao finalizar, envie o comprovante no WhatsApp do profissional.</p>
+            </div>
+
             <div style="display: flex; flex-direction: column; gap: 10px;">
-                <button id="btn-confirmar-agendamento" onclick="confirmarEEnviar()" style="padding: 14px; border-radius: 10px; font-weight: bold; border: none; background: #25D366; color: #FFF; cursor: pointer;"><i class="fa-brands fa-whatsapp"></i> Confirmar e Enviar</button>
+                <button id="btn-confirmar-agendamento" onclick="confirmarEEnviar()" style="padding: 14px; border-radius: 10px; font-weight: bold; border: none; background: #25D366; color: #FFF; cursor: pointer;"><i class="fa-brands fa-whatsapp"></i> Enviar Comprovante</button>
                 <button onclick="fecharModalConfirmacao()" style="padding: 14px; border-radius: 10px; font-weight: bold; border: 1px solid rgba(255,255,255,0.2); background: transparent; color: #FFF; cursor: pointer;">Voltar e Editar</button>
             </div>
         </div>
     </div>
+
     <div id="modal-alerta-custom" class="custom-modal-overlay">
         <div class="custom-modal" style="text-align: center; max-width: 320px;">
             <i class="fa-solid fa-circle-exclamation" style="font-size: 2.5rem; color: var(--primary-color); margin-bottom: 15px;"></i>
