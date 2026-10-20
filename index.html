@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=0">
-    <title id="page-title">Agenda Pro! | Bem-vindo</title>
+    <title id="page-title">NeoBooking | Bem-vindo</title>
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.1/css/all.min.css">
     <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
     <style>
@@ -21,18 +21,28 @@
         .section h2 { font-size: 1rem; color: var(--primary-color); margin-bottom: 8px; }
         .section p { font-size: 0.85rem; color: #DDD; line-height: 1.4; }
         .btn-primary-action { display: block; width: 100%; padding: 14px; background-color: var(--primary-color); color: #FFF; border-radius: 8px; font-weight: bold; text-align: center; text-decoration: none; text-transform: uppercase; }
+        
+        .powered-by { margin-top: 20px; text-align: center; padding: 20px 15px; border-top: 1px dashed rgba(255,255,255,0.1); }
+        .powered-by p { font-size: 0.85rem; color: #AAA; margin-bottom: 15px; line-height: 1.4; }
+        .powered-by a { display: inline-flex; align-items: center; gap: 8px; font-size: 0.85rem; color: #FFF; text-decoration: none; font-weight: bold; padding: 10px 18px; background: rgba(255,255,255,0.05); border: 1px solid rgba(255,255,255,0.1); border-radius: 8px; transition: 0.3s; }
+        .powered-by a:hover { background: var(--primary-color); border-color: var(--primary-color); }
     </style>
     <script>
         (function() {
-            const slug = new URLSearchParams(window.location.search).get('slug') || "padrao";
-            const cached = localStorage.getItem('tema_agenda_pro_' + slug);
-            if (cached) {
-                const c = JSON.parse(cached);
-                const r = document.documentElement;
-                if(c.cor_primaria) r.style.setProperty('--primary-color', c.cor_primaria);
-                if(c.cor_fundo) r.style.setProperty('--bg-color', c.cor_fundo);
-                if(c.cor_caixas) r.style.setProperty('--box-color', c.cor_caixas);
-                if(c.cor_letras) r.style.setProperty('--text-color', c.cor_letras);
+            try {
+                const params = new URLSearchParams(window.location.search);
+                const slug = params.get('slug') || "padrao";
+                const cached = localStorage.getItem('tema_neobooking_' + slug);
+                if (cached) {
+                    const c = JSON.parse(cached);
+                    const r = document.documentElement;
+                    if(c.cor_primaria) r.style.setProperty('--primary-color', c.cor_primaria);
+                    if(c.cor_fundo) r.style.setProperty('--bg-color', c.cor_fundo);
+                    if(c.cor_caixas) r.style.setProperty('--box-color', c.cor_caixas);
+                    if(c.cor_letras) r.style.setProperty('--text-color', c.cor_letras);
+                }
+            } catch (err) {
+                console.error("Erro no tema em cache:", err);
             }
         })();
     </script>
@@ -42,7 +52,7 @@
         <header class="landing-header">
             <div class="brand-logo-container"><img id="landing-logo" src="" alt="Logo" style="display:none;"></div>
             <h1 id="landing-nome">Carregando...</h1>
-            <p class="tagline" id="landing-slogan">Gestão inteligente</p>
+            <p class="tagline" id="landing-slogan">NeoBooking &nbsp;|&nbsp; Agendamento & Visibilidade</p>
         </header>
         <section class="section">
             <h2>Sobre o Estabelecimento</h2>
@@ -55,42 +65,68 @@
         <div class="landing-action">
             <a href="#" id="btn-ir-agendar" class="btn-primary-action"><i class="fa-regular fa-calendar-check"></i> Agendar Horário</a>
         </div>
+
+        <div class="powered-by">
+            <p>Tem um negócio e quer automatizar seus agendamentos e ganhar mais visibilidade na internet?</p>
+            <a href="https://api.whatsapp.com/send?phone=5531972478571&text=Ol%C3%A1!%20Gostaria%20de%20ter%20um%20sistema%20de%20agendamento%20como%20o%20da%20Neologic%20Tech%20Systems%20para%20o%20meu%20neg%C3%B3cio." target="_blank">
+                <i class="fa-solid fa-rocket"></i> Fale com a Neologic Tech Systems
+            </a>
+        </div>
     </div>
+
     <script>
         const SUPABASE_URL = "https://doecoosuqibzdsyadsyg.supabase.co";
         const SUPABASE_KEY = "sb_publishable_-30z4xAhwJPYmy1bfSEjCw_loKUe8uL";
-        const _supabase = supabase.createClient(SUPABASE_URL, SUPABASE_KEY);
+        
+        let _supabase = null;
+        try {
+            _supabase = supabase.createClient(SUPABASE_URL, SUPABASE_KEY);
+        } catch (e) {
+            console.error("Erro ao iniciar Supabase:", e);
+        }
+
         const urlParams = new URLSearchParams(window.location.search);
         const TENANT_ATIVO = urlParams.get('slug') || "padrao";
 
         document.addEventListener("DOMContentLoaded", async () => {
             try {
-                const { data } = await _supabase.from("saas_estabelecimentos").select("*").eq("slug", TENANT_ATIVO).single();
-                if (data) {
-                    document.getElementById("page-title").textContent = `${data.nome_empresa || 'Negócio'} | Bem-vindo`;
-                    document.getElementById("landing-nome").textContent = data.nome_empresa || "Meu Negócio";
-                    document.getElementById("landing-sobre").textContent = data.sobre || "Bem-vindo ao nosso espaço!";
-                    document.getElementById("landing-endereco").textContent = data.endereco || "Não cadastrado.";
-                    if (data.logo_url) { const img = document.getElementById("landing-logo"); img.src = data.logo_url; img.style.display = "block"; }
-                    if (data.cor_primaria) document.documentElement.style.setProperty('--primary-color', data.cor_primaria);
-                    if (data.cor_fundo) document.documentElement.style.setProperty('--bg-color', data.cor_fundo);
-                    if (data.cor_caixas) document.documentElement.style.setProperty('--box-color', data.cor_caixas);
-                    if (data.cor_letras) document.documentElement.style.setProperty('--text-color', data.cor_letras);
+                if (_supabase) {
+                    const { data } = await _supabase.from("saas_estabelecimentos").select("*").eq("slug", TENANT_ATIVO).maybeSingle();
+                    if (data) {
+                        document.getElementById("page-title").textContent = `${data.nome_empresa || 'Negócio'} | NeoBooking`;
+                        document.getElementById("landing-nome").textContent = data.nome_empresa || "Meu Negócio";
+                        document.getElementById("landing-sobre").textContent = data.sobre || "Bem-vindo ao nosso espaço!";
+                        document.getElementById("landing-endereco").textContent = data.endereco || "Não cadastrado.";
+                        if (data.logo_url) { 
+                            const img = document.getElementById("landing-logo"); 
+                            img.src = data.logo_url; 
+                            img.style.display = "block"; 
+                        }
+                        if (data.cor_primaria) document.documentElement.style.setProperty('--primary-color', data.cor_primaria);
+                        if (data.cor_fundo) document.documentElement.style.setProperty('--bg-color', data.cor_fundo);
+                        if (data.cor_caixas) document.documentElement.style.setProperty('--box-color', data.cor_caixas);
+                        if (data.cor_letras) document.documentElement.style.setProperty('--text-color', data.cor_letras);
 
-                    // Grava o tema no dispositivo
-                    localStorage.setItem('tema_agenda_pro_' + TENANT_ATIVO, JSON.stringify({
-                        cor_primaria: data.cor_primaria,
-                        cor_fundo: data.cor_fundo,
-                        cor_caixas: data.cor_caixas,
-                        cor_letras: data.cor_letras
-                    }));
+                        localStorage.setItem('tema_neobooking_' + TENANT_ATIVO, JSON.stringify({
+                            cor_primaria: data.cor_primaria,
+                            cor_fundo: data.cor_fundo,
+                            cor_caixas: data.cor_caixas,
+                            cor_letras: data.cor_letras
+                        }));
+                    }
                 }
-            } catch (e) {}
+            } catch (err) {
+                console.error("Erro ao carregar dados:", err);
+            }
+
             document.getElementById("btn-ir-agendar").href = `agendar.html${window.location.search}`;
-            
-            // Revela a tela com transição suave
             document.body.classList.add('carregado');
         });
+
+        // Trava de segurança: se houver qualquer travamento de rede, a tela é forçada a aparecer em 1.5 segundo
+        setTimeout(() => {
+            document.body.classList.add('carregado');
+        }, 1500);
     </script>
 </body>
 </html>
